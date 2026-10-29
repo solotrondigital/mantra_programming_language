@@ -18,7 +18,7 @@ use std::process::exit;
 
 fn print_help() {
     println!(
-        r#"Mantra Development Kit (MDK) CLI — v0.2.0
+        r#"Mantra Development Kit (MDK) CLI — v0.3.0
 Usage:
     mantra <command> [arguments] [options]
 
@@ -30,6 +30,8 @@ Commands:
     check [TARGET]         Parse and type-check without code generation
     test                   Discover and run tests in tests/
     lock                   Generate mantra.lock with dependency hashes
+    bootstrap              Run self-hosting bootstrap pipeline (stages 0→1→2 + verify)
+    regression             Run the canonical language regression suite
     fmt [FILES...]         Format Mantra source files with 4-space indentation
     lint [FILES...]        Run static diagnostics on source files
     doc [FILE]             Generate Markdown documentation for declarations
@@ -45,8 +47,8 @@ Commands:
 }
 
 fn print_version() {
-    println!("Mantra Development Kit (MDK) v0.2.0");
-    println!("Compiler: mantrac 0.2.0");
+    println!("Mantra Development Kit (MDK) v0.3.0");
+    println!("Compiler: mantrac 0.3.0 (Self-Hosting, Bootstrap Stage-0)");
     println!("Host Target: {}-{}", env::consts::ARCH, env::consts::OS);
 }
 
@@ -166,6 +168,46 @@ fn main() {
                     eprintln!("Error: {}", e);
                     exit(1);
                 }
+            }
+        }
+        "bootstrap" => {
+            // Delegate to mantrac --bootstrap
+            let workspace = env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf());
+            let mantrac = workspace.join("target/release/mantrac");
+            if !mantrac.exists() {
+                eprintln!("Error: Bootstrap compiler not found at {}.", mantrac.display());
+                eprintln!("Run 'cargo build --release' first.");
+                exit(1);
+            }
+            let status = std::process::Command::new(&mantrac)
+                .arg("--bootstrap")
+                .status()
+                .unwrap_or_else(|e| {
+                    eprintln!("Failed to run mantrac --bootstrap: {}", e);
+                    std::process::exit(1);
+                });
+            if !status.success() {
+                exit(1);
+            }
+        }
+        "regression" => {
+            // Delegate to mantrac --regression
+            let workspace = env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf());
+            let mantrac = workspace.join("target/release/mantrac");
+            if !mantrac.exists() {
+                eprintln!("Error: Bootstrap compiler not found at {}.", mantrac.display());
+                eprintln!("Run 'cargo build --release' first.");
+                exit(1);
+            }
+            let status = std::process::Command::new(&mantrac)
+                .arg("--regression")
+                .status()
+                .unwrap_or_else(|e| {
+                    eprintln!("Failed to run mantrac --regression: {}", e);
+                    std::process::exit(1);
+                });
+            if !status.success() {
+                exit(1);
             }
         }
         "fmt" => {

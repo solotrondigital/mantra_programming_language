@@ -1,4 +1,7 @@
 use mantra_debugger::DebugSession;
+use mantra_bootstrap::version::{CompilerVersion, BootstrapStage};
+use mantra_bootstrap::regression::RegressionSuite;
+use mantra_bootstrap::bootstrap::BootstrapPipeline;
 use mantrac_checker::TypeChecker;
 use mantrac_codegen::{CEmitter, NativeCompiler};
 use mantrac_ir::{AstLowering, JitEngine, PipelineProfiler, WasmEmitter};
@@ -13,7 +16,7 @@ use std::time::Instant;
 
 fn print_help() {
     println!(
-        r#"Mantra Compiler (mantrac) v0.2.0 (MVP 2 — JIT, WebAssembly & Async Preview)
+        r#"Mantra Compiler (mantrac) v0.3.0 (MVP 3 — Self-Hosting Compiler)
 Usage:
     mantrac <input.mantra> [options]
 
@@ -32,6 +35,11 @@ Compilation & Target Options:
     --release           Build with native optimizations enabled (-O2)
     --check             Parse and type-check the source without generating code
 
+Bootstrap & Verification (MVP 3):
+    --bootstrap         Run self-hosting bootstrap pipeline (stages 0→1→2 + verify)
+    --regression        Run the canonical language regression suite
+    --version-metadata  Print compiler version metadata in artifact-header format
+
 Diagnostics & Profiling:
     --jit-diagnostics   Display detailed JIT compilation and execution metrics
     --profile           Display pipeline stage duration breakdown
@@ -44,7 +52,8 @@ Informational:
 }
 
 fn print_version() {
-    println!("mantrac 0.2.0 (Mantra Compiler & JIT Engine, Rust backend)");
+    let v = CompilerVersion::current(BootstrapStage::RustBootstrap);
+    println!("{}", v.to_version_string());
 }
 
 fn main() {
@@ -68,6 +77,9 @@ fn main() {
     let mut release = false;
     let mut show_jit_diag = false;
     let mut show_profile = false;
+    let mut run_bootstrap = false;
+    let mut run_regression = false;
+    let mut show_version_meta = false;
 
     let mut profiler = PipelineProfiler::default();
 
@@ -135,6 +147,15 @@ fn main() {
             "--profile" => {
                 show_profile = true;
             }
+            "--bootstrap" => {
+                run_bootstrap = true;
+            }
+            "--regression" => {
+                run_regression = true;
+            }
+            "--version-metadata" => {
+                show_version_meta = true;
+            }
             "-o" => {
                 i += 1;
                 if i < args.len() {
@@ -154,6 +175,39 @@ fn main() {
             }
         }
         i += 1;
+    }
+
+    // ── Bootstrap pipeline (MVP 3) ──────────────────────────────────────────
+    if show_version_meta {
+        let v = CompilerVersion::current(BootstrapStage::RustBootstrap);
+        println!("{}", v.to_artifact_header());
+        return;
+    }
+
+    if run_regression {
+        println!("Running Mantra v0.3.0 Regression Suite...\n");
+        let suite = RegressionSuite::canonical();
+        let results = suite.run();
+        print!("{}", RegressionSuite::summary(&results));
+        if !RegressionSuite::all_passed(&results) {
+            exit(1);
+        }
+        return;
+    }
+
+    if run_bootstrap {
+        println!("Running Mantra v0.3.0 Bootstrap Pipeline...\n");
+        let workspace = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
+        let pipeline = BootstrapPipeline::new(&workspace);
+        let report = pipeline.run_all();
+        print!("{}", report.to_report_string());
+        let report_path = workspace.join("bootstrap_report.txt");
+        let _ = report.save_to_file(&report_path);
+        println!("Report saved to: {}", report_path.display());
+        if !report.all_passed() {
+            exit(1);
+        }
+        return;
     }
 
     let input_path = match input_file {

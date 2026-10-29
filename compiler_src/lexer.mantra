@@ -1,0 +1,326 @@
+# ==============================================================================
+# Mantra Self-Hosted Compiler — Lexer Frontend (Stage 1)
+# compiler_src/lexer.mantra
+#
+# This is the Mantra-language implementation of the Mantra lexer frontend.
+# It tokenises a Mantra source string and produces a flat list of tokens
+# represented as string records, e.g. "IDENT:foo", "INTEGER:42", "KEYWORD:def".
+#
+# Bootstrap path
+#   Stage-0 (Rust)  : mantrac  [v0.1–v0.2] compiles this file to a native binary.
+#   Stage-1 (Mantra): the stage-0 binary runs this source to compile itself.
+#   Stage-2 (Mantra): the stage-1 binary re-compiles the same source.
+#   Acceptance      : Stage-1 output == Stage-2 output (bit-reproducible).
+# ==============================================================================
+
+module compiler.lexer
+
+# ---------------------------------------------------------------------------
+# Token constants
+# ---------------------------------------------------------------------------
+def token(kind: String, value: String) -> String:
+    return kind + ":" + value
+
+def tok_keyword(kw: String) -> String:
+    return token("KEYWORD", kw)
+
+def tok_ident(name: String) -> String:
+    return token("IDENT", name)
+
+def tok_integer(n: String) -> String:
+    return token("INTEGER", n)
+
+def tok_float(n: String) -> String:
+    return token("FLOAT", n)
+
+def tok_string(s: String) -> String:
+    return token("STRING", s)
+
+def tok_sym(sym: String) -> String:
+    return token("SYM", sym)
+
+def tok_indent() -> String:
+    return "INDENT"
+
+def tok_dedent() -> String:
+    return "DEDENT"
+
+def tok_newline() -> String:
+    return "NEWLINE"
+
+def tok_eof() -> String:
+    return "EOF"
+
+# ---------------------------------------------------------------------------
+# Character helpers
+# ---------------------------------------------------------------------------
+def is_alpha(c: String) -> Bool:
+    return (c == "a" or c == "b" or c == "c" or c == "d" or c == "e" or
+            c == "f" or c == "g" or c == "h" or c == "i" or c == "j" or
+            c == "k" or c == "l" or c == "m" or c == "n" or c == "o" or
+            c == "p" or c == "q" or c == "r" or c == "s" or c == "t" or
+            c == "u" or c == "v" or c == "w" or c == "x" or c == "y" or
+            c == "z" or c == "A" or c == "B" or c == "C" or c == "D" or
+            c == "E" or c == "F" or c == "G" or c == "H" or c == "I" or
+            c == "J" or c == "K" or c == "L" or c == "M" or c == "N" or
+            c == "O" or c == "P" or c == "Q" or c == "R" or c == "S" or
+            c == "T" or c == "U" or c == "V" or c == "W" or c == "X" or
+            c == "Y" or c == "Z" or c == "_")
+
+def is_digit(c: String) -> Bool:
+    return (c == "0" or c == "1" or c == "2" or c == "3" or c == "4" or
+            c == "5" or c == "6" or c == "7" or c == "8" or c == "9")
+
+def is_alnum(c: String) -> Bool:
+    return is_alpha(c) or is_digit(c)
+
+def is_keyword(word: String) -> Bool:
+    return (word == "def" or word == "class" or word == "interface" or
+            word == "return" or word == "if" or word == "elif" or
+            word == "else" or word == "for" or word == "in" or
+            word == "while" or word == "break" or word == "continue" or
+            word == "and" or word == "or" or word == "not" or
+            word == "True" or word == "False" or word == "None" or
+            word == "self" or word == "super" or word == "import" or
+            word == "module" or word == "from" or word == "as" or
+            word == "let" or word == "mut" or word == "pub" or
+            word == "private" or word == "protected" or word == "static" or
+            word == "abstract" or word == "override" or word == "extends" or
+            word == "implements" or word == "async" or word == "await")
+
+# ---------------------------------------------------------------------------
+# Lexer result builder (tokens as newline-separated string)
+# ---------------------------------------------------------------------------
+class LexResult:
+    def __init__(self):
+        self.tokens: String = ""
+        self.error: String = ""
+        self.ok: Bool = True
+
+    def add(self, tok: String):
+        if self.tokens == "":
+            self.tokens = tok
+        else:
+            self.tokens = self.tokens + "\n" + tok
+
+    def fail(self, msg: String):
+        self.error = msg
+        self.ok = False
+
+# ---------------------------------------------------------------------------
+# Main tokenise function
+# Returns a LexResult whose .tokens field is a newline-separated token list
+# ---------------------------------------------------------------------------
+def tokenise(source: String) -> LexResult:
+    result: LexResult = LexResult()
+    i: Int = 0
+    line: Int = 1
+    col: Int = 1
+    indent_stack: String = "0"   # colon-separated indent levels, e.g. "0:4:8"
+
+    # We iterate character-by-character using index access.
+    # Mantra strings support single-char slice with source[i].
+    source_len: Int = len(source)
+
+    while i < source_len:
+        c: String = source[i]
+
+        # ---- Comments -------------------------------------------------------
+        if c == "#":
+            while i < source_len and source[i] != "\n":
+                i = i + 1
+            continue
+
+        # ---- Newline + indentation ------------------------------------------
+        if c == "\n":
+            result.add(tok_newline())
+            i = i + 1
+            line = line + 1
+            col = 1
+
+            # Count leading spaces on next logical line
+            spaces: Int = 0
+            while i < source_len and source[i] == " ":
+                spaces = spaces + 1
+                i = i + 1
+                col = col + 1
+
+            # Emit INDENT / DEDENT tokens
+            prev_indent: Int = int(indent_stack)
+            if spaces > prev_indent:
+                indent_stack = str(spaces)
+                result.add(tok_indent())
+            elif spaces < prev_indent:
+                indent_stack = str(spaces)
+                result.add(tok_dedent())
+            continue
+
+        # ---- Whitespace (within line) ---------------------------------------
+        if c == " " or c == "\t" or c == "\r":
+            i = i + 1
+            col = col + 1
+            continue
+
+        # ---- String literals ------------------------------------------------
+        if c == "\"":
+            i = i + 1
+            s: String = ""
+            while i < source_len and source[i] != "\"":
+                if source[i] == "\\" and i + 1 < source_len:
+                    next_c: String = source[i + 1]
+                    if next_c == "n":
+                        s = s + "\n"
+                    elif next_c == "t":
+                        s = s + "\t"
+                    elif next_c == "\\":
+                        s = s + "\\"
+                    elif next_c == "\"":
+                        s = s + "\""
+                    else:
+                        s = s + "\\" + next_c
+                    i = i + 2
+                else:
+                    s = s + source[i]
+                    i = i + 1
+            i = i + 1
+            result.add(tok_string(s))
+            continue
+
+        # ---- Numbers --------------------------------------------------------
+        if is_digit(c):
+            num: String = ""
+            is_f: Bool = False
+            while i < source_len and (is_digit(source[i]) or source[i] == "."):
+                if source[i] == ".":
+                    is_f = True
+                num = num + source[i]
+                i = i + 1
+            if is_f:
+                result.add(tok_float(num))
+            else:
+                result.add(tok_integer(num))
+            continue
+
+        # ---- Identifiers and keywords ---------------------------------------
+        if is_alpha(c):
+            word: String = ""
+            while i < source_len and is_alnum(source[i]):
+                word = word + source[i]
+                i = i + 1
+            if is_keyword(word):
+                result.add(tok_keyword(word))
+            else:
+                result.add(tok_ident(word))
+            continue
+
+        # ---- Two-character symbols ------------------------------------------
+        if i + 1 < source_len:
+            two: String = c + source[i + 1]
+            if two == "->":
+                result.add(tok_sym("->"))
+                i = i + 2
+                continue
+            if two == "==":
+                result.add(tok_sym("=="))
+                i = i + 2
+                continue
+            if two == "!=":
+                result.add(tok_sym("!="))
+                i = i + 2
+                continue
+            if two == "<=":
+                result.add(tok_sym("<="))
+                i = i + 2
+                continue
+            if two == ">=":
+                result.add(tok_sym(">="))
+                i = i + 2
+                continue
+            if two == "+=":
+                result.add(tok_sym("+="))
+                i = i + 2
+                continue
+            if two == "-=":
+                result.add(tok_sym("-="))
+                i = i + 2
+                continue
+            if two == "*=":
+                result.add(tok_sym("*="))
+                i = i + 2
+                continue
+            if two == "/=":
+                result.add(tok_sym("/="))
+                i = i + 2
+                continue
+
+        # ---- Single-character symbols ----------------------------------------
+        if c == "+":
+            result.add(tok_sym("+"))
+        elif c == "-":
+            result.add(tok_sym("-"))
+        elif c == "*":
+            result.add(tok_sym("*"))
+        elif c == "/":
+            result.add(tok_sym("/"))
+        elif c == "%":
+            result.add(tok_sym("%"))
+        elif c == "=":
+            result.add(tok_sym("="))
+        elif c == "<":
+            result.add(tok_sym("<"))
+        elif c == ">":
+            result.add(tok_sym(">"))
+        elif c == "(":
+            result.add(tok_sym("("))
+        elif c == ")":
+            result.add(tok_sym(")"))
+        elif c == "[":
+            result.add(tok_sym("["))
+        elif c == "]":
+            result.add(tok_sym("]"))
+        elif c == "{":
+            result.add(tok_sym("{"))
+        elif c == "}":
+            result.add(tok_sym("}"))
+        elif c == ":":
+            result.add(tok_sym(":"))
+        elif c == ",":
+            result.add(tok_sym(","))
+        elif c == ".":
+            result.add(tok_sym("."))
+        elif c == ";":
+            result.add(tok_sym(";"))
+        elif c == "@":
+            result.add(tok_sym("@"))
+        else:
+            result.fail("Unexpected character '" + c + "' at line " + str(line))
+            return result
+
+        i = i + 1
+
+    result.add(tok_eof())
+    return result
+
+# ---------------------------------------------------------------------------
+# Entry point when run as a standalone lexer tool
+# Usage: mantrac --interpret compiler_src/lexer.mantra <source_file>
+# ---------------------------------------------------------------------------
+def main() -> Int:
+    src_path: String = get_env("MANTRA_LEX_SOURCE", "")
+    if src_path == "":
+        print("Usage: MANTRA_LEX_SOURCE=<file> mantrac compiler_src/lexer.mantra --interpret")
+        return 1
+
+    source: String = read_file(src_path)
+    if source == "":
+        print("Error: could not read source file: " + src_path)
+        return 1
+
+    result: LexResult = tokenise(source)
+    if not result.ok:
+        print("Lexer error: " + result.error)
+        return 1
+
+    print(result.tokens)
+    return 0
+

@@ -112,6 +112,22 @@ impl<'a> CEmitter<'a> {
         self.write_line("    return buf;");
         self.write_line("}");
         self.write_line("");
+        self.write_line("static inline MantraBool mantra_write_file(const char* path, const char* content) {");
+        self.write_line("    FILE* f = fopen(path, \"wb\");");
+        self.write_line("    if (!f) return false;");
+        self.write_line("    if (content) {");
+        self.write_line("        size_t len = strlen(content);");
+        self.write_line("        if (len > 0) fwrite(content, 1, len, f);");
+        self.write_line("    }");
+        self.write_line("    fclose(f);");
+        self.write_line("    return true;");
+        self.write_line("}");
+        self.write_line("");
+        self.write_line("static inline MantraInt mantra_system_exec(const char* cmd) {");
+        self.write_line("    if (!cmd) return -1;");
+        self.write_line("    return (MantraInt)system(cmd);");
+        self.write_line("}");
+        self.write_line("");
         self.write_line("static inline char* mantra_get_env(const char* key, const char* default_val) {");
         self.write_line("    char* v = getenv(key);");
         self.write_line("    if (!v) return (char*)(default_val ? default_val : \"\");");
@@ -846,6 +862,15 @@ impl<'a> CEmitter<'a> {
                     if name == "read_file" {
                         let path_s = args.first().map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
                         return format!("mantra_read_file({})", path_s);
+                    }
+                    if name == "write_file" {
+                        let path_s = args.get(0).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
+                        let content_s = args.get(1).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
+                        return format!("mantra_write_file({}, {})", path_s, content_s);
+                    }
+                    if name == "system_exec" {
+                        let cmd_s = args.first().map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
+                        return format!("mantra_system_exec({})", cmd_s);
                     }
                     if name == "get_env" {
                         let key_s = args.get(0).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());

@@ -3,6 +3,19 @@
 version = 4
 
 [[package]]
+name = "mantra_bootstrap"
+version = "0.3.0"
+dependencies = [
+ "mantrac_ast",
+ "mantrac_checker",
+ "mantrac_codegen",
+ "mantrac_ir",
+ "mantrac_lexer",
+ "mantrac_parser",
+ "mantrac_vm",
+]
+
+[[package]]
 name = "mantra_debugger"
 version = "0.2.0"
 dependencies = [
@@ -50,8 +63,9 @@ dependencies = [
 
 [[package]]
 name = "mantrac"
-version = "0.1.0"
+version = "0.3.0"
 dependencies = [
+ "mantra_bootstrap",
  "mantra_debugger",
  "mantrac_ast",
  "mantrac_checker",

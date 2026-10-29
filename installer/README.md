@@ -1,4 +1,4 @@
-# Mantra Programming Language - Official Installers (v0.2.0)
+# Mantra Programming Language - Official Installers (v0.3.0)
 
 Developed and maintained by **Solotron Technologies Private Limited**.
 Dual-licensed under **The MIT License** and **GNU General Public License v3.0**.
@@ -16,15 +16,15 @@ installer/
 ├── install.sh                    # Universal installer (auto-detects macOS/Linux)
 ├── bin/                          # Direct compiler and MDK binaries (mantra, mantrac)
 ├── macos/
-│   ├── Mantra-0.2.0-macOS.dmg # Apple macOS Disk Image (.dmg) Installer
+│   ├── Mantra-0.3.0-macOS.dmg # Apple macOS Disk Image (.dmg) Installer
 │   └── install.sh                # macOS terminal installer script
 ├── linux/
 │   ├── mantra-installer-linux.sh   # Linux self-extracting .sh installer
-│   ├── mantra-0.2.0-linux.tar.gz # Linux portable archive
+│   ├── mantra-0.3.0-linux.tar.gz # Linux portable archive
 │   ├── mantra.desktop             # Freedesktop application entry
 │   └── install.sh                # Linux terminal installer script
 └── windows/
-    ├── mantra-0.2.0-windows.zip # Windows portable ZIP bundle
+    ├── mantra-0.3.0-windows.zip # Windows portable ZIP bundle
     ├── install.bat               # Windows Command Prompt batch installer
     └── Install-Mantra.ps1         # Windows PowerShell installer
 ```
@@ -37,7 +37,7 @@ installer/
 ```bash
 ./installer/macos/install.sh
 ```
-Or open `installer/macos/Mantra-0.2.0-macOS.dmg`.
+Or open `installer/macos/Mantra-0.3.0-macOS.dmg`.
 
 ### Linux:
 ```bash

@@ -43,7 +43,7 @@ impl Interpreter {
     }
 
     fn register_builtins(&mut self) {
-        let builtins = vec!["print", "len", "range", "str", "int", "float", "assert", "read_file", "get_env"];
+        let builtins = vec!["print", "len", "range", "str", "int", "float", "assert", "read_file", "write_file", "system_exec", "get_env"];
         for b in builtins {
             self.globals.insert(b.to_string(), Value::BuiltinFunction(b.to_string()));
         }
@@ -312,9 +312,29 @@ impl Interpreter {
                 })
             }
             Expr::Binary { op, left, right, span } => {
-                let l_val = self.eval_expr(left, env)?;
-                let r_val = self.eval_expr(right, env)?;
-                self.eval_binary_op(*op, l_val, r_val, *span)
+                match op {
+                    BinaryOp::And => {
+                        let l_val = self.eval_expr(left, env)?;
+                        if !l_val.is_truthy() {
+                            return Ok(Value::Bool(false));
+                        }
+                        let r_val = self.eval_expr(right, env)?;
+                        Ok(Value::Bool(r_val.is_truthy()))
+                    }
+                    BinaryOp::Or => {
+                        let l_val = self.eval_expr(left, env)?;
+                        if l_val.is_truthy() {
+                            return Ok(Value::Bool(true));
+                        }
+                        let r_val = self.eval_expr(right, env)?;
+                        Ok(Value::Bool(r_val.is_truthy()))
+                    }
+                    _ => {
+                        let l_val = self.eval_expr(left, env)?;
+                        let r_val = self.eval_expr(right, env)?;
+                        self.eval_binary_op(*op, l_val, r_val, *span)
+                    }
+                }
             }
             Expr::Unary { op, operand, span } => {
                 let val = self.eval_expr(operand, env)?;
@@ -588,14 +608,14 @@ impl Interpreter {
                         }
                     }
                     (Value::String(s), Value::Int(i)) => {
-                        let chars: Vec<char> = s.chars().collect();
+                        let bytes = s.as_bytes();
                         let u_idx = if i < 0 {
-                            chars.len() as i64 + i
+                            bytes.len() as i64 + i
                         } else {
                             i
                         } as usize;
-                        if u_idx < chars.len() {
-                            Ok(Value::String(chars[u_idx].to_string()))
+                        if u_idx < bytes.len() {
+                            Ok(Value::String((bytes[u_idx] as char).to_string()))
                         } else {
                             Err(RuntimeError {
                                 message: "String index out of range".to_string(),
@@ -868,6 +888,25 @@ impl Interpreter {
                 match std::fs::read_to_string(&path) {
                     Ok(content) => Ok(Value::String(content)),
                     Err(_) => Ok(Value::String("".to_string())),
+                }
+            }
+            "write_file" => {
+                let path = args.first().map_or("".to_string(), |v| v.to_string_repr());
+                let content = args.get(1).map_or("".to_string(), |v| v.to_string_repr());
+                match std::fs::write(&path, content) {
+                    Ok(_) => Ok(Value::Bool(true)),
+                    Err(_) => Ok(Value::Bool(false)),
+                }
+            }
+            "system_exec" => {
+                let cmd = args.first().map_or("".to_string(), |v| v.to_string_repr());
+                #[cfg(target_os = "windows")]
+                let status = std::process::Command::new("cmd").args(["/C", &cmd]).status();
+                #[cfg(not(target_os = "windows"))]
+                let status = std::process::Command::new("sh").args(["-c", &cmd]).status();
+                match status {
+                    Ok(s) => Ok(Value::Int(s.code().unwrap_or(0) as i64)),
+                    Err(_) => Ok(Value::Int(-1)),
                 }
             }
             "get_env" => {

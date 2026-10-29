@@ -105,6 +105,26 @@ impl TypeChecker {
             },
         );
         self.symbols.functions.insert(
+            "write_file".to_string(),
+            FunctionSymbol {
+                name: "write_file".to_string(),
+                params: vec![("path".to_string(), Type::String), ("content".to_string(), Type::String)],
+                return_type: Type::Bool,
+                visibility: Visibility::Pub,
+                span: Span::default(),
+            },
+        );
+        self.symbols.functions.insert(
+            "system_exec".to_string(),
+            FunctionSymbol {
+                name: "system_exec".to_string(),
+                params: vec![("cmd".to_string(), Type::String)],
+                return_type: Type::Int,
+                visibility: Visibility::Pub,
+                span: Span::default(),
+            },
+        );
+        self.symbols.functions.insert(
             "get_env".to_string(),
             FunctionSymbol {
                 name: "get_env".to_string(),

@@ -1,0 +1,195 @@
+# ==============================================================================
+# Mantra Self-Hosted Compiler — AST Types (Stage 1)
+# compiler_src/ast.mantra
+#
+# Defines the Mantra Abstract Syntax Tree node types used by the self-hosted
+# parser (parser.mantra) and type checker (checker.mantra).
+#
+# Each AST node is serialised to a compact S-expression string so it can be
+# written to disk and compared across bootstrap stages:
+#
+#   "(def main () Int (block (return (int 0))))"
+#
+# Stage-0 (Rust mantrac) compiles this file.
+# Stage-1 and Stage-2 must produce identical serialised ASTs for acceptance.
+# ==============================================================================
+
+module compiler.ast
+
+# ---------------------------------------------------------------------------
+# AstNode — serialisable representation of every Mantra construct
+# ---------------------------------------------------------------------------
+class AstNode:
+    def __init__(self, kind: String, value: String):
+        self.kind: String = kind       # e.g. "def", "class", "return", "call"
+        self.value: String = value     # primary literal / name, or ""
+        self.children: String = ""    # serialised child list (newline-separated)
+        self.child_count: Int = 0
+
+    def add_child(self, child_sexpr: String):
+        if self.children == "":
+            self.children = child_sexpr
+        else:
+            self.children = self.children + " " + child_sexpr
+        self.child_count = self.child_count + 1
+
+    def to_sexpr(self) -> String:
+        if self.value != "" and self.children != "":
+            return "(" + self.kind + " " + self.value + " " + self.children + ")"
+        elif self.value != "":
+            return "(" + self.kind + " " + self.value + ")"
+        elif self.children != "":
+            return "(" + self.kind + " " + self.children + ")"
+        else:
+            return "(" + self.kind + ")"
+
+# ---------------------------------------------------------------------------
+# AstProgram — top-level program container
+# ---------------------------------------------------------------------------
+class AstProgram:
+    def __init__(self):
+        self.declarations: String = ""    # newline-separated S-expressions
+        self.decl_count: Int = 0
+
+    def add_declaration(self, sexpr: String):
+        if self.declarations == "":
+            self.declarations = sexpr
+        else:
+            self.declarations = self.declarations + "\n" + sexpr
+        self.decl_count = self.decl_count + 1
+
+    def to_sexpr(self) -> String:
+        return "(program\n" + self.declarations + "\n)"
+
+# ---------------------------------------------------------------------------
+# Node factory helpers
+# ---------------------------------------------------------------------------
+def ast_literal_int(value: String) -> AstNode:
+    return AstNode("int", value)
+
+def ast_literal_float(value: String) -> AstNode:
+    return AstNode("float", value)
+
+def ast_literal_str(value: String) -> AstNode:
+    return AstNode("str", value)
+
+def ast_literal_bool(value: String) -> AstNode:
+    return AstNode("bool", value)
+
+def ast_literal_none() -> AstNode:
+    return AstNode("none", "")
+
+def ast_ident(name: String) -> AstNode:
+    return AstNode("ident", name)
+
+def ast_binary(op: String, left: String, right: String) -> AstNode:
+    node: AstNode = AstNode("binary", op)
+    node.add_child(left)
+    node.add_child(right)
+    return node
+
+def ast_unary(op: String, operand: String) -> AstNode:
+    node: AstNode = AstNode("unary", op)
+    node.add_child(operand)
+    return node
+
+def ast_call(callee: String) -> AstNode:
+    return AstNode("call", callee)
+
+def ast_return(value_sexpr: String) -> AstNode:
+    node: AstNode = AstNode("return", "")
+    if value_sexpr != "":
+        node.add_child(value_sexpr)
+    return node
+
+def ast_block() -> AstNode:
+    return AstNode("block", "")
+
+def ast_if(cond_sexpr: String) -> AstNode:
+    node: AstNode = AstNode("if", "")
+    node.add_child(cond_sexpr)
+    return node
+
+def ast_while(cond_sexpr: String) -> AstNode:
+    node: AstNode = AstNode("while", "")
+    node.add_child(cond_sexpr)
+    return node
+
+def ast_for(var: String, iter_sexpr: String) -> AstNode:
+    node: AstNode = AstNode("for", var)
+    node.add_child(iter_sexpr)
+    return node
+
+def ast_assign(target_sexpr: String, value_sexpr: String) -> AstNode:
+    node: AstNode = AstNode("assign", "")
+    node.add_child(target_sexpr)
+    node.add_child(value_sexpr)
+    return node
+
+def ast_function(name: String, return_type: String, is_async: Bool) -> AstNode:
+    prefix: String = ""
+    if is_async:
+        prefix = "async:"
+    return AstNode("def", prefix + name + ":" + return_type)
+
+def ast_class(name: String, base: String) -> AstNode:
+    label: String = name
+    if base != "":
+        label = name + ":" + base
+    return AstNode("class", label)
+
+def ast_field_access(field: String) -> AstNode:
+    return AstNode("field", field)
+
+def ast_method_call(method: String) -> AstNode:
+    return AstNode("method_call", method)
+
+def ast_import(path: String, alias: String) -> AstNode:
+    label: String = path
+    if alias != "":
+        label = path + " as " + alias
+    return AstNode("import", label)
+
+def ast_await(inner_sexpr: String) -> AstNode:
+    node: AstNode = AstNode("await", "")
+    node.add_child(inner_sexpr)
+    return node
+
+# ---------------------------------------------------------------------------
+# Version metadata attached to emitted AST files
+# ---------------------------------------------------------------------------
+class AstMetadata:
+    def __init__(self):
+        self.compiler_version: String = "0.3.0"
+        self.bootstrap_stage: Int = 0
+        self.source_hash: String = ""
+        self.ast_schema: String = "1.0"
+
+    def to_header(self) -> String:
+        return ("; Mantra AST — schema v" + self.ast_schema +
+                " compiler v" + self.compiler_version +
+                " stage " + str(self.bootstrap_stage) +
+                " source_sha256=" + self.source_hash)
+
+# ---------------------------------------------------------------------------
+# Entry point (self-test)
+# ---------------------------------------------------------------------------
+def main() -> Int:
+    prog: AstProgram = AstProgram()
+
+    main_fn: AstNode = ast_function("main", "Int", False)
+    body: AstNode = ast_block()
+    ret: AstNode = ast_return(ast_literal_int("0").to_sexpr())
+    body.add_child(ret.to_sexpr())
+    main_fn.add_child(body.to_sexpr())
+    prog.add_declaration(main_fn.to_sexpr())
+
+    print(prog.to_sexpr())
+
+    meta: AstMetadata = AstMetadata()
+    meta.bootstrap_stage = 1
+    meta.source_hash = "abc123"
+    print(meta.to_header())
+
+    return 0
+

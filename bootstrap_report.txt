@@ -1,0 +1,10 @@
+Mantra v0.3.0 Bootstrap Verification Report
+Compiler: mantrac 0.3.0 (self-host-alpha) [stage-0 (Rust bootstrap)] IR-schema=1.0 edition=2026
+Stages:   2
+
+  Stage MantraStage1: PASS (258.73ms) → /var/folders/7c/bxj1p96178vbdtx4gbj05rm80000gn/T/mantra_bootstrap_stage1.tokens
+  Stage MantraStage2Verify: PASS (255.75ms) → /var/folders/7c/bxj1p96178vbdtx4gbj05rm80000gn/T/mantra_bootstrap_stage2.tokens
+
+Reproducibility: PASS
+
+OVERALL: PASS

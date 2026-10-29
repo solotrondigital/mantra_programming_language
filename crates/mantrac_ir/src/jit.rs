@@ -151,6 +151,44 @@ impl JitEngine {
                         if let Some(d) = dest {
                             locals.insert(d.clone(), res);
                         }
+                    } else if callee == "read_file" {
+                        let path = arg_vals.first().map(|v| match v {
+                            IrValue::String(s) => s.clone(),
+                            _ => "".to_string(),
+                        }).unwrap_or_else(|| "".to_string());
+                        let content = std::fs::read_to_string(&path).unwrap_or_else(|_| "".to_string());
+                        if let Some(d) = dest {
+                            locals.insert(d.clone(), IrValue::String(content));
+                        }
+                    } else if callee == "write_file" {
+                        let path = arg_vals.first().map(|v| match v {
+                            IrValue::String(s) => s.clone(),
+                            _ => "".to_string(),
+                        }).unwrap_or_else(|| "".to_string());
+                        let content = arg_vals.get(1).map(|v| match v {
+                            IrValue::String(s) => s.clone(),
+                            _ => "".to_string(),
+                        }).unwrap_or_else(|| "".to_string());
+                        let ok = std::fs::write(&path, content).is_ok();
+                        if let Some(d) = dest {
+                            locals.insert(d.clone(), IrValue::Bool(ok));
+                        }
+                    } else if callee == "system_exec" {
+                        let cmd = arg_vals.first().map(|v| match v {
+                            IrValue::String(s) => s.clone(),
+                            _ => "".to_string(),
+                        }).unwrap_or_else(|| "".to_string());
+                        #[cfg(target_os = "windows")]
+                        let status = std::process::Command::new("cmd").args(["/C", &cmd]).status();
+                        #[cfg(not(target_os = "windows"))]
+                        let status = std::process::Command::new("sh").args(["-c", &cmd]).status();
+                        let code = match status {
+                            Ok(s) => s.code().unwrap_or(0) as i64,
+                            Err(_) => -1,
+                        };
+                        if let Some(d) = dest {
+                            locals.insert(d.clone(), IrValue::Int(code));
+                        }
                     } else if let Some(f) = func_map.get(callee) {
                         let res = self.execute_function(f, func_map, globals, arg_vals)?;
                         if let Some(d) = dest {

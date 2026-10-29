@@ -1,0 +1,16 @@
+[package]
+name = "mantra_bootstrap"
+version = "0.3.0"
+edition = "2021"
+description = "Mantra v0.3.0 — Self-Hosting Bootstrap Infrastructure: stable IR contracts, version metadata, reproducibility verification"
+license = "MIT OR GPL-3.0"
+
+[dependencies]
+mantrac_ast     = { path = "../mantrac_ast" }
+mantrac_lexer   = { path = "../mantrac_lexer" }
+mantrac_parser  = { path = "../mantrac_parser" }
+mantrac_checker = { path = "../mantrac_checker" }
+mantrac_ir      = { path = "../mantrac_ir" }
+mantrac_codegen = { path = "../mantrac_codegen" }
+mantrac_vm      = { path = "../mantrac_vm" }
+

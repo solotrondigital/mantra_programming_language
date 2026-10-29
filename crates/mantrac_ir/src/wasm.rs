@@ -220,3 +220,4 @@ fn encode_i64(mut val: i64, out: &mut Vec<u8>) {
         out.push(byte);
     }
 }
+

@@ -250,3 +250,4 @@ Summary: 36 passed, 0 failed
 ```
 
 All 13 workspace crates compile under `cargo test --release` with zero warnings or errors.
+
