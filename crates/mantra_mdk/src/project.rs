@@ -4,6 +4,28 @@ use std::path::Path;
 
 pub struct ProjectScaffolder;
 
+/// Validates that project name follows the `lowercase_with_underscores` naming convention.
+pub fn validate_project_name(name: &str) -> Result<(), String> {
+    if name.is_empty() {
+        return Err("Project name cannot be empty.".to_string());
+    }
+
+    // Must consist only of lowercase letters, digits, and underscores, and cannot start with a digit.
+    let is_valid = name
+        .chars()
+        .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '_')
+        && !name.starts_with(|c: char| c.is_ascii_digit());
+
+    if !is_valid {
+        return Err(format!(
+            "\"{}\" is not a valid Mantra project name.\n\
+             (Note: Your project name must follow the lowercase_with_underscores naming convention).",
+            name
+        ));
+    }
+    Ok(())
+}
+
 /// Arguments for Flutter-style `mantra create` command.
 pub struct CreateArgs<'a> {
     /// Reverse-DNS organisation prefix, e.g. "com.raghav"
@@ -12,6 +34,14 @@ pub struct CreateArgs<'a> {
     pub project_name: &'a str,
     /// Output directory (usually equals project_name)
     pub directory: &'a str,
+    /// Custom project description for mantra.toml
+    pub description: Option<&'a str>,
+    /// Creates a project with a minimal main.mantra file (skips default counter/model app template)
+    pub empty: bool,
+    /// Limits the platforms supported by the project (default generates files for all platforms: ios, android, web)
+    pub platforms: Vec<String>,
+    /// Specifies the type of project: app, module, package, plugin, or skeleton
+    pub template: &'a str,
 }
 
 impl ProjectScaffolder {
@@ -701,7 +731,18 @@ def main() -> Int:
     ///   src/shared/   — shared business-logic modules
     ///   .env*         — per-environment variable files
     pub fn flutter_create(args: &CreateArgs<'_>) -> Result<(), String> {
-        let CreateArgs { org, project_name, directory } = *args;
+        let CreateArgs {
+            org,
+            project_name,
+            directory,
+            description,
+            empty,
+            platforms,
+            template,
+        } = args;
+
+        // 1. Validate project name against lowercase_with_underscores convention
+        validate_project_name(project_name)?;
 
         let root = Path::new(directory);
         if root.exists() {
@@ -711,17 +752,29 @@ def main() -> Int:
             ));
         }
 
+        // Determine enabled platforms
+        let all_platforms = platforms.is_empty();
+        let enable_web = all_platforms || platforms.iter().any(|p| p.eq_ignore_ascii_case("web"));
+        let enable_android = all_platforms || platforms.iter().any(|p| p.eq_ignore_ascii_case("android"));
+        let enable_ios = all_platforms || platforms.iter().any(|p| p.eq_ignore_ascii_case("ios"));
+
         // ── directory tree ──────────────────────────────────────────────────
-        for dir in &[
-            "lib",
-            "lib/models",
-            "src/shared",
-            "test",
-            "web",
-            "android",
-            "ios",
-            "assets/images",
-        ] {
+        let mut dirs = vec!["lib", "test", "assets/images"];
+        if !*empty {
+            dirs.push("lib/models");
+            dirs.push("src/shared");
+        }
+        if enable_web {
+            dirs.push("web");
+        }
+        if enable_android {
+            dirs.push("android");
+        }
+        if enable_ios {
+            dirs.push("ios");
+        }
+
+        for dir in &dirs {
             fs::create_dir_all(root.join(dir))
                 .map_err(|e| format!("Failed to create {}: {}", dir, e))?;
         }
@@ -732,6 +785,19 @@ def main() -> Int:
 
         // ── mantra.toml (Flutter-style with org + targets) ──────────────────
         let bundle_id = format!("{}.{}", org, project_name);
+        let desc = description.unwrap_or("Mantra cross-platform application");
+
+        let mut targets_toml = String::new();
+        if enable_web {
+            targets_toml.push_str("web     = \"web/\"\n");
+        }
+        if enable_android {
+            targets_toml.push_str("android = \"android/\"\n");
+        }
+        if enable_ios {
+            targets_toml.push_str("ios     = \"ios/\"\n");
+        }
+
         let toml = format!(
             r#"[package]
 name = "{project_name}"
@@ -739,15 +805,13 @@ version = "0.1.0"
 edition = "2026"
 org = "{org}"
 bundle_id = "{bundle_id}"
-description = "Mantra cross-platform application"
+description = "{desc}"
+template = "{template}"
 license = "MIT"
 entry = "lib/main.mantra"
 
 [targets]
-web     = "web/"
-android = "android/"
-ios     = "ios/"
-
+{targets_toml}
 [dependencies]
 "mantra.mobile" = "0.5.0"
 "mantra.web"    = "0.5.0"
@@ -755,13 +819,27 @@ ios     = "ios/"
             project_name = project_name,
             org = org,
             bundle_id = bundle_id,
+            desc = desc,
+            template = template,
+            targets_toml = targets_toml,
         );
         fs::write(root.join("mantra.toml"), toml)
             .map_err(|e| format!("Failed to write mantra.toml: {}", e))?;
 
         // ── lib/main.mantra ──────────────────────────────────────────────────
-        let main_src = format!(
-            r#"# {project_name} — Mantra Cross-Platform Application
+        let main_src = if *empty {
+            format!(
+                r#"# Minimal Mantra application: {project_name}
+
+def main() -> Int:
+    print("Hello from Mantra!")
+    return 0
+"#,
+                project_name = project_name,
+            )
+        } else {
+            format!(
+                r#"# {project_name} — Mantra Cross-Platform Application
 # Entry point: runs on native, web (WASM), Android, and iOS.
 
 def get_platform_info() -> String:
@@ -772,14 +850,16 @@ def main() -> Int:
     print("Runtime: " + get_platform_info())
     return 0
 "#,
-            project_name = project_name,
-        );
+                project_name = project_name,
+            )
+        };
         fs::write(root.join("lib/main.mantra"), main_src)
             .map_err(|e| format!("Failed to write lib/main.mantra: {}", e))?;
 
-        // ── lib/app.mantra ───────────────────────────────────────────────────
-        let app_src = format!(
-            r#"# App component for {project_name}
+        if !*empty {
+            // ── lib/app.mantra ───────────────────────────────────────────────────
+            let app_src = format!(
+                r#"# App component for {project_name}
 
 class App:
     def __init__(self, name: String):
@@ -788,13 +868,13 @@ class App:
     pub def get_name(self) -> String:
         return self.name
 "#,
-            project_name = project_name,
-        );
-        fs::write(root.join("lib/app.mantra"), app_src)
-            .map_err(|e| format!("Failed to write lib/app.mantra: {}", e))?;
+                project_name = project_name,
+            );
+            fs::write(root.join("lib/app.mantra"), app_src)
+                .map_err(|e| format!("Failed to write lib/app.mantra: {}", e))?;
 
-        // ── lib/models/user.mantra ───────────────────────────────────────────
-        let user_model = r#"# User model — shared across all targets
+            // ── lib/models/user.mantra ───────────────────────────────────────────
+            let user_model = r#"# User model — shared across all targets
 
 pub class User:
     def __init__(self, id: String, email: String, name: String):
@@ -805,11 +885,11 @@ pub class User:
     pub def to_string(self) -> String:
         return "User(" + self.id + ", " + self.email + ")"
 "#;
-        fs::write(root.join("lib/models/user.mantra"), user_model)
-            .map_err(|e| format!("Failed to write lib/models/user.mantra: {}", e))?;
+            fs::write(root.join("lib/models/user.mantra"), user_model)
+                .map_err(|e| format!("Failed to write lib/models/user.mantra: {}", e))?;
 
-        // ── src/shared/models.mantra ─────────────────────────────────────────
-        let shared_models = r#"# Shared cross-platform data models
+            // ── src/shared/models.mantra ─────────────────────────────────────────
+            let shared_models = r#"# Shared cross-platform data models
 
 pub class ApiResponse:
     def __init__(self, status: Int, body: String):
@@ -819,11 +899,11 @@ pub class ApiResponse:
     pub def is_ok(self) -> Bool:
         return self.status >= 200 and self.status < 300
 "#;
-        fs::write(root.join("src/shared/models.mantra"), shared_models)
-            .map_err(|e| format!("Failed to write src/shared/models.mantra: {}", e))?;
+            fs::write(root.join("src/shared/models.mantra"), shared_models)
+                .map_err(|e| format!("Failed to write src/shared/models.mantra: {}", e))?;
 
-        // ── src/shared/validation.mantra ─────────────────────────────────────
-        let validation_src = r#"# Shared validation — runs identically on all platforms
+            // ── src/shared/validation.mantra ─────────────────────────────────────
+            let validation_src = r#"# Shared validation — runs identically on all platforms
 
 pub class Validator:
     pub def validate_email(self, email: String) -> Bool:
@@ -834,12 +914,12 @@ pub class Validator:
     pub def validate_required(self, value: String) -> Bool:
         return len(value) > 0
 "#;
-        fs::write(root.join("src/shared/validation.mantra"), validation_src)
-            .map_err(|e| format!("Failed to write src/shared/validation.mantra: {}", e))?;
+            fs::write(root.join("src/shared/validation.mantra"), validation_src)
+                .map_err(|e| format!("Failed to write src/shared/validation.mantra: {}", e))?;
 
-        // ── src/shared/api_client.mantra ─────────────────────────────────────
-        let api_client_src = format!(
-            r#"# Shared HTTP API client
+            // ── src/shared/api_client.mantra ─────────────────────────────────────
+            let api_client_src = format!(
+                r#"# Shared HTTP API client
 # Base URL is read from environment at startup.
 
 pub class ApiClient:
@@ -857,9 +937,10 @@ def default_client() -> ApiClient:
     # In production this is read from APP_ENV / API_BASE_URL
     return ApiClient("http://localhost:8080")
 "#,
-        );
-        fs::write(root.join("src/shared/api_client.mantra"), api_client_src)
-            .map_err(|e| format!("Failed to write src/shared/api_client.mantra: {}", e))?;
+            );
+            fs::write(root.join("src/shared/api_client.mantra"), api_client_src)
+                .map_err(|e| format!("Failed to write src/shared/api_client.mantra: {}", e))?;
+        }
 
         // ── test/widget_test.mantra ──────────────────────────────────────────
         let test_src = format!(
@@ -881,9 +962,10 @@ def main() -> Int:
         fs::write(root.join("test/widget_test.mantra"), test_src)
             .map_err(|e| format!("Failed to write test/widget_test.mantra: {}", e))?;
 
-        // ── web/index.html ───────────────────────────────────────────────────
-        let web_html = format!(
-            r#"<!DOCTYPE html>
+        // ── web platform files ───────────────────────────────────────────────
+        if enable_web {
+            let web_html = format!(
+                r#"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -940,84 +1022,91 @@ def main() -> Int:
 </body>
 </html>
 "#,
-            project_name = project_name,
-        );
-        fs::write(root.join("web/index.html"), web_html)
-            .map_err(|e| format!("Failed to write web/index.html: {}", e))?;
+                project_name = project_name,
+            );
+            fs::write(root.join("web/index.html"), web_html)
+                .map_err(|e| format!("Failed to write web/index.html: {}", e))?;
 
-        // ── web/manifest.json (PWA) ──────────────────────────────────────────
-        let manifest_json = format!(
-            r##"{{
+            // ── web/manifest.json (PWA) ──────────────────────────────────────────
+            let manifest_json = format!(
+                r##"{{
     "name": "{project_name}",
     "short_name": "{project_name}",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0f172a",
     "theme_color": "#38bdf8",
-    "description": "Mantra cross-platform application"
+    "description": "{desc}"
 }}
 "##,
-            project_name = project_name,
-        );
-        fs::write(root.join("web/manifest.json"), manifest_json)
-            .map_err(|e| format!("Failed to write web/manifest.json: {}", e))?;
+                project_name = project_name,
+                desc = desc,
+            );
+            fs::write(root.join("web/manifest.json"), manifest_json)
+                .map_err(|e| format!("Failed to write web/manifest.json: {}", e))?;
 
-        // ── web/favicon.ico placeholder ──────────────────────────────────────
-        // Tiny valid 16×16 ICO (1×1 white pixel, binary-safe placeholder)
-        fs::write(root.join("web/favicon.ico"), b"\x00\x00\x01\x00\x01\x00\x01\x01\x00\x00\x01\x00\x18\x00\x28\x00\x00\x00\x16\x00\x00\x00")
-            .map_err(|e| format!("Failed to write web/favicon.ico: {}", e))?;
+            // ── web/favicon.ico placeholder ──────────────────────────────────────
+            // Tiny valid 16×16 ICO (1×1 white pixel, binary-safe placeholder)
+            fs::write(root.join("web/favicon.ico"), b"\x00\x00\x01\x00\x01\x00\x01\x01\x00\x00\x01\x00\x18\x00\x28\x00\x00\x00\x16\x00\x00\x00")
+                .map_err(|e| format!("Failed to write web/favicon.ico: {}", e))?;
+        }
 
         // ── Android platform skeleton ────────────────────────────────────────
-        let android_package = format!("{}.{}", org, project_name);
-        let android_pkg_path = root
-            .join("android/app/src/main/java")
-            .join(android_package.replace('.', "/"));
-        fs::create_dir_all(&android_pkg_path)
-            .map_err(|e| format!("Failed to create android java dir: {}", e))?;
-        fs::create_dir_all(root.join("android/app/src/main/res/xml"))
-            .map_err(|e| format!("Failed to create android res dir: {}", e))?;
-        fs::create_dir_all(root.join("android/app/src/main/assets/www"))
-            .map_err(|e| format!("Failed to create android assets dir: {}", e))?;
+        if enable_android {
+            let android_package = format!("{}.{}", org, project_name);
+            let android_pkg_path = root
+                .join("android/app/src/main/java")
+                .join(android_package.replace('.', "/"));
+            fs::create_dir_all(&android_pkg_path)
+                .map_err(|e| format!("Failed to create android java dir: {}", e))?;
+            fs::create_dir_all(root.join("android/app/src/main/res/xml"))
+                .map_err(|e| format!("Failed to create android res dir: {}", e))?;
+            fs::create_dir_all(root.join("android/app/src/main/assets/www"))
+                .map_err(|e| format!("Failed to create android assets dir: {}", e))?;
 
-        use mantra_mobile::AndroidBridgeTemplate;
-        fs::write(
-            android_pkg_path.join("MantraBridge.kt"),
-            AndroidBridgeTemplate::generate_bridge_kotlin(&android_package),
-        ).map_err(|e| format!("Failed to write MantraBridge.kt: {}", e))?;
-        fs::write(
-            android_pkg_path.join("MainActivity.kt"),
-            AndroidBridgeTemplate::generate_main_activity_kotlin(&android_package, project_name),
-        ).map_err(|e| format!("Failed to write MainActivity.kt: {}", e))?;
-        fs::write(
-            root.join("android/app/src/main/AndroidManifest.xml"),
-            AndroidBridgeTemplate::generate_manifest(&android_package, project_name),
-        ).map_err(|e| format!("Failed to write AndroidManifest.xml: {}", e))?;
-        fs::write(
-            root.join("android/app/src/main/res/xml/network_security_config.xml"),
-            AndroidBridgeTemplate::generate_network_security_config(),
-        ).map_err(|e| format!("Failed to write network_security_config.xml: {}", e))?;
-        fs::write(
-            root.join("android/build.gradle.kts"),
-            AndroidBridgeTemplate::generate_build_gradle(&android_package),
-        ).map_err(|e| format!("Failed to write build.gradle.kts: {}", e))?;
+            use mantra_mobile::AndroidBridgeTemplate;
+            fs::write(
+                android_pkg_path.join("MantraBridge.kt"),
+                AndroidBridgeTemplate::generate_bridge_kotlin(&android_package),
+            ).map_err(|e| format!("Failed to write MantraBridge.kt: {}", e))?;
+            fs::write(
+                android_pkg_path.join("MainActivity.kt"),
+                AndroidBridgeTemplate::generate_main_activity_kotlin(&android_package, project_name),
+            ).map_err(|e| format!("Failed to write MainActivity.kt: {}", e))?;
+            fs::write(
+                root.join("android/app/src/main/AndroidManifest.xml"),
+                AndroidBridgeTemplate::generate_manifest(&android_package, project_name),
+            ).map_err(|e| format!("Failed to write AndroidManifest.xml: {}", e))?;
+            fs::write(
+                root.join("android/app/src/main/res/xml/network_security_config.xml"),
+                AndroidBridgeTemplate::generate_network_security_config(),
+            ).map_err(|e| format!("Failed to write network_security_config.xml: {}", e))?;
+            fs::write(
+                root.join("android/build.gradle.kts"),
+                AndroidBridgeTemplate::generate_build_gradle(&android_package),
+            ).map_err(|e| format!("Failed to write build.gradle.kts: {}", e))?;
+        }
 
         // ── iOS platform skeleton ────────────────────────────────────────────
-        fs::create_dir_all(root.join("ios/MantraApp"))
-            .map_err(|e| format!("Failed to create ios/MantraApp: {}", e))?;
+        if enable_ios {
+            let android_package = format!("{}.{}", org, project_name);
+            fs::create_dir_all(root.join("ios/MantraApp"))
+                .map_err(|e| format!("Failed to create ios/MantraApp: {}", e))?;
 
-        use mantra_mobile::IosBridgeTemplate;
-        fs::write(
-            root.join("ios/MantraApp/MantraBridge.swift"),
-            IosBridgeTemplate::generate_bridge_swift(),
-        ).map_err(|e| format!("Failed to write MantraBridge.swift: {}", e))?;
-        fs::write(
-            root.join("ios/MantraApp/ViewController.swift"),
-            IosBridgeTemplate::generate_view_controller_swift(project_name),
-        ).map_err(|e| format!("Failed to write ViewController.swift: {}", e))?;
-        fs::write(
-            root.join("ios/MantraApp/Info.plist"),
-            IosBridgeTemplate::generate_info_plist(&android_package, project_name),
-        ).map_err(|e| format!("Failed to write Info.plist: {}", e))?;
+            use mantra_mobile::IosBridgeTemplate;
+            fs::write(
+                root.join("ios/MantraApp/MantraBridge.swift"),
+                IosBridgeTemplate::generate_bridge_swift(),
+            ).map_err(|e| format!("Failed to write MantraBridge.swift: {}", e))?;
+            fs::write(
+                root.join("ios/MantraApp/ViewController.swift"),
+                IosBridgeTemplate::generate_view_controller_swift(project_name),
+            ).map_err(|e| format!("Failed to write ViewController.swift: {}", e))?;
+            fs::write(
+                root.join("ios/MantraApp/Info.plist"),
+                IosBridgeTemplate::generate_info_plist(&android_package, project_name),
+            ).map_err(|e| format!("Failed to write Info.plist: {}", e))?;
+        }
 
         // ── Environment files ────────────────────────────────────────────────
         // .env — local (NOT committed)
@@ -1209,13 +1298,25 @@ mantra test
         println!("  Organisation  : {}", org);
         println!("  Bundle ID     : {}", bundle_id);
         println!("  Directory     : {}", directory);
+        println!("  Template      : {}", template);
+        if *empty {
+            println!("  Mode          : minimal (--empty)");
+        }
         println!();
         println!("✓ lib/             — Mantra source files");
-        println!("✓ src/shared/      — Cross-platform shared logic");
+        if !*empty {
+            println!("✓ src/shared/      — Cross-platform shared logic");
+        }
         println!("✓ test/            — Test suite");
-        println!("✓ web/             — Web / PWA shell (index.html, manifest.json)");
-        println!("✓ android/         — Android bridge project (Kotlin)");
-        println!("✓ ios/             — iOS bridge project (Swift)");
+        if enable_web {
+            println!("✓ web/             — Web / PWA shell (index.html, manifest.json)");
+        }
+        if enable_android {
+            println!("✓ android/         — Android bridge project (Kotlin)");
+        }
+        if enable_ios {
+            println!("✓ ios/             — iOS bridge project (Swift)");
+        }
         println!("✓ assets/          — Static assets");
         println!("✓ .env             — Local environment (git-ignored)");
         println!("✓ .env.development / .env.test / .env.production");
@@ -1225,7 +1326,17 @@ mantra test
         println!("All done! Get started:");
         println!("  cd {dir}", dir = directory);
         println!("  mantra run");
-        println!("  mantra build web");
+        if enable_web {
+            println!("  mantra run -d chrome --web-port 4300 --mantra-define-from-file=.env.development");
+            println!("  mantra build web --release --mantra-define-from-file=.env.development");
+        }
+        if enable_android {
+            println!("  mantra run -d android --mantra-define-from-file=.env.test");
+            println!("  mantra build apk --release --mantra-define-from-file=.env.test");
+        }
+        if enable_ios {
+            println!("  mantra run -d ios --mantra-define-from-file=.env.test");
+        }
 
         Ok(())
     }

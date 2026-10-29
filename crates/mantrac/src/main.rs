@@ -156,6 +156,20 @@ fn main() {
             "--version-metadata" => {
                 show_version_meta = true;
             }
+            "--mantra-define-from-file" | "--dart-define-from-file" => {
+                i += 1;
+                if i < args.len() {
+                    load_env_defines(&args[i]);
+                }
+            }
+            opt if opt.starts_with("--mantra-define-from-file=") => {
+                let file = opt.trim_start_matches("--mantra-define-from-file=");
+                load_env_defines(file);
+            }
+            opt if opt.starts_with("--dart-define-from-file=") => {
+                let file = opt.trim_start_matches("--dart-define-from-file=");
+                load_env_defines(file);
+            }
             "-o" => {
                 i += 1;
                 if i < args.len() {
@@ -427,3 +441,34 @@ fn main() {
         }
     }
 }
+
+fn load_env_defines(file_path_str: &str) {
+    let path = Path::new(file_path_str);
+    if !path.exists() {
+        eprintln!("Warning: Environment file '{}' does not exist.", file_path_str);
+        return;
+    }
+
+    if let Ok(content) = fs::read_to_string(path) {
+        let mut count = 0;
+        for line in content.lines() {
+            let trimmed = line.trim();
+            if trimmed.is_empty() || trimmed.starts_with('#') {
+                continue;
+            }
+            if let Some((raw_key, raw_val)) = trimmed.split_once('=') {
+                let key = raw_key.trim();
+                let mut val = raw_val.trim();
+                if (val.starts_with('"') && val.ends_with('"')) || (val.starts_with('\'') && val.ends_with('\'')) {
+                    if val.len() >= 2 {
+                        val = &val[1..val.len() - 1];
+                    }
+                }
+                std::env::set_var(key, val);
+                count += 1;
+            }
+        }
+        println!("Loaded defines from '{}' ({} variables)", file_path_str, count);
+    }
+}
+
