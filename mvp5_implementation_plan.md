@@ -417,14 +417,14 @@ All prior MVP 1–4 capabilities remain completely functional and verified:
   ✓ Mobile bridge conformance test (mantra mobile test): PASS
   ✓ Web app scaffolding and test pass: PASS
   ✓ Hybrid mobile app scaffolding and test pass: PASS
-  ✓ Flutter-style project creation (mantra create --org ... --project-name ...): PASS
+  ✓ Unified cross-platform project creation (mantra create --org ... --project-name ...): PASS
   ✓ WebAssembly target build (mantra build web): PASS
   ✓ Multi-environment configuration (.env, .env.development, .env.test, .env.production): PASS
 ```
 
 ---
 
-## 14. Flutter-Style CLI & Multi-Environment Configuration
+## 14. Unified Cross-Platform CLI & Multi-Environment Configuration
 
 ### Scaffolding Command Syntax
 ```bash

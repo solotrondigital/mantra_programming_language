@@ -264,7 +264,7 @@ impl Runner {
             }
         }
 
-        // Defaults (Flutter-style lib/main.mantra first, then src/main.mantra, etc.)
+        // Defaults (lib/main.mantra first, then src/main.mantra, etc.)
         if Path::new("lib/main.mantra").exists() {
             return Ok(PathBuf::from("lib/main.mantra"));
         }

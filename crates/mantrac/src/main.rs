@@ -156,7 +156,7 @@ fn main() {
             "--version-metadata" => {
                 show_version_meta = true;
             }
-            "--mantra-define-from-file" | "--dart-define-from-file" => {
+            "--mantra-define-from-file" => {
                 i += 1;
                 if i < args.len() {
                     load_env_defines(&args[i]);
@@ -164,10 +164,6 @@ fn main() {
             }
             opt if opt.starts_with("--mantra-define-from-file=") => {
                 let file = opt.trim_start_matches("--mantra-define-from-file=");
-                load_env_defines(file);
-            }
-            opt if opt.starts_with("--dart-define-from-file=") => {
-                let file = opt.trim_start_matches("--dart-define-from-file=");
                 load_env_defines(file);
             }
             "-o" => {

@@ -128,16 +128,36 @@ bash installer/linux/mantra-installer-linux.sh
 
 ---
 
-## ⚡ Cross-Platform CLI (`mantra`) — Flutter-Style Workflow
+## ⚡ Cross-Platform CLI (`mantra`) — Multi-Platform Application Platform
 
-Mantra v0.5.0 introduces cross-platform tooling with Flutter-style commands for web, Android, and iOS:
+Mantra v0.5.0 introduces cross-platform tooling with streamlined commands for Web, Android, and iOS:
 
 ### 1. Create a Cross-Platform Project
+
+```bash
+mantra create my_awesome_app
+```
+> **Note:** Project names must follow the `lowercase_with_underscores` naming convention.
+
+#### Flags and Options
+
+| Option / Flag | Description | Example |
+| :--- | :--- | :--- |
+| `--empty` | Creates a project with a minimal `lib/main.mantra` file (skips starter template). | `mantra create my_app --empty` |
+| `--org` | Sets the organization RFC 1034 domain for package/bundle ID. | `mantra create my_app --org com.company` |
+| `--platforms` | Limits platforms supported by the project (default: `"ios,android,web"`). | `mantra create my_app --platforms="ios,android,web"` |
+| `-t, --template` | Specifies project type: `app`, `module`, `package`, `plugin`, or `skeleton`. | `mantra create my_plugin -t plugin` |
+| `--description` | Adds a custom description directly to `mantra.toml`. | `mantra create my_app --description "A cool app"` |
+| `--project-name` | Explicit internal project name when directory differs. | `mantra create my_app --project-name custom_app` |
+
+#### Full Creation Example
 
 ```bash
 mantra create \
   --org com.raghav \
   --project-name mantralayanivas \
+  --platforms="ios,android,web" \
+  --description="Mantralayanivas cross-platform application" \
   mantralayanivas
 ```
 
@@ -149,7 +169,7 @@ mantralayanivas/
 │   ├── app.mantra           # App component
 │   └── models/              # Data models
 ├── src/shared/              # Shared cross-platform services & validation
-├── test/                    # Widget and unit tests
+├── test/                    # Tests
 ├── web/                     # Web target shell (index.html, manifest.json)
 ├── android/                 # Native Android bridge (Kotlin + Gradle)
 ├── ios/                     # Native iOS bridge (Swift + Xcode)
@@ -162,23 +182,50 @@ mantralayanivas/
 └── mantra.toml              # Project manifest with multi-target metadata
 ```
 
-### 2. Multi-Target Compilation
+### 2. Multi-Environment Runtime & Build Commands
 
+Mantra projects support native loading of tiered environment configurations via `--mantra-define-from-file=<file>`:
+
+#### Web Targets
 ```bash
-# Build WebAssembly bundle for browsers (wasm32-unknown-unknown)
-mantra build web
+# Web production:
+mantra run -d chrome --web-port 4300 --mantra-define-from-file=.env.production
 
-# Build Android APK / AAB
-mantra build android
+# Web development:
+mantra run -d chrome --web-port 4300 --mantra-define-from-file=.env.development
 
-# Build iOS .app / .ipa
-mantra build ios
+# Web development build (WebAssembly wasm32-unknown-unknown):
+mantra build web --release --mantra-define-from-file=.env.development
+```
 
-# Run test suite across test/ and tests/
-mantra test
+#### Mobile Android Targets
+```bash
+# Mobile local (Android):
+mantra run -d android --mantra-define-from-file=.env
 
-# Run interactive development target
-mantra run
+# Mobile Android test:
+mantra run -d android --mantra-define-from-file=.env.test
+
+# Mobile Android test APK:
+mantra build apk --release --mantra-define-from-file=.env.test
+
+# Mobile Android test AAB (Google Play Store):
+mantra build appbundle --release --mantra-define-from-file=.env.test
+```
+
+#### Mobile iOS Targets
+```bash
+# Mobile iOS local:
+mantra run -d ios --mantra-define-from-file=.env
+
+# Mobile iOS development:
+mantra run -d ios --mantra-define-from-file=.env.development
+
+# Mobile iOS test:
+mantra run -d ios --mantra-define-from-file=.env.test
+
+# Mobile iOS prod:
+mantra run -d ios --mantra-define-from-file=.env.production
 ```
 
 ---
@@ -429,7 +476,7 @@ Source (.mantra)
 - [x] Standard library: mantra.web, mantra.rest, mantra.sql.orm
 - [x] MVP 4: Package Ecosystem, Lockfile, Homebrew/Chocolatey Distribution
 - [x] MVP 5: Web & Mobile Application Platform (Browser WASM, Android Kotlin Bridge, iOS Swift Bridge)
-- [x] Flutter-style CLI Scaffolding (`mantra create --org ... --project-name ...`)
+- [x] Unified Cross-Platform CLI Scaffolding (`mantra create --org ... --project-name ...`)
 - [x] Multi-Environment Support (`.env`, `.env.development`, `.env.test`, `.env.production`)
 - [x] WebAssembly Target Build (`mantra build web`)
 - [ ] Generics (full implementation)

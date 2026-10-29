@@ -1,7 +1,5 @@
-/**
- * Mantra WebAssembly Browser Runtime
- * Provides browser-host interoperability, standard imports, memory access, and function execution.
- */
+// Mantra WebAssembly Browser Runtime
+// Provides browser-host interoperability, standard imports, memory access, and function execution.
 class MantraBrowserRuntime {
     constructor() {
         this.instance = null;
@@ -9,10 +7,7 @@ class MantraBrowserRuntime {
         this.outputLogs = [];
     }
 
-    /**
-     * Initializes the WebAssembly module from a binary or buffer.
-     * @param {string | ArrayBuffer} wasmSource 
-     */
+    // Initializes the WebAssembly module from a binary or buffer.
     async load(wasmSource) {
         const importObject = {
             env: {
@@ -46,18 +41,14 @@ class MantraBrowserRuntime {
         return this;
     }
 
-    /**
-     * Reads a UTF-8 string from the WebAssembly linear memory.
-     */
+    // Reads a UTF-8 string from the WebAssembly linear memory.
     readString(ptr, len) {
         if (!this.memory) return "";
         const bytes = new Uint8Array(this.memory.buffer, Number(ptr), Number(len));
         return new TextDecoder("utf-8").decode(bytes);
     }
 
-    /**
-     * Invokes an exported Mantra WebAssembly function.
-     */
+    // Invokes an exported Mantra WebAssembly function.
     call(funcName, ...args) {
         if (!this.instance || !this.instance.exports[funcName]) {
             throw new Error(`Exported function '${funcName}' not found in Mantra WASM module.`);

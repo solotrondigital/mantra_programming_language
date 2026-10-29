@@ -26,11 +26,11 @@ pub fn validate_project_name(name: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// Arguments for Flutter-style `mantra create` command.
+/// Arguments for cross-platform `mantra create` command.
 pub struct CreateArgs<'a> {
     /// Reverse-DNS organisation prefix, e.g. "com.raghav"
     pub org: &'a str,
-    /// Dart/Mantra package identifier, e.g. "mantralayanivas"
+    /// Mantra package identifier, e.g. "mantralayanivas"
     pub project_name: &'a str,
     /// Output directory (usually equals project_name)
     pub directory: &'a str,
@@ -716,12 +716,12 @@ def main() -> Int:
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // Flutter-style `mantra create` scaffolder
+    // Cross-platform `mantra create` scaffolder
     // ─────────────────────────────────────────────────────────────────────────
 
-    /// Flutter-style cross-platform project scaffold.
+    /// Cross-platform project scaffold.
     ///
-    /// Mirrors the folder layout of `flutter create`:
+    /// Generates the standard unified workspace layout:
     ///   lib/          — main Mantra source files
     ///   test/         — test files
     ///   web/          — web build outputs and HTML shell
@@ -730,7 +730,7 @@ def main() -> Int:
     ///   assets/       — static assets
     ///   src/shared/   — shared business-logic modules
     ///   .env*         — per-environment variable files
-    pub fn flutter_create(args: &CreateArgs<'_>) -> Result<(), String> {
+    pub fn create_cross_platform(args: &CreateArgs<'_>) -> Result<(), String> {
         let CreateArgs {
             org,
             project_name,
@@ -783,7 +783,7 @@ def main() -> Int:
         fs::write(root.join("assets/images/.gitkeep"), "")
             .map_err(|e| format!("Failed to write assets/.gitkeep: {}", e))?;
 
-        // ── mantra.toml (Flutter-style with org + targets) ──────────────────
+        // ── mantra.toml (cross-platform with org + targets) ────────────────
         let bundle_id = format!("{}.{}", org, project_name);
         let desc = description.unwrap_or("Mantra cross-platform application");
 
@@ -1250,7 +1250,7 @@ mantra test
 
 ```
 {project_name}/
-├── lib/                     # Main Mantra source (mirrors Flutter lib/)
+├── lib/                     # Main Mantra application source
 │   ├── main.mantra          # App entry point
 │   ├── app.mantra           # Root App class
 │   └── models/
@@ -1259,7 +1259,7 @@ mantra test
 │   ├── models.mantra        # Shared data models
 │   ├── validation.mantra    # Shared validation rules
 │   └── api_client.mantra    # Shared API client
-├── test/                    # Tests (mirrors Flutter test/)
+├── test/                    # Tests
 │   └── widget_test.mantra
 ├── web/                     # Web build shell + PWA manifest
 │   ├── index.html

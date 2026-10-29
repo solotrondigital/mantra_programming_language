@@ -30,7 +30,7 @@ Usage:
     mantra <command> [arguments] [options]
 
 Project Management & Scaffolding:
-    create <NAME> [OPTIONS] Create a cross-platform project (Flutter-style)
+    create <NAME> [OPTIONS] Create a cross-platform project
                             Flags:
                               --org <DOMAIN>         Organisation domain for bundle ID
                               --platforms <LIST>     Target platforms: ios,android,web
@@ -44,7 +44,6 @@ Project Management & Scaffolding:
                               -d, --device-id <ID>   Target: android, ios, chrome, web, native
                               --web-port <PORT>      Development server port (default: 8080)
                               --mantra-define-from-file=<FILE>  Load environment defines (.env)
-                              --dart-define-from-file=<FILE>    Flutter compatibility alias
     build <TARGET> [OPTS]   Compile target for release or debug
                             Targets:
                               web                    WebAssembly bundle (wasm32)
@@ -54,7 +53,6 @@ Project Management & Scaffolding:
                             Flags:
                               --release              Optimize for release / production
                               --mantra-define-from-file=<FILE>  Load environment defines (.env)
-                              --dart-define-from-file=<FILE>    Flutter compatibility alias
     check [TARGET]          Parse and type-check without code generation
     test                    Discover and run tests in test/ or tests/
     bench [TARGET]          Run micro-benchmarks with cycle/throughput analysis
@@ -124,7 +122,7 @@ fn main() {
         "-h" | "--help" => print_help(),
         "-v" | "--version" => print_version(),
         "create" | "new" => {
-            // Flutter-style project creation:
+            // Cross-platform project creation:
             // mantra create my_awesome_app
             // mantra create my_app --empty
             // mantra create my_app --org com.company
@@ -248,7 +246,7 @@ fn main() {
                 template: &template,
             };
 
-            if let Err(e) = ProjectScaffolder::flutter_create(&create_args) {
+            if let Err(e) = ProjectScaffolder::create_cross_platform(&create_args) {
                 eprintln!("Error creating project: {}", e);
                 exit(1);
             }
@@ -316,7 +314,7 @@ fn main() {
                     opt if opt.starts_with("--web-port=") => {
                         web_port = opt.trim_start_matches("--web-port=").parse().unwrap_or(8080);
                     }
-                    "--mantra-define-from-file" | "--dart-define-from-file" => {
+                    "--mantra-define-from-file" => {
                         i += 1;
                         if i < args.len() {
                             defines_file = Some(args[i].clone());
@@ -324,9 +322,6 @@ fn main() {
                     }
                     opt if opt.starts_with("--mantra-define-from-file=") => {
                         defines_file = Some(opt.trim_start_matches("--mantra-define-from-file=").to_string());
-                    }
-                    opt if opt.starts_with("--dart-define-from-file=") => {
-                        defines_file = Some(opt.trim_start_matches("--dart-define-from-file=").to_string());
                     }
                     arg if !arg.starts_with('-') && target.is_none() => {
                         target = Some(arg.to_string());
@@ -387,7 +382,7 @@ fn main() {
                     }
                     "--release" => release = true,
                     "--debug" => release = false,
-                    "--mantra-define-from-file" | "--dart-define-from-file" => {
+                    "--mantra-define-from-file" => {
                         i += 1;
                         if i < args.len() {
                             defines_file = Some(args[i].clone());
@@ -395,9 +390,6 @@ fn main() {
                     }
                     opt if opt.starts_with("--mantra-define-from-file=") => {
                         defines_file = Some(opt.trim_start_matches("--mantra-define-from-file=").to_string());
-                    }
-                    opt if opt.starts_with("--dart-define-from-file=") => {
-                        defines_file = Some(opt.trim_start_matches("--dart-define-from-file=").to_string());
                     }
                     "-o" => {
                         i += 1;
