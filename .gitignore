@@ -12,7 +12,9 @@ installer/macos/bin/mantrac
 installer/linux/bin/mantra
 installer/linux/bin/mantrac
 installer/linux/*.tar.gz
+installer/linux/*.sh
 installer/macos/*.dmg
+installer/windows/*.zip
 
 # OS metadata
 .DS_Store
