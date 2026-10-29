@@ -14,5 +14,6 @@ members = [
     "crates/mantrac_ir",
     "crates/mantra_debugger",
     "crates/mantra_bootstrap",
+    "crates/mantra_lsp",
 ]
 resolver = "2"

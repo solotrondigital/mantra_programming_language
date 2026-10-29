@@ -101,6 +101,10 @@ mkdir -p "$STAGE_BIN" "$STAGE_EXAMPLES" "$STAGE_ASSETS"
 cp "$TARGET_RELEASE/mantra" "$STAGE_BIN/mantra"
 cp "$TARGET_RELEASE/mantrac" "$STAGE_BIN/mantrac"
 chmod 755 "$STAGE_BIN/mantra" "$STAGE_BIN/mantrac"
+if [ -f "$TARGET_RELEASE/mantra-lsp" ]; then
+    cp "$TARGET_RELEASE/mantra-lsp" "$STAGE_BIN/mantra-lsp"
+    chmod 755 "$STAGE_BIN/mantra-lsp"
+fi
 
 # Copy latest examples if available
 if [ -d "$PKG_DIR/examples" ]; then

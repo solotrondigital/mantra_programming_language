@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ==============================================================================
+     Chocolatey Package Specification for Mantra Programming Language
+     Package: mantra
+     Usage:
+       choco pack mantra.nuspec
+       choco install mantra -source .
+       choco push mantra.0.4.0.nupkg -source https://push.chocolatey.org/
+============================================================================== -->
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>mantra</id>
+    <version>0.4.0</version>
+    <title>Mantra Programming Language</title>
+    <authors>Solotron Technologies Private Limited</authors>
+    <owners>Solotron Technologies Private Limited</owners>
+    <projectUrl>https://github.com/solotrondigital/mantra_programming_language</projectUrl>
+    <licenseUrl>https://github.com/solotrondigital/mantra_programming_language/blob/main/LICENSE-MIT</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/solotrondigital/mantra_programming_language</projectSourceUrl>
+    <docsUrl>https://solotrondigital.github.io/mantra_website</docsUrl>
+    <bugTrackerUrl>https://github.com/solotrondigital/mantra_programming_language/issues</bugTrackerUrl>
+    <tags>mantra programming-language compiler mdk lsp oop cli</tags>
+    <summary>Mantra compiler, runtime, standard library, LSP and MDK toolchain.</summary>
+    <description><![CDATA[
+Mantra is a modern, statically typed, Python-approachable object-oriented programming language compiled directly to native machine code.
+
+### Included Tools:
+- **mantra** — Mantra Development Kit (MDK) CLI for project creation, running, building, testing, linting, formatting, benchmarking, and package management.
+- **mantrac** — Native bootstrap compiler, typed IR generator, Cranelift JIT engine, and WebAssembly emitter.
+- **mantra-lsp** — Official Language Server Protocol daemon for editor integration (VS Code, Neovim, Emacs, Zed).
+- **mantra-debugger** — Interactive REPL source debugger.
+- **Standard Library & Runtime** — Core classes, collections, asynchronous networking, web primitives, and database ORM.
+
+### Quick Start:
+```powershell
+choco install mantra
+mantra new my_app
+cd my_app
+mantra run
+```
+]]></description>
+    <releaseNotes>https://github.com/solotrondigital/mantra_programming_language/releases/tag/v0.4.0</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
+

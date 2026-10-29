@@ -26,6 +26,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mantra_lsp"
+version = "0.4.0"
+dependencies = [
+ "mantrac_ast",
+ "mantrac_checker",
+ "mantrac_lexer",
+ "mantrac_parser",
+]
+
+[[package]]
 name = "mantra_mdk"
 version = "0.1.0"
 dependencies = [

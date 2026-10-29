@@ -1,0 +1,21 @@
+[package]
+name = "mantra_lsp"
+version = "0.4.0"
+edition = "2021"
+description = "Mantra Language Server Protocol (LSP) Server — Diagnostics, Completion, Hover, Navigation, Formatting"
+license = "MIT OR GPL-3.0"
+
+[[bin]]
+name = "mantra-lsp"
+path = "src/main.rs"
+
+[lib]
+name = "mantra_lsp"
+path = "src/lib.rs"
+
+[dependencies]
+mantrac_ast     = { path = "../mantrac_ast" }
+mantrac_lexer   = { path = "../mantrac_lexer" }
+mantrac_parser  = { path = "../mantrac_parser" }
+mantrac_checker = { path = "../mantrac_checker" }
+

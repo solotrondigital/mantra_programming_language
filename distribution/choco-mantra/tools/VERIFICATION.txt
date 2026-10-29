@@ -1,0 +1,25 @@
+VERIFICATION
+Verification is intended to assist the Chocolatey Moderator in reviewing this package.
+
+PACKAGE NAME: mantra
+VERSION: 0.4.0
+AUTHOR: Solotron Technologies Private Limited
+
+1. Upstream Binary Location:
+   The Windows 64-bit release binary zip archive is built and hosted at GitHub Releases:
+   https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.4.0/mantra-0.4.0-x86_64-pc-windows-msvc.zip
+
+2. Checksum Verification:
+   The SHA-256 hash of the release archive can be verified against the official release checksum:
+   https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.4.0/mantra-0.4.0-x86_64-pc-windows-msvc.zip.sha256
+
+3. Build From Source:
+   The source repository is publicly available at:
+   https://github.com/solotrondigital/mantra_programming_language
+
+   To build natively on Windows:
+   git clone https://github.com/solotrondigital/mantra_programming_language.git
+   cd mantra_programming_language
+   cargo build --release
+   ./distribution/build_distribution.sh 0.4.0
+
