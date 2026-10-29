@@ -8,8 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE-MIT)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE-GPL)
-[![Version](https://img.shields.io/badge/version-0.2.0-cyan.svg)](#)
-[![Built with Rust](https://img.shields.io/badge/built%20with-Rust-orange.svg)](https://www.rust-lang.org/)
+[![Version](https://img.shields.io/badge/version-0.5.0-cyan.svg)](#)
 [![Maintained by Solotron](https://img.shields.io/badge/maintained%20by-Solotron%20Technologies-blueviolet.svg)](https://github.com/solotrondigital)
 
 [Website](https://solotrondigital.github.io/mantra_website/mantra_web/) · [Docs](https://solotrondigital.github.io/mantra_website/mantra_web/mantra_docs/) · [Examples](#examples) · [Download](#installation)
@@ -20,7 +19,7 @@
 
 ## What is Mantra?
 
-**Mantra** is a clean, Python-inspired programming language with static typing, object-oriented design, and a native compiler built in Rust. It combines the readability of Python with the safety and performance guarantees of a compiled, type-checked system.
+**Mantra** is a clean, Python-inspired programming language with static typing, object-oriented design, and a native compiler. It combines the readability of Python with the safety and performance guarantees of a compiled, type-checked system.
 
 Mantra is designed to be the language you reach for when you want **expressive syntax without runtime surprises** — whether you're building CLI tools, REST APIs, or systems software.
 
@@ -89,42 +88,29 @@ mantra_programming_language/
 
 ### Prerequisites
 
-- [Rust](https://www.rust-lang.org/tools/install) 1.70+ with Cargo
-- A C compiler (`cc` / `clang` / `gcc`) for native compilation
+To write, build, and run applications in the Mantra programming language, developers only need:
+- **Mantra Toolchain** (`mantrac` and `mantra` CLI) — installed via official platform installer packages or pre-compiled binaries.
+- **A standard C compiler/linker** (`clang`, `gcc`, or Xcode Command Line Tools) — used by `mantrac` to produce optimized native machine binaries.
 
-### Build from Source
+*(Note: Rust is only an internal bootstrap dependency used to compile the initial stage-0 compiler from raw source. When using Mantra to write and build applications, no Rust installation is required.)*
 
-```bash
-# Clone the repo
-git clone https://github.com/solotrondigital/mantra_programming_language.git
-cd mantra_programming_language
-
-# Build all crates (debug)
-cargo build
-
-# Build for release (optimized)
-cargo build --release
-
-# The compiler binary will be at:
-./target/release/mantrac
-```
-
-### Installation via Installer Script
+### Installation via Installer Packages
 
 ```bash
-# Run the installer generator for your version
-chmod +x create_installers.sh
-./create_installers.sh 0.2.0
-
-# Then run the platform installer:
-# macOS
+# macOS (Apple Silicon & Intel)
 open installer/macos/*.dmg
 
-# Linux
+# Linux (Debian, Ubuntu, Fedora, Arch)
 bash installer/linux/mantra-installer-linux.sh
 
-# Windows (PowerShell as Admin)
+# Windows (PowerShell as Administrator)
 .\installer\windows\Install-Mantra.ps1
+```
+
+Verify your installation:
+```bash
+mantra --version
+mantrac --version
 ```
 
 ---
@@ -303,6 +289,33 @@ mantra run -d ios --mantra-define-from-file=.env.test
 # Mobile iOS prod:
 mantra run -d ios --mantra-define-from-file=.env.production
 ```
+
+#### Backend REST & GraphQL Service Targets
+```bash
+# Run backend REST API (development):
+mantra run --env=.env.development
+# or with explicit define flag:
+mantra run --mantra-define-from-file=.env.development
+
+# Run backend REST API (production):
+mantra run --env=.env.production
+
+# Build REST API release binary:
+mantra build --release --mantra-define-from-file=.env.production
+
+# Run GraphQL backend (test environment):
+mantra run --env=.env.test
+
+# Build GraphQL backend release binary:
+mantra build --release --mantra-define-from-file=.env.test
+```
+
+#### Environment Files Convention
+- `.env` &rarr; local development (default)
+- `.env.development` &rarr; development environment
+- `.env.test` &rarr; test / QA environment
+- `.env.production` &rarr; production deployment
+
 
 ---
 
@@ -511,17 +524,20 @@ def main() -> Int:
 
 ## 🛠️ MDK — Mantra Development Kit
 
-The `mdk` CLI is the all-in-one project toolchain:
+The `mantra` CLI is the all-in-one developer toolchain for standalone applications, cross-platform hybrid frontend apps, and backend services:
+
+### Standalone Application Workflow (`mantra new`)
 
 ```bash
-# Create a new project
-mantra new my_project
+# Create a new standalone application
+mantra new testapp
+cd testapp
 
-# Build the project
-mantra build
-
-# Run the project
+# Run the project (dev mode)
 mantra run
+
+# Build the project (release binary)
+mantra build
 
 # Format source files
 mantra fmt
@@ -536,18 +552,33 @@ mantra doc
 mantra test
 ```
 
-**`mantra.toml`** — Project manifest (similar to `Cargo.toml`):
+### Application Manifest (`mantra.toml`)
+
+Similar to `Cargo.toml`, `mantra.toml` defines project metadata, dependencies, compiler targets, and lint rules:
 
 ```toml
 [package]
-name    = "my_app"
-version = "0.1.0"
-author  = "Your Name"
-lang    = "mantra"
+name        = "testapp"
+version     = "0.1.0"
+description = "My first Mantra application"
+authors     = ["Your Name <you@example.com>"]
+edition     = "2026"
 
 [dependencies]
-mantra.web = "0.2.0"
-mantra.rest = "0.2.0"
+mantra.io      = "0.5.0"
+mantra.lang    = "0.5.0"
+mantra.web     = "0.5.0"
+mantra.rest    = "0.5.0"
+mantra.graphql = "0.5.0"
+
+[build]
+target  = "native"   # native | wasm | jit
+entry   = "src/main.mantra"
+out_dir = "build/"
+
+[lint]
+warn_unused  = true
+strict_types = true
 ```
 
 ---
@@ -628,7 +659,7 @@ You may choose whichever license best suits your use case.
 
 Mantra is developed and maintained by **[Solotron Technologies Private Limited](https://github.com/solotrondigital)**.
 
-> Built with ❤️ and Rust. Designed for developers who value clarity, safety, and performance.
+> Designed for developers who value clarity, safety, and performance.
 
 ---
 
