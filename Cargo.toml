@@ -16,5 +16,6 @@ members = [
     "crates/mantra_bootstrap",
     "crates/mantra_lsp",
     "crates/mantra_mobile",
+    "crates/mantra_graphql",
 ]
 resolver = "2"

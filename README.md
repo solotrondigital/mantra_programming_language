@@ -71,7 +71,8 @@ mantra_programming_language/
 │   ├── mantra_bootstrap/   # Self-hosting bootstrap verification harness
 │   ├── mantra_web/         # Web framework (Router, Server, Middleware)
 │   ├── mantra_rest/        # REST framework (Controllers, JSON, Routes)
-│   └── mantra_sql_orm/     # SQL ORM (Model, QueryBuilder, Adapters)
+│   ├── mantra_graphql/     # Native GraphQL runtime engine, SchemaBuilder, AST & SDL
+│   └── mantra_sql_orm/     # Enterprise ORM (Oracle, MSSQL, MongoDB, SQLite, Postgres, MySQL)
 ├── examples/               # Sample Mantra programs
 ├── tests/                  # Conformance + negative test suite
 ├── installer/              # Platform installer scripts
@@ -440,6 +441,56 @@ def main() -> Int:
     return 0
 ```
 
+### GraphQL API with `mantra.graphql`
+
+```mantra
+import mantra.graphql.*
+
+def main() -> Int:
+    # Build typed GraphQL schema with query and mutation resolvers
+    let schema = SchemaBuilder("Query")
+        .mutation("Mutation")
+        .resolver("Query", "hello", def(ctx):
+            return "Hello from Mantra GraphQL!"
+        )
+        .build()
+
+    let engine = GraphQLEngine(schema)
+    let response = engine.execute("{ hello }")
+    print(response.to_json())   # Output: {"data":{"hello":"Hello from Mantra GraphQL!"}}
+    return 0
+```
+
+### Enterprise Persistence with `mantra.sql.orm`
+
+```mantra
+import mantra.sql.orm.*
+
+def main() -> Int:
+    # Connect to Oracle, MSSQL, PostgreSQL, MySQL, MongoDB, or Generic DB
+    let db = OracleAdapter("oracle://user:pass@localhost:1521/ORCLPDB")
+    db.connect()
+
+    # 1. Execute Stored Procedure with IN / OUT parameters
+    let params = [
+        ProcedureParam("p_dept_id", FieldValue.Int(10), ParamDirection.In),
+        ProcedureParam("p_total_emp", FieldValue.Null, ParamDirection.Out)
+    ]
+    let result = db.execute_procedure("get_dept_employee_count", params)
+    print("Total Employees: " + str(result.output_params.get("p_total_emp")))
+
+    # 2. Database Cursors
+    let cursor = db.open_cursor("emp_cursor", "SELECT emp_id, emp_name FROM employees")
+    let page = cursor.fetch_many(50)
+
+    # 3. Views & Materialized Views
+    db.create_view("active_customers_mv", "SELECT * FROM customers WHERE status = 'ACTIVE'", true)
+    db.refresh_materialized_view("active_customers_mv")
+
+    db.disconnect()
+    return 0
+```
+
 ---
 
 ## 📚 Standard Library Packages
@@ -452,7 +503,8 @@ def main() -> Int:
 | `mantra.net.http` | `HttpServer`, `HttpRequest`, `HttpResponse` |
 | `mantra.web` | `Router`, `Server`, `Middleware`, `Request`, `Response`, `Template` |
 | `mantra.rest` | `RestController`, `CrudController`, `RouteHandler`, `JsonSerializer`, `ApiResponse` |
-| `mantra.sql.orm` | `Model`, `QueryBuilder`, `Migration`, SQLite / MySQL / PostgreSQL adapters |
+| `mantra.graphql` | `GraphQLEngine`, `SchemaBuilder`, `GraphQLType`, `GraphQLValue`, `DateTime`/`JSON`/`UUID` Scalars, Introspection |
+| `mantra.sql.orm` | Enterprise ORM: Oracle, MSSQL, MongoDB, SQLite, PostgreSQL, MySQL, Generic DB, Stored Procedures, Cursors, Views, Functions |
 | `mantra.mdk` | `DocGenerator`, `Formatter`, `PackageManifest`, `ProjectScaffolder` |
 
 ---

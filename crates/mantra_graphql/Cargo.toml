@@ -1,0 +1,8 @@
+[package]
+name = "mantra_graphql"
+version = "0.5.0"
+edition = "2021"
+description = "Native GraphQL runtime engine, schema executor, and introspection system for the Mantra programming language"
+license = "MIT OR GPL-3.0-or-later"
+
+[dependencies]
