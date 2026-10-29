@@ -147,3 +147,4 @@ impl DatabaseAdapter for GenericDbAdapter {
         Ok(vec![row])
     }
 }
+

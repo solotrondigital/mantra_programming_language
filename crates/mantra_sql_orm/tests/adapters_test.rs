@@ -107,3 +107,4 @@ fn test_generic_db_adapter() {
     assert!(cursor.close().is_ok());
     assert!(cursor.fetch_next().is_err());
 }
+

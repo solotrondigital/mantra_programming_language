@@ -109,3 +109,4 @@ pub fn coerce_scalar(name: &str, value: &GraphQLValue) -> Result<GraphQLValue, S
         _ => Ok(value.clone()),
     }
 }
+

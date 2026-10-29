@@ -149,3 +149,4 @@ impl DatabaseAdapter for MongoDBAdapter {
         Ok(vec![row])
     }
 }
+

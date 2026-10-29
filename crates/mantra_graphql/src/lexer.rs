@@ -172,3 +172,4 @@ impl<'a> Lexer<'a> {
         Err("Unterminated string literal in GraphQL query".to_string())
     }
 }
+

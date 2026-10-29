@@ -143,3 +143,4 @@ pub struct InputFieldDefinition {
     pub field_type: GraphQLType,
     pub default_value: Option<GraphQLValue>,
 }
+

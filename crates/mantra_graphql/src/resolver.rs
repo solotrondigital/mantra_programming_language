@@ -68,3 +68,4 @@ impl ResolverRegistry {
         self.resolvers.get(&(type_name.to_string(), field_name.to_string()))
     }
 }
+

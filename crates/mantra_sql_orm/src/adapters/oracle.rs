@@ -165,3 +165,4 @@ impl DatabaseAdapter for OracleAdapter {
         Ok(vec![row])
     }
 }
+

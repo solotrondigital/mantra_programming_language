@@ -236,3 +236,4 @@ fn test_validation_errors() {
     assert!(!response.errors.is_empty());
     assert!(response.errors[0].message.contains("Field 'nonExistentField' does not exist"));
 }
+

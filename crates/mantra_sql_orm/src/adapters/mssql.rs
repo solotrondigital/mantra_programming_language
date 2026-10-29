@@ -160,3 +160,4 @@ impl DatabaseAdapter for MSSQLAdapter {
         Ok(vec![row])
     }
 }
+

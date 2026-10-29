@@ -84,3 +84,4 @@
   - `GraphQLValue` is designed with memory alignment to fit within standard 64-byte CPU cache lines, maximizing cache hit ratios when traversing deeply nested graph trees.
 * **Pre-Sized Serialization Buffers**:
   - Response JSON generation pre-calculates estimated response size to allocate a single contiguous DRAM buffer, eliminating memory fragmentation and repeated MMU page table allocations (`brk` / `mmap`).
+

@@ -515,25 +515,25 @@ The `mdk` CLI is the all-in-one project toolchain:
 
 ```bash
 # Create a new project
-mdk new my_project
+mantra new my_project
 
 # Build the project
-mdk build
+mantra build
 
 # Run the project
-mdk run
+mantra run
 
 # Format source files
-mdk fmt
+mantra fmt
 
 # Lint the codebase
-mdk lint
+mantra lint
 
 # Generate API documentation
-mdk doc
+mantra doc
 
 # Run tests
-mdk test
+mantra test
 ```
 
 **`mantra.toml`** — Project manifest (similar to `Cargo.toml`):
