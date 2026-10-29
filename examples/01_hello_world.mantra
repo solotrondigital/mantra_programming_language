@@ -1,0 +1,40 @@
+# Mantra Language Sample 01: Hello World and Fundamentals
+
+def add(a: Int, b: Int) -> Int:
+    return a + b
+
+def multiply(x: Float, y: Float) -> Float:
+    return x * y
+
+def main() -> Int:
+    print("========================================")
+    print("    Welcome to the Mantra Language!     ")
+    print("========================================")
+
+    # Printing strings and numbers
+    let message = "Hello, Developer! Mantra is up and running."
+    print(message)
+
+    # Arithmetic and function calls
+    let sum = add(42, 58)
+    print("Sum of 42 + 58 = " + str(sum))
+
+    let product = multiply(3.14159, 2.0)
+    print("Product = " + str(product))
+
+    # Conditionals
+    if sum > 50:
+        print("Sum is greater than 50!")
+    else:
+        print("Sum is 50 or less.")
+
+    # While Loop
+    print("\nCounting down with while loop:")
+    mut count = 3
+    while count > 0:
+        print("  Tick... " + str(count))
+        count = count - 1
+
+    print("Liftoff! 🚀 Mantra is ready.")
+    return 0
+

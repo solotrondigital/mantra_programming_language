@@ -1,0 +1,27 @@
+# Conformance Test 08: Composition and Aggregation
+
+class Engine:
+    def __init__(self, horsepower: Int):
+        self.horsepower = horsepower
+
+    pub def start(self) -> String:
+        return "V8 Engine started with " + str(self.horsepower) + " HP"
+
+class Car:
+    def __init__(self, model: String, engine: Engine):
+        self.model = model
+        self.engine = engine
+
+    pub def drive(self) -> String:
+        return self.model + " is driving! " + self.engine.start()
+
+def main() -> Int:
+    print("Testing Composition...")
+    eng = Engine(450)
+    car = Car("Mantra GT", eng)
+    let msg = car.drive()
+    print(msg)
+    assert(msg == "Mantra GT is driving! V8 Engine started with 450 HP")
+    print("Test 08 passed!")
+    return 0
+

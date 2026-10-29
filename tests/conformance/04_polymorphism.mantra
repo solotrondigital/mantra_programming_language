@@ -1,0 +1,39 @@
+# Conformance Test 04: Interfaces and Polymorphism
+
+interface Shape:
+    def area() -> Float
+
+class Circle implements Shape:
+    def __init__(self, radius: Float):
+        self.radius = radius
+
+    override pub def area() -> Float:
+        return 3.14159 * self.radius * self.radius
+
+class Rectangle implements Shape:
+    def __init__(self, width: Float, height: Float):
+        self.width = width
+        self.height = height
+
+    override pub def area() -> Float:
+        return self.width * self.height
+
+def calculate_area(shape: Shape) -> Float:
+    return shape.area()
+
+def main() -> Int:
+    print("Testing Interfaces and Subtype Polymorphism...")
+    c = Circle(2.0)
+    r = Rectangle(3.0, 4.0)
+
+    let c_area = calculate_area(c)
+    let r_area = calculate_area(r)
+
+    print("Circle area: " + str(c_area))
+    print("Rectangle area: " + str(r_area))
+
+    assert(r_area == 12.0)
+    assert(c_area > 12.0)
+    print("Test 04 passed!")
+    return 0
+

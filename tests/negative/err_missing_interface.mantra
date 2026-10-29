@@ -1,0 +1,10 @@
+interface Printable:
+    def print_me(self)
+
+class Document implements Printable:
+    def other(self):
+        print("not printing")
+
+def main() -> Int:
+    return 0
+

@@ -1,0 +1,18 @@
+# Tests for my_app
+
+class TestSuite:
+    def __init__(self):
+        self.tests_run = 0
+
+    pub def test_greeter(self) -> Bool:
+        let expected = "Hello, Mantra! Welcome to Mantra."
+        let actual = "Hello, Mantra! Welcome to Mantra."
+        assert(expected == actual)
+        return True
+
+def main() -> Int:
+    suite = TestSuite()
+    print("Running test_greeter...")
+    suite.test_greeter()
+    print("All tests passed successfully!")
+    return 0

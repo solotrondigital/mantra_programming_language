@@ -1,0 +1,11 @@
+class Base:
+    def test(self):
+        print("base")
+
+class Derived extends Base:
+    override pub def nonexistent(self):
+        print("nope")
+
+def main() -> Int:
+    return 0
+

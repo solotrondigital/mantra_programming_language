@@ -1,0 +1,13 @@
+# Welcome to Mantra Application: my_app
+
+class Greeter:
+    def __init__(self, name: String):
+        self.name = name
+
+    pub def greet(self) -> String:
+        return "Hello, " + self.name + "! Welcome to Mantra."
+
+def main() -> Int:
+    greeter = Greeter("my_first_app")
+    print(greeter.greet())
+    return 0

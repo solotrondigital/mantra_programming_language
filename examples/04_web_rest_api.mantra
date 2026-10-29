@@ -1,0 +1,101 @@
+# Mantra Language Sample 04: Web + REST API with mantra.web and mantra.rest
+
+# ── Interfaces ───────────────────────────────────────────────────
+interface DatabaseAdapter:
+    def connect(self) -> Bool
+    def execute(self, sql: String) -> String
+    def get_driver_name(self) -> String
+
+# ── Model ────────────────────────────────────────────────────────
+class User:
+    pub id: Int
+    pub name: String
+    pub email: String
+    pub role: String
+
+    def __init__(self, id: Int, name: String, email: String, role: String):
+        self.id = id
+        self.name = name
+        self.email = email
+        self.role = role
+
+    pub def to_json(self) -> String:
+        return "{\"id\": " + str(self.id) + ", \"name\": \"" + self.name + "\", \"email\": \"" + self.email + "\", \"role\": \"" + self.role + "\"}"
+
+# ── In-Memory User Repository ─────────────────────────────────────
+class UserRepository:
+    def __init__(self):
+        self.users = []
+        self.next_id = 1
+
+    pub def create(self, name: String, email: String, role: String) -> User:
+        let u = User(self.next_id, name, email, role)
+        self.users.append(u)
+        self.next_id = self.next_id + 1
+        return u
+
+    pub def find_by_id(self, id: Int) -> User:
+        mut i = 0
+        while i < len(self.users):
+            if self.users[i].id == id:
+                return self.users[i]
+            i = i + 1
+        return User(-1, "not_found", "", "")
+
+    pub def count(self) -> Int:
+        return len(self.users)
+
+# ── API Response Envelope ─────────────────────────────────────────
+class ApiResponse:
+    def __init__(self, code: Int, status: String, body: String):
+        self.code = code
+        self.status = status
+        self.body = body
+
+    pub def to_string(self) -> String:
+        return "HTTP " + str(self.code) + " " + self.status + " | " + self.body
+
+# ── REST Controller ───────────────────────────────────────────────
+class UserController:
+    def __init__(self, repo: UserRepository):
+        self.repo = repo
+
+    pub def get_all(self) -> ApiResponse:
+        let body = "{\"total\": " + str(self.repo.count()) + ", \"users\": \"...\"}"
+        return ApiResponse(200, "OK", body)
+
+    pub def get_by_id(self, id: Int) -> ApiResponse:
+        let u = self.repo.find_by_id(id)
+        if u.id == -1:
+            return ApiResponse(404, "Not Found", "{\"error\": \"User " + str(id) + " not found\"}")
+        return ApiResponse(200, "OK", u.to_json())
+
+    pub def create_user(self, name: String, email: String, role: String) -> ApiResponse:
+        let u = self.repo.create(name, email, role)
+        return ApiResponse(201, "Created", u.to_json())
+
+# ── Main ──────────────────────────────────────────────────────────
+def main() -> Int:
+    print("=== Mantra REST API Demo (mantra.web + mantra.rest) ===")
+    let repo = UserRepository()
+    let controller = UserController(repo)
+
+    # Seed data
+    repo.create("Alice Johnson", "alice@example.com", "Admin")
+    repo.create("Bob Smith", "bob@example.com", "Developer")
+
+    # Simulate REST endpoints
+    print("\n>>> GET /api/v1/users")
+    print(controller.get_all().to_string())
+
+    print("\n>>> GET /api/v1/users/1")
+    print(controller.get_by_id(1).to_string())
+
+    print("\n>>> GET /api/v1/users/99  (not found)")
+    print(controller.get_by_id(99).to_string())
+
+    print("\n>>> POST /api/v1/users")
+    print(controller.create_user("Charlie Brown", "charlie@example.com", "Analyst").to_string())
+
+    print("\n>>> Final user count: " + str(repo.count()))
+    return 0

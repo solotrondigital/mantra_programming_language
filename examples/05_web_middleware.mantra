@@ -1,0 +1,80 @@
+# Mantra Language Sample 05: Web Server with Middleware Pipeline
+
+interface Middleware:
+    def before(self, method: String, path: String) -> Bool
+    def after(self, code: Int, body: String)
+
+class LoggingMiddleware implements Middleware:
+    override pub def before(self, method: String, path: String) -> Bool:
+        print("[LOG] " + method + " " + path)
+        return True
+
+    override pub def after(self, code: Int, body: String):
+        print("[LOG] Response: HTTP " + str(code))
+
+class AuthMiddleware implements Middleware:
+    def __init__(self, token: String):
+        self.required_token = token
+
+    override pub def before(self, method: String, path: String) -> Bool:
+        print("[AUTH] Checking token for " + path)
+        return True
+
+    override pub def after(self, code: Int, body: String):
+        return
+
+class MiddlewareChain:
+    def __init__(self):
+        self.chain = []
+
+    pub def add(self, mw: Middleware):
+        self.chain.append(mw)
+
+    pub def run_before(self, method: String, path: String) -> Bool:
+        mut i = 0
+        while i < len(self.chain):
+            let ok = self.chain[i].before(method, path)
+            if ok == False:
+                return False
+            i = i + 1
+        return True
+
+    pub def run_after(self, code: Int, body: String):
+        mut i = 0
+        while i < len(self.chain):
+            self.chain[i].after(code, body)
+            i = i + 1
+
+class HttpResponse:
+    pub code: Int
+    pub body: String
+
+    def __init__(self, code: Int, body: String):
+        self.code = code
+        self.body = body
+
+class WebServer:
+    def __init__(self, port: Int):
+        self.port = port
+        self.middleware = MiddlewareChain()
+
+    pub def use_middleware(self, mw: Middleware):
+        self.middleware.add(mw)
+
+    pub def handle(self, method: String, path: String, response: HttpResponse):
+        print("\n--- Request: " + method + " " + path + " ---")
+        let ok = self.middleware.run_before(method, path)
+        if ok:
+            print("Handler: " + response.body)
+            self.middleware.run_after(response.code, response.body)
+
+def main() -> Int:
+    print("=== Mantra Web Server with Middleware ===")
+    let server = WebServer(8080)
+    server.use_middleware(LoggingMiddleware())
+    server.use_middleware(AuthMiddleware("secret-token-123"))
+
+    server.handle("GET", "/api/users", HttpResponse(200, "{\"users\": []}"))
+    server.handle("POST", "/api/users", HttpResponse(201, "{\"id\": 1, \"name\": \"Alice\"}"))
+    server.handle("GET", "/api/health", HttpResponse(200, "{\"status\": \"ok\"}"))
+    return 0

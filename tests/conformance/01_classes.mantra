@@ -1,0 +1,23 @@
+# Conformance Test 01: Classes and Objects
+
+class User:
+    def __init__(self, name: String, age: Int):
+        self.name = name
+        self.age = age
+
+    pub def greet(self) -> String:
+        return "Hello, " + self.name
+
+    pub def is_adult(self) -> Bool:
+        return self.age >= 18
+
+def main() -> Int:
+    user = User("Alex", 25)
+    print("Testing Class Declaration & Methods...")
+    assert(user.name == "Alex")
+    assert(user.age == 25)
+    assert(user.greet() == "Hello, Alex")
+    assert(user.is_adult() == True)
+    print("Test 01 passed!")
+    return 0
+

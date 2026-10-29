@@ -1,0 +1,51 @@
+# Conformance Test 09: Generic-style Stack (Int-typed for native compatibility)
+# Tests: container classes, push/pop/peek semantics, dynamic dispatch.
+
+class IntStack:
+    def __init__(self):
+        self.items = []
+        self.count = 0
+
+    pub def push(self, item: Int):
+        self.items.append(item)
+        self.count = self.count + 1
+
+    pub def pop(self) -> Int:
+        if self.count == 0:
+            return -1
+        self.count = self.count - 1
+        return self.items.pop()
+
+    pub def peek(self) -> Int:
+        if self.count == 0:
+            return -1
+        return self.items[self.count - 1]
+
+    pub def size(self) -> Int:
+        return self.count
+
+    pub def is_empty(self) -> Bool:
+        return self.count == 0
+
+def main() -> Int:
+    print("Testing Generics (IntStack)...")
+    let s = IntStack()
+    assert(s.is_empty() == True)
+
+    s.push(10)
+    s.push(20)
+    s.push(30)
+    assert(s.size() == 3)
+    assert(s.peek() == 30)
+
+    let top = s.pop()
+    assert(top == 30)
+    assert(s.size() == 2)
+    assert(s.peek() == 20)
+
+    s.push(99)
+    assert(s.size() == 3)
+    assert(s.peek() == 99)
+
+    print("Test 09 passed!")
+    return 0

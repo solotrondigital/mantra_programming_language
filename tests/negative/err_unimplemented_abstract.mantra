@@ -1,0 +1,10 @@
+abstract class Base:
+    abstract pub def must_impl(self)
+
+class Child extends Base:
+    def other(self):
+        print("hello")
+
+def main() -> Int:
+    return 0
+

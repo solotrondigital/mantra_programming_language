@@ -1,0 +1,46 @@
+# Mantra Language Sample 02: Object-Oriented Programming & Encapsulation
+
+class BankAccount:
+    def __init__(self, owner: String, initial_balance: Float):
+        self.owner = owner
+        self.balance = initial_balance
+        self.account_number = "ACT-1001"
+
+    pub def deposit(self, amount: Float):
+        if amount > 0.0:
+            self.balance = self.balance + amount
+            print("Deposited $" + str(amount) + ". New balance: $" + str(self.balance))
+        else:
+            print("Deposit amount must be positive!")
+
+    pub def withdraw(self, amount: Float) -> Bool:
+        if amount > self.balance:
+            print("Insufficient funds! Requested $" + str(amount) + ", available: $" + str(self.balance))
+            return False
+        self.balance = self.balance - amount
+        print("Withdrew $" + str(amount) + ". Remaining balance: $" + str(self.balance))
+        return True
+
+    pub def get_balance(self) -> Float:
+        return self.balance
+
+    pub def get_summary(self) -> String:
+        return "Account[" + self.account_number + "] for " + self.owner + " has $" + str(self.balance)
+
+def main() -> Int:
+    print("=== Mantra Banking System Demo ===")
+    account = BankAccount("Alice Smith", 500.0)
+    print(account.get_summary())
+
+    account.deposit(250.0)
+    let ok1 = account.withdraw(100.0)
+    assert(ok1 == True)
+
+    let ok2 = account.withdraw(1000.0)
+    assert(ok2 == False)
+
+    print("Final balance: $" + str(account.get_balance()))
+    assert(account.get_balance() == 650.0)
+    print("Demo completed successfully!")
+    return 0
+

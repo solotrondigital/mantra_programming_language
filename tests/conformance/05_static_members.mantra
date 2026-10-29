@@ -1,0 +1,21 @@
+# Conformance Test 05: Static Members and Class-level Functions
+
+class MathUtils:
+    static PI: Float = 3.14159
+
+    static def square(value: Int) -> Int:
+        return value * value
+
+    static def cube(value: Int) -> Int:
+        return value * value * value
+
+def main() -> Int:
+    print("Testing Static Members...")
+    assert(MathUtils.square(5) == 25)
+    assert(MathUtils.cube(3) == 27)
+    assert(MathUtils.PI > 3.14)
+    print("Square of 5: " + str(MathUtils.square(5)))
+    print("Cube of 3: " + str(MathUtils.cube(3)))
+    print("Test 05 passed!")
+    return 0
+

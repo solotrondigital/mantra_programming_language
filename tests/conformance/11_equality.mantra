@@ -1,0 +1,44 @@
+# Conformance Test 11: Equality and Identity
+
+class Point:
+    def __init__(self, x: Int, y: Int):
+        self.x = x
+        self.y = y
+
+    pub def equals(self, other: Point) -> Bool:
+        return self.x == other.x and self.y == other.y
+
+def main() -> Int:
+    print("Testing Equality and Identity...")
+
+    # Primitive Equality
+    assert(10 == 10)
+    assert(10 != 20)
+    assert(True == True)
+    assert(False == False)
+    assert(True != False)
+
+    # String Equality
+    let s1 = "hello"
+    let s2 = "hello"
+    let s3 = "world"
+    assert(s1 == s2)
+    assert(s1 != s3)
+
+    # Object Identity vs Value Equality
+    p1 = Point(5, 10)
+    p2 = Point(5, 10)
+    p3 = p1
+
+    # Reference Identity
+    assert(p1 == p3)
+    assert(p1 != p2)
+
+    # Value Equality via method
+    assert(p1.equals(p2) == True)
+    p4 = Point(7, 10)
+    assert(p1.equals(p4) == False)
+
+    print("Test 11 passed!")
+    return 0
+

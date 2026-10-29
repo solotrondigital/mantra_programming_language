@@ -1,0 +1,31 @@
+# Conformance Test 03: Inheritance
+
+class Animal:
+    def __init__(self, name: String):
+        self.name = name
+
+    pub def speak(self) -> String:
+        return "Unknown sound"
+
+    pub def get_name(self) -> String:
+        return self.name
+
+class Dog extends Animal:
+    def __init__(self, name: String):
+        super().__init__(name)
+
+    override pub def speak(self) -> String:
+        return "Woof"
+
+def main() -> Int:
+    print("Testing Inheritance...")
+    dog = Dog("Rex")
+    assert(dog.get_name() == "Rex")
+    assert(dog.speak() == "Woof")
+
+    animal = Animal("Generic")
+    assert(animal.speak() == "Unknown sound")
+
+    print("Test 03 passed!")
+    return 0
+

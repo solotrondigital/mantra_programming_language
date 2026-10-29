@@ -1,0 +1,24 @@
+# Conformance Test 07: Properties and Controlled Attribute Access
+
+class Temperature:
+    def __init__(self, c: Float):
+        self._celsius = c
+
+    @property
+    def celsius(self) -> Float:
+        return self._celsius
+
+    @property
+    def fahrenheit(self) -> Float:
+        return (self._celsius * 1.8) + 32.0
+
+def main() -> Int:
+    print("Testing Properties...")
+    temp = Temperature(25.0)
+    assert(temp.celsius == 25.0)
+    assert(temp.fahrenheit == 77.0)
+    print("Celsius: " + str(temp.celsius))
+    print("Fahrenheit: " + str(temp.fahrenheit))
+    print("Test 07 passed!")
+    return 0
+

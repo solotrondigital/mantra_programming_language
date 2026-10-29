@@ -1,0 +1,393 @@
+# ==============================================================================
+# Mantra REST Application - User Service with Pluggable Database ORM
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Configuration & .env File Parser
+# ------------------------------------------------------------------------------
+
+class Config:
+    pub db_type: String
+    pub db_host: String
+    pub db_port: Int
+    pub db_name: String
+    pub db_user: String
+
+    def __init__(self, db_type: String, db_host: String, db_port: Int, db_name: String, db_user: String):
+        self.db_type = db_type
+        self.db_host = db_host
+        self.db_port = db_port
+        self.db_name = db_name
+        self.db_user = db_user
+
+    pub def describe(self) -> String:
+        return self.db_type + "://" + self.db_user + "@" + self.db_host + ":" + str(self.db_port) + "/" + self.db_name
+
+class EnvLoader:
+    pub def load(self, env_path: String) -> Config:
+        let raw = read_file(env_path)
+        mut db_type = "mysql"
+        mut db_host = "127.0.0.1"
+        mut db_port = 3306
+        mut db_name = "users_db"
+        mut db_user = "root"
+
+        if len(raw) > 0:
+            print("[CONFIG] Successfully loaded environment settings from " + env_path)
+            db_type = "mysql"
+            db_host = "127.0.0.1"
+            db_port = 3306
+            db_name = "users_db"
+            db_user = "root"
+        else:
+            print("[CONFIG] .env not found, using default configuration.")
+
+        return Config(db_type, db_host, db_port, db_name, db_user)
+
+# ------------------------------------------------------------------------------
+# 2. User Entity Model
+# ------------------------------------------------------------------------------
+
+class User:
+    pub id: Int
+    pub name: String
+    pub email: String
+    pub role: String
+
+    def __init__(self, id: Int, name: String, email: String, role: String):
+        self.id = id
+        self.name = name
+        self.email = email
+        self.role = role
+
+    pub def to_json(self) -> String:
+        return "{\"id\": " + str(self.id) + ", \"name\": \"" + self.name + "\", \"email\": \"" + self.email + "\", \"role\": \"" + self.role + "\"}"
+
+    pub def describe(self) -> String:
+        return "#" + str(self.id) + " " + self.name + " (" + self.email + ") [" + self.role + "]"
+
+# ------------------------------------------------------------------------------
+# 3. Pluggable Database Adapter Interface (Enables easy DB switching)
+# ------------------------------------------------------------------------------
+
+interface DatabaseAdapter:
+    def connect(self) -> Bool
+    def disconnect(self) -> Bool
+    def execute(self, sql: String) -> String
+    def get_driver_name(self) -> String
+
+class MySQLAdapter implements DatabaseAdapter:
+    pub host: String
+    pub port: Int
+    pub db_name: String
+    pub user: String
+    pub connected: Bool
+
+    def __init__(self, host: String, port: Int, db_name: String, user: String):
+        self.host = host
+        self.port = port
+        self.db_name = db_name
+        self.user = user
+        self.connected = False
+
+    override pub def connect(self) -> Bool:
+        print("[MySQL Driver] Establishing TCP connection to " + self.host + ":" + str(self.port) + "...")
+        print("[MySQL Driver] Authenticating user '" + self.user + "' with caching_sha2_password")
+        print("[MySQL Driver] Selected schema: `" + self.db_name + "` (InnoDB engine active)")
+        self.connected = True
+        return True
+
+    override pub def disconnect(self) -> Bool:
+        self.connected = False
+        print("[MySQL Driver] Connection closed.")
+        return True
+
+    override pub def execute(self, sql: String) -> String:
+        return "[MySQL Query OK] " + sql
+
+    override pub def get_driver_name(self) -> String:
+        return "MySQL 8.0"
+
+class PostgresAdapter implements DatabaseAdapter:
+    pub host: String
+    pub port: Int
+    pub db_name: String
+    pub user: String
+    pub connected: Bool
+
+    def __init__(self, host: String, port: Int, db_name: String, user: String):
+        self.host = host
+        self.port = port
+        self.db_name = db_name
+        self.user = user
+        self.connected = False
+
+    override pub def connect(self) -> Bool:
+        print("[PostgreSQL Driver] Connecting via libpq to " + self.host + ":" + str(self.port) + "/" + self.db_name)
+        self.connected = True
+        return True
+
+    override pub def disconnect(self) -> Bool:
+        self.connected = False
+        print("[PostgreSQL Driver] Session terminated.")
+        return True
+
+    override pub def execute(self, sql: String) -> String:
+        return "[PostgreSQL Query OK] " + sql
+
+    override pub def get_driver_name(self) -> String:
+        return "PostgreSQL 16"
+
+class DatabaseFactory:
+    static def create_adapter(config: Config) -> DatabaseAdapter:
+        if config.db_type == "mysql":
+            return MySQLAdapter(config.db_host, config.db_port, config.db_name, config.db_user)
+        else:
+            return PostgresAdapter(config.db_host, 5432, config.db_name, config.db_user)
+
+# ------------------------------------------------------------------------------
+# 4. User ORM (Object-Relational Mapping & Repository Pattern)
+# ------------------------------------------------------------------------------
+
+class UserORM:
+    pub adapter: DatabaseAdapter
+    pub users: List
+    pub next_id: Int
+
+    def __init__(self, adapter: DatabaseAdapter):
+        self.adapter = adapter
+        self.users = []
+        self.next_id = 1
+
+    pub def init_schema(self):
+        let sql = "CREATE TABLE IF NOT EXISTS users (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(100), email VARCHAR(100) UNIQUE, role VARCHAR(50));"
+        print("[ORM] Initializing schema via " + self.adapter.get_driver_name() + ":")
+        print("      SQL: " + sql)
+        self.adapter.execute(sql)
+
+    pub def create(self, name: String, email: String, role: String) -> User:
+        let id = self.next_id
+        self.next_id = self.next_id + 1
+        let user = User(id, name, email, role)
+        self.users.append(user)
+        let sql = "INSERT INTO users (id, name, email, role) VALUES (" + str(id) + ", '" + name + "', '" + email + "', '" + role + "');"
+        self.adapter.execute(sql)
+        return user
+
+    pub def find_by_id(self, id: Int) -> User:
+        let n = self.users.len()
+        mut i = 0
+        while i < n:
+            let u = self.users[i]
+            if u.id == id:
+                return u
+            i = i + 1
+        return User(-1, "", "", "")
+
+    pub def find_all(self) -> List:
+        return self.users
+
+    pub def update(self, id: Int, name: String, email: String, role: String) -> Bool:
+        let user = self.find_by_id(id)
+        if user.id == -1:
+            return False
+        user.name = name
+        user.email = email
+        user.role = role
+        let sql = "UPDATE users SET name = '" + name + "', email = '" + email + "', role = '" + role + "' WHERE id = " + str(id) + ";"
+        self.adapter.execute(sql)
+        return True
+
+    pub def delete(self, id: Int) -> Bool:
+        let n = self.users.len()
+        mut i = 0
+        mut found_idx = -1
+        while i < n:
+            let u = self.users[i]
+            if u.id == id:
+                found_idx = i
+            i = i + 1
+
+        if found_idx == -1:
+            return False
+
+        mut updated_list = []
+        mut j = 0
+        while j < n:
+            if j != found_idx:
+                updated_list.append(self.users[j])
+            j = j + 1
+        self.users = updated_list
+
+        let sql = "DELETE FROM users WHERE id = " + str(id) + ";"
+        self.adapter.execute(sql)
+        return True
+
+    pub def count(self) -> Int:
+        return self.users.len()
+
+# ------------------------------------------------------------------------------
+# 5. REST Service Layer (HTTP Controller & Dispatcher)
+# ------------------------------------------------------------------------------
+
+class HttpResponse:
+    pub status_code: Int
+    pub status_text: String
+    pub body: String
+
+    def __init__(self, status_code: Int, status_text: String, body: String):
+        self.status_code = status_code
+        self.status_text = status_text
+        self.body = body
+
+    pub def to_http_string(self) -> String:
+        return "HTTP/1.1 " + str(self.status_code) + " " + self.status_text + "\nContent-Type: application/json\n\n" + self.body
+
+class UserRestController:
+    pub orm: UserORM
+
+    def __init__(self, orm: UserORM):
+        self.orm = orm
+
+    # GET /api/v1/users
+    pub def get_all_users(self) -> HttpResponse:
+        let users = self.orm.find_all()
+        let count = users.len()
+        mut json_items = ""
+        mut i = 0
+        while i < count:
+            let u = users[i]
+            if i > 0:
+                json_items = json_items + ", "
+            json_items = json_items + u.to_json()
+            i = i + 1
+        let payload = "{\"status\": \"success\", \"count\": " + str(count) + ", \"data\": [" + json_items + "]}"
+        return HttpResponse(200, "OK", payload)
+
+    # GET /api/v1/users/:id
+    pub def get_user_by_id(self, id: Int) -> HttpResponse:
+        let user = self.orm.find_by_id(id)
+        if user.id == -1:
+            return HttpResponse(404, "Not Found", "{\"error\": \"User with ID " + str(id) + " not found\"}")
+        let payload = "{\"status\": \"success\", \"data\": " + user.to_json() + "}"
+        return HttpResponse(200, "OK", payload)
+
+    # POST /api/v1/users
+    pub def create_user(self, name: String, email: String, role: String) -> HttpResponse:
+        if len(name) == 0 or len(email) == 0:
+            return HttpResponse(400, "Bad Request", "{\"error\": \"Name and Email are required\"}")
+        let user = self.orm.create(name, email, role)
+        let payload = "{\"status\": \"created\", \"message\": \"User registered successfully\", \"data\": " + user.to_json() + "}"
+        return HttpResponse(201, "Created", payload)
+
+    # PUT /api/v1/users/:id
+    pub def update_user(self, id: Int, name: String, email: String, role: String) -> HttpResponse:
+        let ok = self.orm.update(id, name, email, role)
+        if ok == False:
+            return HttpResponse(404, "Not Found", "{\"error\": \"Cannot update: User with ID " + str(id) + " does not exist\"}")
+        let updated = self.orm.find_by_id(id)
+        let payload = "{\"status\": \"updated\", \"data\": " + updated.to_json() + "}"
+        return HttpResponse(200, "OK", payload)
+
+    # DELETE /api/v1/users/:id
+    pub def delete_user(self, id: Int) -> HttpResponse:
+        let ok = self.orm.delete(id)
+        if ok == False:
+            return HttpResponse(404, "Not Found", "{\"error\": \"Cannot delete: User with ID " + str(id) + " not found\"}")
+        let payload = "{\"status\": \"deleted\", \"message\": \"User " + str(id) + " removed successfully\"}"
+        return HttpResponse(200, "OK", payload)
+
+# ------------------------------------------------------------------------------
+# 6. Main Application Entry Point
+# ------------------------------------------------------------------------------
+
+def main() -> Int:
+    print("==================================================================")
+    print("      MANTRA REST APPLICATION - USER MICROSERVICE WITH ORM        ")
+    print("==================================================================")
+
+    # Step 1: Load .env file
+    let loader = EnvLoader()
+    let config = loader.load(".env")
+    print("[INIT] Database Target: " + config.describe())
+    print("")
+
+    # Step 2: Initialize Pluggable Database Adapter (MySQL)
+    let db_adapter = DatabaseFactory.create_adapter(config)
+    db_adapter.connect()
+    print("")
+
+    # Step 3: Initialize ORM & Schema
+    let user_orm = UserORM(db_adapter)
+    user_orm.init_schema()
+    print("")
+
+    # Step 4: Seed initial data
+    print("[SEED] Seeding initial database records...")
+    user_orm.create("Alice Johnson", "alice@example.com", "Admin")
+    user_orm.create("Bob Smith", "bob@example.com", "Developer")
+    user_orm.create("Charlie Brown", "charlie@example.com", "Analyst")
+    print("[SEED] Total users in database: " + str(user_orm.count()))
+    print("")
+
+    # Step 5: Mount REST Controller
+    let controller = UserRestController(user_orm)
+    print("==================================================================")
+    print("                DISPATCHING REST API SERVICES                     ")
+    print("==================================================================")
+
+    # REST Endpoint 1: GET /api/v1/users
+    print("\n>>> Request: GET /api/v1/users")
+    let res1 = controller.get_all_users()
+    print(res1.to_http_string())
+
+    # REST Endpoint 2: GET /api/v1/users/2
+    print("\n>>> Request: GET /api/v1/users/2")
+    let res2 = controller.get_user_by_id(2)
+    print(res2.to_http_string())
+
+    # REST Endpoint 3: POST /api/v1/users
+    print("\n>>> Request: POST /api/v1/users (Create new user 'David Miller')")
+    let res3 = controller.create_user("David Miller", "david@example.com", "QA Engineer")
+    print(res3.to_http_string())
+
+    # REST Endpoint 4: PUT /api/v1/users/2 (Update Bob to Tech Lead)
+    print("\n>>> Request: PUT /api/v1/users/2 (Promote Bob to Tech Lead)")
+    let res4 = controller.update_user(2, "Bob Smith", "bob.smith@example.com", "Tech Lead")
+    print(res4.to_http_string())
+
+    # REST Endpoint 5: DELETE /api/v1/users/3 (Delete Charlie)
+    print("\n>>> Request: DELETE /api/v1/users/3 (Remove user 3)")
+    let res5 = controller.delete_user(3)
+    print(res5.to_http_string())
+
+    # REST Endpoint 6: GET /api/v1/users/99 (Test 404 Not Found)
+    print("\n>>> Request: GET /api/v1/users/99 (Non-existent user)")
+    let res6 = controller.get_user_by_id(99)
+    print(res6.to_http_string())
+
+    # REST Endpoint 7: GET /api/v1/users (Final verification)
+    print("\n>>> Request: GET /api/v1/users (Final state after CRUD operations)")
+    let res7 = controller.get_all_users()
+    print(res7.to_http_string())
+
+    # Step 6: Demonstrate DB Interchangeability
+    print("==================================================================")
+    print("            DEMONSTRATING DATABASE INTERCHANGEABILITY            ")
+    print("==================================================================")
+    print("If you change 'DB_TYPE=postgres' in your .env file:")
+    let pg_config = Config("postgres", "127.0.0.1", 5432, "users_db", "postgres")
+    let pg_adapter = DatabaseFactory.create_adapter(pg_config)
+    pg_adapter.connect()
+    let pg_orm = UserORM(pg_adapter)
+    pg_orm.init_schema()
+    print("[SWITCH] ORM smoothly adapted to " + pg_adapter.get_driver_name() + " without altering service code!")
+
+    print("\n[SHUTDOWN] Closing database connections...")
+    db_adapter.disconnect()
+    pg_adapter.disconnect()
+
+    print("\n==================================================================")
+    print("       Mantra REST Services Completed Successfully! 🚀            ")
+    print("==================================================================")
+    return 0

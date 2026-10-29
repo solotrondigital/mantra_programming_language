@@ -1,0 +1,30 @@
+# Conformance Test 02: Encapsulation and Access Control
+
+class BankAccount:
+    def __init__(self, initial_balance: Float):
+        self._balance = initial_balance
+
+    pub def deposit(self, amount: Float) -> Float:
+        if amount > 0.0:
+            self._balance = self._balance + amount
+        return self._balance
+
+    pub def withdraw(self, amount: Float) -> Float:
+        if amount <= self._balance:
+            self._balance = self._balance - amount
+        return self._balance
+
+    pub def balance(self) -> Float:
+        return self._balance
+
+def main() -> Int:
+    print("Testing Encapsulation...")
+    account = BankAccount(100.0)
+    assert(account.balance() == 100.0)
+    account.deposit(50.0)
+    assert(account.balance() == 150.0)
+    account.withdraw(30.0)
+    assert(account.balance() == 120.0)
+    print("Test 02 passed!")
+    return 0
+

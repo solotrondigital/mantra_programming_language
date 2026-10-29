@@ -1,0 +1,11 @@
+[package]
+name = "mantra_rest"
+version = "0.2.0"
+edition = "2021"
+description = "Native REST framework runtime for the Mantra programming language — controllers, JSON serialization, and API routing."
+license = "MIT"
+
+[dependencies]
+mantrac_vm = { path = "../mantrac_vm" }
+mantra_web = { path = "../mantra_web" }
+mantra_sql_orm = { path = "../mantra_sql_orm" }

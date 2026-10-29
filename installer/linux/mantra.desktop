@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Mantra Programming Language
+GenericName=Programming Language Compiler and MDK
+Comment=Modern Object-Oriented Mantra Programming Language Toolchain
+Exec=mantra run
+Icon=mantra
+Terminal=true
+Categories=Development;Building;IDE;
+Keywords=mantra;compiler;programming;oop;mdk;

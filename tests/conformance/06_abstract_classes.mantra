@@ -1,0 +1,26 @@
+# Conformance Test 06: Abstract Classes and Methods
+
+abstract class Repository:
+    abstract def get_by_id(id: Int) -> String
+
+    pub def exists(id: Int) -> Bool:
+        return self.get_by_id(id) != "not_found"
+
+class InMemoryRepository extends Repository:
+    def __init__(self):
+        self.item = "Mantra Developer"
+
+    override pub def get_by_id(self, id: Int) -> String:
+        if id == 1:
+            return self.item
+        return "not_found"
+
+def main() -> Int:
+    print("Testing Abstract Classes and Methods...")
+    repo = InMemoryRepository()
+    assert(repo.get_by_id(1) == "Mantra Developer")
+    assert(repo.exists(1) == True)
+    assert(repo.exists(99) == False)
+    print("Test 06 passed!")
+    return 0
+

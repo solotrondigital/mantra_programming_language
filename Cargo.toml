@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    "crates/mantrac_lexer",
+    "crates/mantrac_ast",
+    "crates/mantrac_parser",
+    "crates/mantrac_checker",
+    "crates/mantrac_vm",
+    "crates/mantrac_codegen",
+    "crates/mantrac",
+    "crates/mantra_mdk",
+    "crates/mantra_sql_orm",
+    "crates/mantra_web",
+    "crates/mantra_rest",
+]
+resolver = "2"

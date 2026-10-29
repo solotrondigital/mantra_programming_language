@@ -1,0 +1,25 @@
+# Rust build artifacts
+target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# Release binaries and installer packages (Upload these to GitHub Releases, not git repo)
+dist/
+installer/bin/mantra
+installer/bin/mantrac
+installer/macos/bin/mantra
+installer/macos/bin/mantrac
+installer/linux/bin/mantra
+installer/linux/bin/mantrac
+installer/linux/*.tar.gz
+installer/macos/*.dmg
+
+# OS metadata
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE configurations
+.idea/
+.vscode/

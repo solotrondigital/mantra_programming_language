@@ -1,0 +1,44 @@
+# Mantra Language Sample 03: Interfaces, Inheritance & Polymorphism
+
+interface Shape:
+    def area(self) -> Float
+    def name(self) -> String
+
+class Circle implements Shape:
+    def __init__(self, radius: Float):
+        self.radius = radius
+
+    pub def area(self) -> Float:
+        return 3.14159 * self.radius * self.radius
+
+    pub def name(self) -> String:
+        return "Circle"
+
+class Rectangle implements Shape:
+    def __init__(self, width: Float, height: Float):
+        self.width = width
+        self.height = height
+
+    pub def area(self) -> Float:
+        return self.width * self.height
+
+    pub def name(self) -> String:
+        return "Rectangle"
+
+def print_shape_info(shape: Shape):
+    print("Shape: " + shape.name() + " | Area: " + str(shape.area()))
+
+def main() -> Int:
+    print("=== Polymorphism with Interfaces ===")
+    c = Circle(5.0)
+    r = Rectangle(4.0, 6.0)
+
+    print_shape_info(c)
+    print_shape_info(r)
+
+    assert(c.area() > 78.0)
+    assert(r.area() == 24.0)
+
+    print("Polymorphism demo passed!")
+    return 0
+

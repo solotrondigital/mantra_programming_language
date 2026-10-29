@@ -1,0 +1,7 @@
+abstract class Shape:
+    abstract pub def area(self) -> Float
+
+def main() -> Int:
+    s = Shape()
+    return 0
+

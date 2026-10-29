@@ -1,0 +1,26 @@
+# Tests for my_rest_app
+
+class User:
+    pub id: Int
+    pub name: String
+    pub email: String
+    pub role: String
+
+    def __init__(self, id: Int, name: String, email: String, role: String):
+        self.id = id
+        self.name = name
+        self.email = email
+        self.role = role
+
+    pub def to_json(self) -> String:
+        return "{\"id\": " + str(self.id) + ", \"name\": \"" + self.name + "\"}"
+
+def main() -> Int:
+    print("Running my_rest_app tests...")
+    let u = User(1, "Alice", "alice@example.com", "Admin")
+    assert(u.id == 1)
+    assert(u.name == "Alice")
+    assert(u.email == "alice@example.com")
+    assert(u.role == "Admin")
+    print("User unit tests passed!")
+    return 0

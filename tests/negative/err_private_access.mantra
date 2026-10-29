@@ -1,0 +1,9 @@
+class Secret:
+    private def hidden(self):
+        print("shh")
+
+def main() -> Int:
+    s = Secret()
+    s.hidden()
+    return 0
+

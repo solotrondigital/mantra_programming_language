@@ -1,0 +1,10 @@
+[package]
+name = "mantrac_codegen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+mantrac_lexer = { path = "../mantrac_lexer" }
+mantrac_ast = { path = "../mantrac_ast" }
+mantrac_checker = { path = "../mantrac_checker" }
+
