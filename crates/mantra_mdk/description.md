@@ -2,10 +2,13 @@
 
 ## 1. Package Overview & Purpose
 
-`mantra_mdk` is the primary command-line toolchain driver (`mantra`) for the Mantra programming language ecosystem. It serves as the developer's single entry point, orchestrating project scaffolding, building, static checking, testing, formatting, linting, benchmarking, security auditing, dependency management, publishing, and cross-platform compilation targeting Browser (WebAssembly), Android (Kotlin Bridge), and iOS (Swift Bridge).
+`mantra_mdk` is the primary command-line toolchain driver (`mantra`) for the Mantra programming language ecosystem. It serves as the developer's single entry point, orchestrating project scaffolding, building, static checking, testing, formatting, linting, benchmarking, security auditing, dependency management, publishing, and cross-platform compilation targeting Browser (WebAssembly), Android (Kotlin Bridge), iOS (Swift Bridge), and backend server services (REST and GraphQL).
 
 ### Core Responsibilities:
-* **Project Lifecycle & Cross-Platform Scaffolding**: Commands `mantra create`, `new`, `build`, `run`, `check`, `test`.
+* **Application Scaffolding Architecture (`mantra create`)**:
+  - **Frontend Hybrid Application**: Scaffolds cross-platform hybrid apps targeting Web (WASM/PWA), Android (WebView Kotlin Bridge), and iOS (WKWebView Swift Bridge).
+  - **Backend REST API Application**: Scaffolds modular MVC REST APIs with routers, controllers, services, repositories, validators, and middleware.
+  - **Backend GraphQL API Application**: Scaffolds modular GraphQL servers with schema definitions, query/mutation resolvers, custom scalars, and middleware.
 * **Multi-Environment Configuration**: Native loading of tiered `.env` files (`.env`, `.env.development`, `.env.test`, `.env.production`) via `--mantra-define-from-file=<file>`.
 * **Standard Quality & Tooling**: Commands `mantra fmt`, `lint`, `doc`, `bench`, `audit`, `lsp`.
 * **Package & Dependency System**: Commands `mantra add`, `remove`, `lock`, `publish`, `package validate`.
@@ -17,32 +20,31 @@
 
 ### Key Modules:
 * [`src/main.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/main.rs): Command-line argument parsing, dispatch logic, and CLI help/version rendering.
+* [`src/scaffold/mod.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/scaffold/mod.rs): Primary entry point (`CreateCommand`) and argument tokenizer (`ArgumentParser`).
+* [`src/scaffold/validator.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/scaffold/validator.rs): Strict conditional options validator (`ProjectOptionsValidator`) enforcing rules for frontend, REST, and GraphQL.
+* [`src/scaffold/generator.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/scaffold/generator.rs): Project creation coordinator (`ProjectGenerator`).
+* [`src/scaffold/frontend.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/scaffold/frontend.rs): Hybrid mobile/web scaffolding engine (`FrontendTemplateGenerator`).
+* [`src/scaffold/rest.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/scaffold/rest.rs): MVC REST backend scaffolding engine (`RestTemplateGenerator`).
+* [`src/scaffold/graphql.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/scaffold/graphql.rs): GraphQL API backend scaffolding engine (`GraphQLTemplateGenerator`).
+* [`src/scaffold/metadata.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/scaffold/metadata.rs): Manifest (`mantra.toml`), `.gitignore`, and customized `README.md` writer (`ProjectMetadataGenerator`).
+* [`src/scaffold/fs_service.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/scaffold/fs_service.rs): Safe filesystem service preventing accidental file overwrites (`FilesystemService`).
 * [`src/env_loader.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/env_loader.rs): Multi-tier `.env` environment file loader, variable interpolation (`${VAR}`), secret masking for logs, and process environment variable injection.
-* [`src/project.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/project.rs): Workspace scaffolding engine creating directory layouts, manifest files, and platform bridge projects (`web/`, `android/`, `ios/`).
 * [`src/mobile_builder.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/mobile_builder.rs): Android APK / AAB packager, iOS application bundler, asset synchronization, and bridge capability verifier.
 * [`src/runner.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/runner.rs): Subprocess process executor, embedded HTTP server for WebAssembly browser target (`mantra run -d chrome`), and compiler invoker.
 * [`src/bench.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/bench.rs): Micro-benchmarking harness measuring execution latency and throughput.
 * [`src/audit.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/audit.rs): Security auditing, SemVer verification, lockfile checksum authentication, and sandbox checks.
 * [`src/manifest.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/manifest.rs): TOML manifest parser and lockfile generator (`mantra.toml`, `mantra.lock`).
-* [`src/formatter.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/formatter.rs): Source code indentation and normalization engine.
-* [`src/linter.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/linter.rs): Idiomatic code style and AST smell detection.
-* [`src/docgen.rs`](file:///Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/crates/mantra_mdk/src/docgen.rs): Markdown documentation extractor from doc comments.
 
 ### Functions & Methods:
-* `validate_project_name(name: &str) -> Result<(), String>`: Enforces the `lowercase_with_underscores` naming convention for all new projects.
-* `ProjectScaffolder::create_cross_platform(args: &CreateArgs) -> Result<(), String>`: Scaffolds the complete multi-platform workspace (`lib/`, `src/shared/`, `web/`, `android/`, `ios/`, `assets/`, `.env*`, `mantra.toml`).
+* `CreateCommand::execute(args: &[String]) -> Result<(), String>`: High-level command execution pipeline executing argument parsing, option validation, template generation, and success messaging.
+* `ProjectOptionsValidator::validate(raw: RawProjectOptions) -> Result<ValidatedOptions, String>`: Validates `--type`, `--service`, `--platforms`, `--project-name`, `--org`, checks for existing directory collisions, and normalizes service identifiers.
+* `ProjectGenerator::generate(opts: &ValidatedOptions) -> Result<GenerationSummary, String>`: Emits project metadata and dispatches generation to `FrontendTemplateGenerator`, `RestTemplateGenerator`, or `GraphQLTemplateGenerator`.
+* `validate_project_name(name: &str) -> Result<(), String>`: Enforces `lowercase_with_underscores` naming convention for all project packages.
 * `EnvLoader::load_file(path: &Path) -> Result<HashMap<String, String>, String>`: Parses `.env` lines, resolves variable substitutions, injects entries into `std::env::set_var`, and returns loaded key-value pairs.
-* `EnvLoader::print_summary(source_label: &str, vars: &HashMap<String, String>)`: Formats loaded variables for developer console output, masking sensitive tokens (keys containing `KEY`, `SECRET`, `PASSWORD`, `TOKEN`).
 * `MobileBuilder::build_apk(root: &Path, release: bool, defines_file: Option<&str>)`: Builds release or debug Android APK artifact in `android/app/build/outputs/apk/`.
 * `MobileBuilder::build_appbundle(root: &Path, release: bool, defines_file: Option<&str>)`: Generates Google Play Store distribution bundle (AAB) in `android/app/build/outputs/bundle/`.
-* `MobileBuilder::run_mobile(device: &str, defines_file: Option<&str>)`: Executes simulated bridge runtime test harness for Android / iOS targets.
 * `Runner::run_web_dev(web_port: u16, defines_file: Option<&str>)`: Launches embedded multi-threaded HTTP server with MIME type dispatch (`application/wasm`, `text/html`, `text/css`, `application/javascript`) on `http://127.0.0.1:<web_port>`.
-* `Runner::build_web(target_file: Option<&str>, release: bool, custom_out: Option<&str>, defines_file: Option<&str>)`: Compiles WebAssembly output (`web/app.wasm`, `web/app.wat`) from Mantra source.
-* `BenchRunner::run_benchmarks(root: &Path, iterations: usize)`: Discovers benchmark suites in `benches/*.mantra`, runs a 10-iteration CPU cache warmup, measures execution wall-clock time via `std::time::Instant`, and prints formatted ns/op and ops/sec metrics.
-* `Auditor::audit_project(root: &Path)`: Inspects dependencies in `mantra.toml`, cross-checks cryptographic SHA-256 hashes in `mantra.lock`, evaluates edition compatibility (Edition 2026), and verifies build sandbox rules.
-* `PackageManifest::load_from_dir(path: &Path) -> Result<PackageManifest, String>`: Parses project configuration, entry points, and dependency tree.
-* `Lockfile::from_manifest(manifest: &PackageManifest) -> Self`: Computes reproducible deterministic SHA-256 digests for all project dependencies.
-* `handle_publish(workspace: &Path)`: Validates package integrity, generates `.tar.gz` and `.sha256` archives into `dist/`, and prepares artifacts for package distribution.
+* `Runner::build_web(target_file: Option<&str>, release: bool, custom_out: Option<&str>, defines_file: Option<&str>)`: Compiles WebAssembly output (`platforms/web/app.wasm` or `web/app.wasm`) from Mantra source.
 
 ---
 
@@ -57,9 +59,9 @@
    - When lowering via `mantrac_codegen` (C99 emission), `mantra_mdk` invokes system C compilers to generate native object files (`.o`), static archives (`.a`), and native executable binaries (`ELF` on Linux, `Mach-O` on macOS, `PE/COFF` on Windows).
    - Links against the Mantra runtime library `libmantra_runtime.a` using OS linkers (`ld`, `ld64`, `lld`).
 3. **WebAssembly Toolchain (`wasm32-unknown-unknown`)**:
-   - Emits raw WebAssembly binary bytecode (`web/app.wasm`) and textual format (`web/app.wat`), validated against the Wasm standard specification for browser execution.
+   - Emits raw WebAssembly binary bytecode (`app.wasm`) and textual format (`app.wat`), validated against the Wasm standard specification for browser execution.
 4. **Mobile Native Toolchains**:
-   - Interfaces with the Android Gradle plugin, `kotlinc`, and `apksigner` / `jarsigner`.
+   - Interfaces with Android Gradle plugin, `kotlinc`, and `apksigner` / `jarsigner`.
    - Interfaces with Apple `xcodebuild` and `xcrun` for iOS compilation and code-signing verification.
 5. **Child Process I/O & Return Codes**:
    - Executes user target binaries (`mantra run`, `mantra test`) and captures stdout/stderr through operating system file descriptor pipes (`pipe(2)`).
@@ -102,34 +104,36 @@
 
 ## 5. Command Reference & Usage Examples
 
-### Project Creation
+### Application Scaffolding (`mantra create`)
 
+#### Frontend Hybrid Application
 ```bash
-# Basic project creation (name must follow lowercase_with_underscores)
-mantra create my_awesome_app
-
-# Create minimal project (skips default counter/model template)
-mantra create my_app --empty
-
-# Create with custom reverse-DNS organization domain
-mantra create my_app --org com.company
-
-# Limit supported platforms (default: "ios,android,web")
-mantra create my_app --platforms="ios,android,web"
-
-# Custom project template (app, module, package, plugin, skeleton)
-mantra create my_plugin -t plugin
-
-# Custom description written to mantra.toml
-mantra create my_app --description "A cool cross-platform app"
-
-# Full options example
 mantra create \
-  --org com.test.app \
+  --type frontend \
+  --org com.testapp \
   --project-name testapp \
-  --platforms="ios,android,web" \
-  --description="TestApp cross-platform application" \
-  testapp
+  --platforms ios,android,web \
+  --description "TestApp cross-platform application"
+```
+
+#### Backend REST API Application
+```bash
+mantra create \
+  --type backend \
+  --service REST \
+  --org com.testapp \
+  --project-name testapp \
+  --description "TestApp REST API backend"
+```
+
+#### Backend GraphQL API Application
+```bash
+mantra create \
+  --type backend \
+  --service GRAPHQL \
+  --org com.testapp \
+  --project-name testapp \
+  --description "TestApp GraphQL backend"
 ```
 
 ### Multi-Environment Runtime & Build Commands

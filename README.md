@@ -128,59 +128,134 @@ bash installer/linux/mantra-installer-linux.sh
 
 ---
 
-## ⚡ Cross-Platform CLI (`mantra`) — Multi-Platform Application Platform
+## ⚡ Application Scaffolding CLI (`mantra create`)
 
-Mantra v0.5.0 introduces cross-platform tooling with streamlined commands for Web, Android, and iOS:
+Mantra provides a production-ready application scaffolding CLI (`mantra create`) supporting frontend hybrid applications and modular backend APIs (REST and GraphQL).
 
-### 1. Create a Cross-Platform Project
-
-```bash
-mantra create my_awesome_app
-```
-> **Note:** Project names must follow the `lowercase_with_underscores` naming convention.
-
-#### Flags and Options
-
-| Option / Flag | Description | Example |
-| :--- | :--- | :--- |
-| `--empty` | Creates a project with a minimal `lib/main.mantra` file (skips starter template). | `mantra create my_app --empty` |
-| `--org` | Sets the organization RFC 1034 domain for package/bundle ID. | `mantra create my_app --org com.company` |
-| `--platforms` | Limits platforms supported by the project (default: `"ios,android,web"`). | `mantra create my_app --platforms="ios,android,web"` |
-| `-t, --template` | Specifies project type: `app`, `module`, `package`, `plugin`, or `skeleton`. | `mantra create my_plugin -t plugin` |
-| `--description` | Adds a custom description directly to `mantra.toml`. | `mantra create my_app --description "A cool app"` |
-| `--project-name` | Explicit internal project name when directory differs. | `mantra create my_app --project-name custom_app` |
-
-#### Full Creation Example
+### 1. Frontend Hybrid Application (iOS, Android, Web)
 
 ```bash
 mantra create \
-  --org com.raghav \
-  --project-name mantralayanivas \
-  --platforms="ios,android,web" \
-  --description="Mantralayanivas cross-platform application" \
-  mantralayanivas
+  --type frontend \
+  --org com.testapp \
+  --project-name testapp \
+  --platforms ios,android,web \
+  --description "TestApp cross-platform application"
 ```
 
-Generated project structure:
-```
-mantralayanivas/
-├── lib/                     # Main Mantra application code
-│   ├── main.mantra          # Application entry point
-│   ├── app.mantra           # App component
-│   └── models/              # Data models
-├── src/shared/              # Shared cross-platform services & validation
-├── test/                    # Tests
-├── web/                     # Web target shell (index.html, manifest.json)
-├── android/                 # Native Android bridge (Kotlin + Gradle)
-├── ios/                     # Native iOS bridge (Swift + Xcode)
+Generated architecture:
+```text
+testapp/
+├── mantra.toml
+├── README.md
+├── .gitignore
+├── src/
+│   ├── app/                 # Root application bootstrap
+│   ├── components/          # Reusable UI components
+│   ├── screens/             # Application views & screens
+│   ├── navigation/          # Screen routing controller
+│   ├── services/            # Cross-platform HTTP/API client
+│   ├── state/               # Global state store
+│   ├── styles/              # Global styling & theme constants
+│   └── main.mantra          # Application entry point
 ├── assets/images/           # Static asset directory
-├── .env                     # Local environment overrides (git-ignored)
-├── .env.development         # Development configuration
-├── .env.test                # Automated test configuration
-├── .env.production          # Production environment variables
-├── .env.example             # Documented environment template
-└── mantra.toml              # Project manifest with multi-target metadata
+├── platforms/               # Platform-specific bridge projects
+│   ├── ios/                 # iOS Swift bridge (WebKit WKWebView)
+│   ├── android/             # Android Kotlin bridge (WebView)
+│   └── web/                 # WebAssembly build & PWA shell
+└── tests/                   # Unit & integration test suite
 ```
+
+### 2. Backend REST API Application (MVC Architecture)
+
+```bash
+mantra create \
+  --type backend \
+  --service REST \
+  --org com.testapp \
+  --project-name testapp \
+  --description "TestApp REST API backend"
+```
+
+Generated architecture:
+```text
+testapp/
+├── mantra.toml
+├── README.md
+├── .gitignore
+├── src/
+│   ├── main.mantra          # Server entry point & route binding
+│   ├── config/              # Application environment config
+│   ├── routes/              # HTTP endpoint router
+│   ├── controllers/         # Request handlers & response dispatch
+│   ├── models/              # Domain entities
+│   ├── services/            # Core business logic
+│   ├── repositories/        # Data access abstraction
+│   ├── middleware/          # Auth, logging, CORS middleware
+│   ├── validators/          # Payload validators
+│   └── utils/               # Response envelope formatters
+├── tests/
+│   ├── unit/                # Service unit tests
+│   └── integration/         # Endpoint integration tests
+└── docs/
+    └── api_spec.md          # REST API documentation
+```
+
+### 3. Backend GraphQL API Application
+
+```bash
+mantra create \
+  --type backend \
+  --service GRAPHQL \
+  --org com.testapp \
+  --project-name testapp \
+  --description "TestApp GraphQL backend"
+```
+
+Generated architecture:
+```text
+testapp/
+├── mantra.toml
+├── README.md
+├── .gitignore
+├── src/
+│   ├── main.mantra          # GraphQL server entry point
+│   ├── config/              # Server configuration
+│   ├── graphql/
+│   │   ├── schema/          # GraphQL schema definitions
+│   │   ├── resolvers/       # Query and Mutation field resolvers
+│   │   ├── types/           # GraphQL object type definitions
+│   │   ├── queries/         # Query execution operations
+│   │   ├── mutations/       # Mutation execution operations
+│   │   └── scalars/         # Custom scalar types (DateTime)
+│   ├── services/            # Reusable business logic
+│   ├── models/              # Domain entities
+│   ├── repositories/        # Data access layer
+│   ├── middleware/          # Auth & logging context middleware
+│   └── utils/               # GraphQL response formatters
+├── tests/
+│   ├── unit/                # Resolver unit tests
+│   └── integration/         # GraphQL execution integration tests
+└── docs/
+    └── schema.graphql       # GraphQL SDL schema
+```
+
+### 4. Conditional Argument Rules & Options
+
+| Argument | Frontend | Backend REST | Backend GraphQL |
+|---|---|---|---|
+| `--type` | Required: `frontend` | Required: `backend` | Required: `backend` |
+| `--service` | Not applicable (rejected) | Required: `REST` | Required: `GRAPHQL` |
+| `--org` | Supported (e.g. `com.example`) | Supported | Supported |
+| `--project-name` | Required | Required | Required |
+| `--platforms` | Supported (`ios,android,web`) | Not applicable (rejected) | Not applicable (rejected) |
+| `--description` | Optional | Optional | Optional |
+
+> **Notes:**
+> - All Mantra source files strictly use the `.mantra` extension (never `.mr`).
+> - The application entry point is always `src/main.mantra`.
+> - Project names must adhere to the `lowercase_with_underscores` naming convention.
+> - Service names are case-insensitive (`rest` / `graphql` normalize to `REST` / `GRAPHQL`).
 
 ### 2. Multi-Environment Runtime & Build Commands
 

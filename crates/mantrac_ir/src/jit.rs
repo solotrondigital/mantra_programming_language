@@ -151,6 +151,18 @@ impl JitEngine {
                         if let Some(d) = dest {
                             locals.insert(d.clone(), res);
                         }
+                    } else if callee == "assert" {
+                        let cond = arg_vals.first().map(|v| match v {
+                            IrValue::Bool(b) => *b,
+                            IrValue::Int(i) => *i != 0,
+                            _ => true,
+                        }).unwrap_or(true);
+                        if !cond {
+                            return Err("Assertion failed in JIT execution".to_string());
+                        }
+                        if let Some(d) = dest {
+                            locals.insert(d.clone(), IrValue::Bool(true));
+                        }
                     } else if callee == "read_file" {
                         let path = arg_vals.first().map(|v| match v {
                             IrValue::String(s) => s.clone(),

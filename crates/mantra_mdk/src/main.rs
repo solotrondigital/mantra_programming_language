@@ -8,6 +8,7 @@ pub mod manifest;
 pub mod mobile_builder;
 pub mod project;
 pub mod runner;
+pub mod scaffold;
 
 use audit::Auditor;
 use bench::BenchRunner;
@@ -30,15 +31,21 @@ Usage:
     mantra <command> [arguments] [options]
 
 Project Management & Scaffolding:
-    create <NAME> [OPTIONS] Create a cross-platform project
-                            Flags:
-                              --org <DOMAIN>         Organisation domain for bundle ID
-                              --platforms <LIST>     Target platforms: ios,android,web
-                              -t, --template <TYPE>  Project template: app, package, plugin, module, skeleton
-                              --empty                Minimal entry point (skips starter template)
-                              --description <DESC>   Custom description in mantra.toml
-                              --project-name <NAME>  Internal project name
-    new <NAME> [OPTIONS]    Create a new application or package (supports all create flags)
+    create [OPTIONS]        Scaffold a new Mantra application (frontend or backend)
+                            Frontend hybrid:
+                              mantra create --type frontend --project-name <NAME> [--platforms ios,android,web]
+                            Backend REST:
+                              mantra create --type backend --service REST --project-name <NAME>
+                            Backend GraphQL:
+                              mantra create --type backend --service GRAPHQL --project-name <NAME>
+                            Options:
+                              --type <frontend|backend>  Application type (required)
+                              --service <REST|GRAPHQL>   Backend service (required for backend)
+                              --project-name <NAME>      Application and package name (required)
+                              --org <DOMAIN>             Organisation domain (default: com.example)
+                              --platforms <LIST>         Frontend platforms (ios,android,web)
+                              --description <DESC>       Project description in mantra.toml
+    new <NAME> [OPTIONS]    Create a new application or package
     run [OPTIONS]           Build and run development target
                             Flags:
                               -d, --device-id <ID>   Target: android, ios, chrome, web, native
@@ -121,134 +128,28 @@ fn main() {
     match command {
         "-h" | "--help" => print_help(),
         "-v" | "--version" => print_version(),
-        "create" | "new" => {
-            // Cross-platform project creation:
-            // mantra create my_awesome_app
-            // mantra create my_app --empty
-            // mantra create my_app --org com.company
-            // mantra create my_app --platforms="ios,android,web"
-            // mantra create my_plugin -t plugin
-            // mantra create my_app --description "A cool app"
-            // mantra create --org com.raghav --project-name mantralayanivas mantralayanivas
-            let mut org = "com.example".to_string();
-            let mut project_name = String::new();
-            let mut directory = String::new();
-            let mut empty = false;
-            let mut platforms = Vec::new();
-            let mut template = "app".to_string();
-            let mut description = None;
-
-            let mut i = 2;
-            while i < args.len() {
-                match args[i].as_str() {
-                    "--empty" => {
-                        empty = true;
-                    }
-                    "--org" => {
-                        i += 1;
-                        if i < args.len() {
-                            org = args[i].clone();
-                        } else {
-                            eprintln!("Error: --org requires a value (e.g. --org com.company)");
-                            exit(1);
-                        }
-                    }
-                    opt if opt.starts_with("--org=") => {
-                        org = opt.trim_start_matches("--org=").to_string();
-                    }
-                    "--platforms" => {
-                        i += 1;
-                        if i < args.len() {
-                            let raw = &args[i];
-                            platforms = raw.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
-                        } else {
-                            eprintln!("Error: --platforms requires a value (e.g. --platforms=\"ios,android,web\")");
-                            exit(1);
-                        }
-                    }
-                    opt if opt.starts_with("--platforms=") => {
-                        let raw = opt.trim_start_matches("--platforms=").trim_matches('"').trim_matches('\'');
-                        platforms = raw.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
-                    }
-                    "-t" | "--template" => {
-                        i += 1;
-                        if i < args.len() {
-                            template = args[i].clone();
-                        } else {
-                            eprintln!("Error: -t/--template requires a value (e.g. -t plugin)");
-                            exit(1);
-                        }
-                    }
-                    opt if opt.starts_with("--template=") => {
-                        template = opt.trim_start_matches("--template=").to_string();
-                    }
-                    "--description" => {
-                        i += 1;
-                        if i < args.len() {
-                            description = Some(args[i].clone());
-                        } else {
-                            eprintln!("Error: --description requires a value");
-                            exit(1);
-                        }
-                    }
-                    opt if opt.starts_with("--description=") => {
-                        description = Some(opt.trim_start_matches("--description=").trim_matches('"').to_string());
-                    }
-                    "--project-name" => {
-                        i += 1;
-                        if i < args.len() {
-                            project_name = args[i].clone();
-                        } else {
-                            eprintln!("Error: --project-name requires a value (e.g. --project-name mantralayanivas)");
-                            exit(1);
-                        }
-                    }
-                    opt if opt.starts_with("--project-name=") => {
-                        project_name = opt.trim_start_matches("--project-name=").to_string();
-                    }
-                    arg if !arg.starts_with('-') => {
-                        if directory.is_empty() {
-                            directory = arg.to_string();
-                        }
-                    }
-                    other => {
-                        eprintln!("Unknown option '{}' for 'mantra {}'", other, command);
-                        exit(1);
-                    }
+        "create" => {
+            if let Err(e) = scaffold::CreateCommand::execute(&args[2..]) {
+                eprintln!("{}", e);
+                exit(1);
+            }
+        }
+        "new" => {
+            if args.len() > 2 && args[2..].iter().any(|a| a.starts_with("--type")) {
+                if let Err(e) = scaffold::CreateCommand::execute(&args[2..]) {
+                    eprintln!("{}", e);
+                    exit(1);
                 }
-                i += 1;
-            }
-
-            if directory.is_empty() && !project_name.is_empty() {
-                directory = project_name.clone();
-            } else if !directory.is_empty() && project_name.is_empty() {
-                let p = Path::new(&directory);
-                project_name = p.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| directory.clone());
-            }
-
-            if directory.is_empty() {
-                eprintln!("Usage: mantra {} <my_awesome_app> [options]", command);
-                eprintln!("  --empty                Minimal entry point (skips starter template)");
-                eprintln!("  --org <DOMAIN>         Organisation domain, e.g. com.company");
-                eprintln!("  --platforms <LIST>     Target platforms: ios,android,web");
-                eprintln!("  -t, --template <TYPE>  Project template: app, package, plugin, module, skeleton");
-                eprintln!("  --description <DESC>   Custom project description");
-                exit(1);
-            }
-
-            let create_args = project::CreateArgs {
-                org: &org,
-                project_name: &project_name,
-                directory: &directory,
-                description: description.as_deref(),
-                empty,
-                platforms,
-                template: &template,
-            };
-
-            if let Err(e) = ProjectScaffolder::create_cross_platform(&create_args) {
-                eprintln!("Error creating project: {}", e);
-                exit(1);
+            } else if args.len() > 2 && !args[2].starts_with('-') {
+                if let Err(e) = ProjectScaffolder::new_app(&args[2]) {
+                    eprintln!("Error creating project: {}", e);
+                    exit(1);
+                }
+            } else {
+                if let Err(e) = scaffold::CreateCommand::execute(&args[2..]) {
+                    eprintln!("{}", e);
+                    exit(1);
+                }
             }
         }
         "mobile" => {

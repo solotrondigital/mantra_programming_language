@@ -17,12 +17,14 @@ impl MobileBuilder {
             return Err("Not inside a Mantra project (missing mantra.toml)".to_string());
         }
 
-        let www_dir = if root.join("www").exists() {
+        let www_dir = if root.join("platforms/web").exists() {
+            root.join("platforms/web")
+        } else if root.join("www").exists() {
             root.join("www")
         } else if root.join("web").exists() {
             root.join("web")
         } else {
-            return Err("Missing web/mobile assets directory ('web/' or 'www/'). Run 'mantra create' to generate scaffold.".to_string());
+            return Err("Missing web/mobile assets directory ('platforms/web/', 'web/' or 'www/'). Run 'mantra create' to generate scaffold.".to_string());
         };
 
         println!("==================================================");
@@ -58,12 +60,14 @@ impl MobileBuilder {
         println!("Target Platform : Android (APK)");
         println!("Build Profile   : {}", if release { "release" } else { "debug" });
 
-        let www_dir = if root.join("www").exists() {
+        let www_dir = if root.join("platforms/web").exists() {
+            root.join("platforms/web")
+        } else if root.join("www").exists() {
             root.join("www")
         } else if root.join("web").exists() {
             root.join("web")
         } else {
-            return Err("Missing web/mobile assets directory ('web/' or 'www/').".to_string());
+            return Err("Missing web/mobile assets directory ('platforms/web/', 'web/' or 'www/').".to_string());
         };
 
         Self::build_android(root, &www_dir, release)?;
@@ -90,12 +94,14 @@ impl MobileBuilder {
         println!("Target Platform : Android App Bundle (AAB)");
         println!("Build Profile   : {}", if release { "release" } else { "debug" });
 
-        let www_dir = if root.join("www").exists() {
+        let www_dir = if root.join("platforms/web").exists() {
+            root.join("platforms/web")
+        } else if root.join("www").exists() {
             root.join("www")
         } else if root.join("web").exists() {
             root.join("web")
         } else {
-            return Err("Missing web/mobile assets directory ('web/' or 'www/').".to_string());
+            return Err("Missing web/mobile assets directory ('platforms/web/', 'web/' or 'www/').".to_string());
         };
 
         Self::build_android(root, &www_dir, release)?;
@@ -146,7 +152,11 @@ impl MobileBuilder {
     }
 
     fn build_android(root: &Path, web_assets: &Path, release: bool) -> Result<(), String> {
-        let android_dir = root.join("android");
+        let android_dir = if root.join("platforms/android").exists() {
+            root.join("platforms/android")
+        } else {
+            root.join("android")
+        };
         let assets_dest = android_dir.join("app/src/main/assets/www");
 
         println!("\n>> [Android] Synchronizing web assets to {}", assets_dest.display());
@@ -183,7 +193,11 @@ impl MobileBuilder {
     }
 
     fn build_ios(root: &Path, web_assets: &Path, release: bool) -> Result<(), String> {
-        let ios_dir = root.join("ios");
+        let ios_dir = if root.join("platforms/ios").exists() {
+            root.join("platforms/ios")
+        } else {
+            root.join("ios")
+        };
         let assets_dest = ios_dir.join("www");
 
         println!("\n>> [iOS] Synchronizing web assets to {}", assets_dest.display());

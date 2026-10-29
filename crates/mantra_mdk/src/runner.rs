@@ -113,7 +113,11 @@ impl Runner {
         let emitter = mantrac_ir::WasmEmitter::new();
         let wasm_bytes = emitter.emit_wasm_binary(&ir_prog);
 
-        let web_dir = PathBuf::from("web");
+        let web_dir = if Path::new("platforms/web").exists() {
+            PathBuf::from("platforms/web")
+        } else {
+            PathBuf::from("web")
+        };
         if !web_dir.exists() {
             let _ = fs::create_dir_all(&web_dir);
         }

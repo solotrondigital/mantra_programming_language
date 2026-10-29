@@ -3,6 +3,10 @@ name = "mantra_mdk"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+name = "mantra_mdk"
+path = "src/lib.rs"
+
 [[bin]]
 name = "mantra"
 path = "src/main.rs"
