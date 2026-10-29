@@ -1,0 +1,13 @@
+# Shared Data Models for Server, Web, Android, and iOS
+
+pub class User:
+    def __init__(self, id: String, email: String, name: String):
+        self.id = id
+        self.email = email
+        self.name = name
+
+pub class TaskItem:
+    def __init__(self, id: String, title: String, completed: Bool):
+        self.id = id
+        self.title = title
+        self.completed = completed

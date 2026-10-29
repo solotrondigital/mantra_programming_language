@@ -106,10 +106,7 @@ impl WasmEmitter {
 
             wat.push_str("    i64.const 0\n");
             wat.push_str("  )\n");
-
-            if func.name == "main" {
-                wat.push_str("  (export \"main\" (func $main))\n");
-            }
+            wat.push_str(&format!("  (export \"{}\" (func ${}))\n", func.name, func.name));
         }
 
         wat.push_str(")\n");

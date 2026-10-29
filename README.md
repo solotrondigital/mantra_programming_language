@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="images/mantra_logo.png" alt="Mantra Logo" width="180"/>
+<img src="images/mantra_color_logo.png" alt="Mantra Logo" width="180"/>
 
 # Mantra Programming Language
 
@@ -64,7 +64,11 @@ mantra_programming_language/
 │   ├── mantrac_checker/    # Type checker & semantic analyser
 │   ├── mantrac_codegen/    # C code emitter + native compiler
 │   ├── mantrac_vm/         # Bytecode interpreter / VM
-│   ├── mantra_mdk/         # Mantra Development Kit (CLI: mdk)
+│   ├── mantrac_ir/         # IR lowering & WebAssembly binary emitter
+│   ├── mantra_mdk/         # Mantra Development Kit (CLI: mantra)
+│   ├── mantra_mobile/      # Hybrid Mobile Engine (Android & iOS Bridges)
+│   ├── mantra_lsp/         # Language Server Protocol daemon
+│   ├── mantra_bootstrap/   # Self-hosting bootstrap verification harness
 │   ├── mantra_web/         # Web framework (Router, Server, Middleware)
 │   ├── mantra_rest/        # REST framework (Controllers, JSON, Routes)
 │   └── mantra_sql_orm/     # SQL ORM (Model, QueryBuilder, Adapters)
@@ -120,6 +124,61 @@ bash installer/linux/mantra-installer-linux.sh
 
 # Windows (PowerShell as Admin)
 .\installer\windows\Install-Mantra.ps1
+```
+
+---
+
+## ⚡ Cross-Platform CLI (`mantra`) — Flutter-Style Workflow
+
+Mantra v0.5.0 introduces cross-platform tooling with Flutter-style commands for web, Android, and iOS:
+
+### 1. Create a Cross-Platform Project
+
+```bash
+mantra create \
+  --org com.raghav \
+  --project-name mantralayanivas \
+  mantralayanivas
+```
+
+Generated project structure:
+```
+mantralayanivas/
+├── lib/                     # Main Mantra application code
+│   ├── main.mantra          # Application entry point
+│   ├── app.mantra           # App component
+│   └── models/              # Data models
+├── src/shared/              # Shared cross-platform services & validation
+├── test/                    # Widget and unit tests
+├── web/                     # Web target shell (index.html, manifest.json)
+├── android/                 # Native Android bridge (Kotlin + Gradle)
+├── ios/                     # Native iOS bridge (Swift + Xcode)
+├── assets/images/           # Static asset directory
+├── .env                     # Local environment overrides (git-ignored)
+├── .env.development         # Development configuration
+├── .env.test                # Automated test configuration
+├── .env.production          # Production environment variables
+├── .env.example             # Documented environment template
+└── mantra.toml              # Project manifest with multi-target metadata
+```
+
+### 2. Multi-Target Compilation
+
+```bash
+# Build WebAssembly bundle for browsers (wasm32-unknown-unknown)
+mantra build web
+
+# Build Android APK / AAB
+mantra build android
+
+# Build iOS .app / .ipa
+mantra build ios
+
+# Run test suite across test/ and tests/
+mantra test
+
+# Run interactive development target
+mantra run
 ```
 
 ---
@@ -366,12 +425,16 @@ Source (.mantra)
 - [x] C code emitter (`--emit-c`)
 - [x] Native binary compilation (`--release`)
 - [x] Integrated VM / interpreter (`--run`)
-- [x] MDK toolchain (fmt, lint, doc, scaffold)
+- [x] MDK toolchain (fmt, lint, doc, scaffold, benchmark, audit)
 - [x] Standard library: mantra.web, mantra.rest, mantra.sql.orm
+- [x] MVP 4: Package Ecosystem, Lockfile, Homebrew/Chocolatey Distribution
+- [x] MVP 5: Web & Mobile Application Platform (Browser WASM, Android Kotlin Bridge, iOS Swift Bridge)
+- [x] Flutter-style CLI Scaffolding (`mantra create --org ... --project-name ...`)
+- [x] Multi-Environment Support (`.env`, `.env.development`, `.env.test`, `.env.production`)
+- [x] WebAssembly Target Build (`mantra build web`)
 - [ ] Generics (full implementation)
 - [ ] Pattern matching (`match` expressions)
-- [ ] Async/await support
-- [ ] Package registry (mantra.pkg)
+- [ ] Package registry online cloud service
 - [ ] Self-hosting compiler (Mantra compiled in Mantra)
 
 ---

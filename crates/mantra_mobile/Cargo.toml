@@ -1,0 +1,11 @@
+[package]
+name = "mantra_mobile"
+version = "0.5.0"
+edition = "2021"
+authors = ["Solotron Technologies Private Limited"]
+description = "Mantra Mobile Runtime and Bridge Framework for Android and iOS"
+license = "MIT OR GPL-3.0-or-later"
+
+[dependencies]
+# Zero external dependencies — pure Rust standard library implementation
+

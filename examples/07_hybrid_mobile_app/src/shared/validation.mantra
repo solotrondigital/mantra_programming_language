@@ -1,0 +1,13 @@
+# Shared Cross-Platform Validation Rules
+
+pub class Validator:
+    pub def validate_email(self, email: String) -> Bool:
+        if len(email) < 5:
+            return False
+        # Basic email check
+        return True
+
+    pub def validate_password(self, password: String) -> Bool:
+        if len(password) < 8:
+            return False
+        return True

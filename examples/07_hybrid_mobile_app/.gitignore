@@ -1,0 +1,5 @@
+target/
+android/app/build/
+android/.gradle/
+ios/build/
+.DS_Store

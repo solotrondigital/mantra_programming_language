@@ -1,0 +1,8 @@
+# Shared HTTP API Client
+
+pub class ApiClient:
+    def __init__(self, base_url: String):
+        self.base_url = base_url
+
+    pub def get_tasks_endpoint(self) -> String:
+        return self.base_url + "/api/v1/tasks"

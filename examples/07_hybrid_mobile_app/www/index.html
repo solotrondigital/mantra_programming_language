@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' file: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:;">
+    <title>07_hybrid_mobile_app</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="safe-area">
+        <header>
+            <h2>📱 07_hybrid_mobile_app</h2>
+            <span id="badge" class="badge">Hybrid Mobile</span>
+        </header>
+
+        <section class="card">
+            <h3>Native Bridge Status</h3>
+            <p id="bridge-status">Connecting to Mantra Native Bridge...</p>
+            <div class="button-group">
+                <button id="btn-info" class="btn">Get Device Info</button>
+                <button id="btn-camera" class="btn">Request Camera</button>
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>Shared Validation Test</h3>
+            <input type="email" id="email-input" placeholder="Enter email..." value="test@mantra.lang">
+            <button id="btn-validate" class="btn secondary">Validate with Shared Logic</button>
+            <p id="val-result"></p>
+        </section>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

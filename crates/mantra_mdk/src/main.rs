@@ -4,6 +4,7 @@ pub mod docgen;
 pub mod formatter;
 pub mod linter;
 pub mod manifest;
+pub mod mobile_builder;
 pub mod project;
 pub mod runner;
 
@@ -13,6 +14,7 @@ use docgen::DocGenerator;
 use formatter::Formatter;
 use linter::Linter;
 use manifest::{Lockfile, PackageManifest};
+use mobile_builder::MobileBuilder;
 use project::ProjectScaffolder;
 use runner::Runner;
 use std::env;
@@ -22,18 +24,27 @@ use std::process::exit;
 
 fn print_help() {
     println!(
-        r#"Mantra Development Kit (MDK) CLI — v0.4.0 (Package Ecosystem & ADK)
+        r#"Mantra Development Kit (MDK) CLI — v0.5.0 (Web and Mobile Application Platform)
 Usage:
     mantra <command> [arguments] [options]
 
-Project Management:
+Project Management & Scaffolding:
+    create [OPTIONS] <DIR> Create a cross-platform project (Flutter-style)
+                           Flags: --org <ORG> --project-name <NAME>
     new <NAME>             Create a new Mantra application project
     new package <NAME>     Create a new Mantra library package
+    new web <NAME>         Create a full-stack Mantra web application (mantra.web)
+    new mobile <NAME>      Create a cross-platform hybrid mobile app (Android & iOS)
     run [TARGET]           Build and run development target
-    build [OPTIONS]        Compile target to native executable
+    build [web|android|ios] Compile target (web WASM, mobile, or native executable)
     check [TARGET]         Parse and type-check without code generation
-    test                   Discover and run tests in tests/
+    test                   Discover and run tests in test/ or tests/
     bench [TARGET]         Run micro-benchmarks with cycle/throughput analysis
+
+Mobile & Web Platforms:
+    build web              Compile WebAssembly bundle (wasm32) and update web/ shell
+    mobile build [TARGET]  Prepare mobile web assets and builds (android, ios, all)
+    mobile test            Run mobile bridge security & capability conformance test
 
 Package Management & Distribution:
     add <PACKAGE>          Add a dependency to mantra.toml
@@ -60,9 +71,10 @@ Bootstrap & Toolchain:
 }
 
 fn print_version() {
-    println!("Mantra Development Kit (MDK) v0.4.0 (Package Ecosystem & ADK)");
-    println!("Compiler: mantrac 0.4.0");
-    println!("Language Server: mantra-lsp 0.4.0");
+    println!("Mantra Development Kit (MDK) v0.5.0 (Web and Mobile Application Platform)");
+    println!("Compiler: mantrac 0.5.0");
+    println!("Language Server: mantra-lsp 0.5.0");
+    println!("Mobile Engine: mantra_mobile 0.5.0 (Android & iOS Bridge)");
     println!("Host Target: {}-{}", env::consts::ARCH, env::consts::OS);
 }
 
@@ -91,25 +103,148 @@ fn main() {
     match command {
         "-h" | "--help" => print_help(),
         "-v" | "--version" => print_version(),
-        "new" => {
-            if args.len() < 3 {
-                eprintln!("Usage: mantra new [package] <NAME>");
+        "create" => {
+            // Flutter-style project creation:
+            // mantra create --org com.raghav --project-name mantralayanivas mantralayanivas
+            let mut org = "com.example".to_string();
+            let mut project_name = String::new();
+            let mut directory = String::new();
+
+            let mut i = 2;
+            while i < args.len() {
+                match args[i].as_str() {
+                    "--org" => {
+                        i += 1;
+                        if i < args.len() {
+                            org = args[i].clone();
+                        } else {
+                            eprintln!("Error: --org requires a value (e.g. --org com.raghav)");
+                            exit(1);
+                        }
+                    }
+                    opt if opt.starts_with("--org=") => {
+                        org = opt.trim_start_matches("--org=").to_string();
+                    }
+                    "--project-name" => {
+                        i += 1;
+                        if i < args.len() {
+                            project_name = args[i].clone();
+                        } else {
+                            eprintln!("Error: --project-name requires a value (e.g. --project-name mantralayanivas)");
+                            exit(1);
+                        }
+                    }
+                    opt if opt.starts_with("--project-name=") => {
+                        project_name = opt.trim_start_matches("--project-name=").to_string();
+                    }
+                    arg if !arg.starts_with('-') => {
+                        directory = arg.to_string();
+                    }
+                    other => {
+                        eprintln!("Unknown option '{}' for 'mantra create'", other);
+                        exit(1);
+                    }
+                }
+                i += 1;
+            }
+
+            if directory.is_empty() && !project_name.is_empty() {
+                directory = project_name.clone();
+            } else if !directory.is_empty() && project_name.is_empty() {
+                project_name = directory.clone();
+            }
+
+            if directory.is_empty() {
+                eprintln!("Usage: mantra create --org <ORG> --project-name <NAME> <DIRECTORY>");
+                eprintln!("Example: mantra create --org com.raghav --project-name mantralayanivas mantralayanivas");
                 exit(1);
             }
-            if args[2] == "package" {
-                if args.len() < 4 {
-                    eprintln!("Usage: mantra new package <NAME>");
-                    exit(1);
+
+            let create_args = project::CreateArgs {
+                org: &org,
+                project_name: &project_name,
+                directory: &directory,
+            };
+
+            if let Err(e) = ProjectScaffolder::flutter_create(&create_args) {
+                eprintln!("Error creating project: {}", e);
+                exit(1);
+            }
+        }
+        "new" => {
+            if args.len() < 3 {
+                eprintln!("Usage: mantra new [package|web|mobile] <NAME>");
+                exit(1);
+            }
+            match args[2].as_str() {
+                "package" => {
+                    if args.len() < 4 {
+                        eprintln!("Usage: mantra new package <NAME>");
+                        exit(1);
+                    }
+                    let name = &args[3];
+                    if let Err(e) = ProjectScaffolder::new_package(name) {
+                        eprintln!("Error: {}", e);
+                        exit(1);
+                    }
                 }
-                let name = &args[3];
-                if let Err(e) = ProjectScaffolder::new_package(name) {
-                    eprintln!("Error: {}", e);
-                    exit(1);
+                "web" => {
+                    if args.len() < 4 {
+                        eprintln!("Usage: mantra new web <NAME>");
+                        exit(1);
+                    }
+                    let name = &args[3];
+                    if let Err(e) = ProjectScaffolder::new_web(name) {
+                        eprintln!("Error: {}", e);
+                        exit(1);
+                    }
                 }
-            } else {
-                let name = &args[2];
-                if let Err(e) = ProjectScaffolder::new_app(name) {
-                    eprintln!("Error: {}", e);
+                "mobile" => {
+                    if args.len() < 4 {
+                        eprintln!("Usage: mantra new mobile <NAME>");
+                        exit(1);
+                    }
+                    let name = &args[3];
+                    if let Err(e) = ProjectScaffolder::new_mobile(name) {
+                        eprintln!("Error: {}", e);
+                        exit(1);
+                    }
+                }
+                _ => {
+                    let name = &args[2];
+                    if let Err(e) = ProjectScaffolder::new_app(name) {
+                        eprintln!("Error: {}", e);
+                        exit(1);
+                    }
+                }
+            }
+        }
+        "mobile" => {
+            if args.len() < 3 {
+                eprintln!("Usage: mantra mobile <build|test> [TARGET] [--release]");
+                exit(1);
+            }
+            match args[2].as_str() {
+                "build" => {
+                    let target = if args.len() > 3 && !args[3].starts_with("--") {
+                        args[3].as_str()
+                    } else {
+                        "all"
+                    };
+                    let release = args.iter().any(|a| a == "--release");
+                    if let Err(e) = MobileBuilder::build(target, release) {
+                        eprintln!("Mobile build failed: {}", e);
+                        exit(1);
+                    }
+                }
+                "test" => {
+                    if let Err(e) = MobileBuilder::test_mobile_bridge() {
+                        eprintln!("Mobile test failed: {}", e);
+                        exit(1);
+                    }
+                }
+                other => {
+                    eprintln!("Unknown mobile command '{}'. Use 'mantra mobile build [android|ios]' or 'mantra mobile test'.", other);
                     exit(1);
                 }
             }
@@ -122,6 +257,44 @@ fn main() {
             }
         }
         "build" => {
+            // Check for sub-commands: mantra build web | android | ios
+            if args.len() > 2 && args[2] == "web" {
+                let release = args.iter().any(|a| a == "--release");
+                let mut custom_out = None;
+                let mut target = None;
+                let mut i = 3;
+                while i < args.len() {
+                    match args[i].as_str() {
+                        "--release" => {},
+                        "-o" => {
+                            i += 1;
+                            if i < args.len() {
+                                custom_out = Some(args[i].as_str());
+                            }
+                        }
+                        arg if !arg.starts_with('-') && target.is_none() => {
+                            target = Some(arg);
+                        }
+                        _ => {}
+                    }
+                    i += 1;
+                }
+
+                if let Err(e) = Runner::build_web(target, release, custom_out) {
+                    eprintln!("Web build error: {}", e);
+                    exit(1);
+                }
+                return;
+            } else if args.len() > 2 && (args[2] == "android" || args[2] == "ios") {
+                let target = args[2].as_str();
+                let release = args.iter().any(|a| a == "--release");
+                if let Err(e) = MobileBuilder::build(target, release) {
+                    eprintln!("Mobile build failed: {}", e);
+                    exit(1);
+                }
+                return;
+            }
+
             let mut release = false;
             let mut target = None;
             let mut custom_out = None;

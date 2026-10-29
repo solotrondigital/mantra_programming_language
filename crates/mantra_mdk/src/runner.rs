@@ -74,6 +74,66 @@ impl Runner {
         Ok(binary_name)
     }
 
+    pub fn build_web(target_path: Option<&str>, _release: bool, custom_output: Option<&str>) -> Result<PathBuf, String> {
+        let file_path = Self::resolve_entry_file(target_path)?;
+        let source = fs::read_to_string(&file_path)
+            .map_err(|e| format!("Failed to read {}: {}", file_path.display(), e))?;
+
+        let mut lexer = Lexer::new(&source);
+        let tokens = lexer.tokenize().map_err(|e| e.message)?;
+        let mut parser = Parser::new(tokens);
+        let program = parser.parse().map_err(|e| e.message)?;
+
+        let mut checker = TypeChecker::new();
+        if let Err(diags) = checker.check_program(&program) {
+            for d in diags {
+                eprintln!("{}", d.format_with_source(&file_path.to_string_lossy(), &source));
+            }
+            return Err("Type checking failed".to_string());
+        }
+
+        println!("Compiling WebAssembly target (wasm32-unknown-unknown)...");
+
+        let mut lowering = mantrac_ir::AstLowering::new();
+        let ir_prog = lowering.lower_program(&program);
+
+        let emitter = mantrac_ir::WasmEmitter::new();
+        let wasm_bytes = emitter.emit_wasm_binary(&ir_prog);
+
+        let web_dir = PathBuf::from("web");
+        if !web_dir.exists() {
+            let _ = fs::create_dir_all(&web_dir);
+        }
+
+        let out_path = if let Some(out) = custom_output {
+            PathBuf::from(out)
+        } else if web_dir.exists() {
+            web_dir.join("app.wasm")
+        } else {
+            PathBuf::from("target/web/app.wasm")
+        };
+
+        if let Some(parent) = out_path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+
+        fs::write(&out_path, &wasm_bytes)
+            .map_err(|e| format!("Failed to write WebAssembly output to {}: {}", out_path.display(), e))?;
+
+        let wat_code = emitter.emit_wat(&ir_prog);
+        let wat_path = out_path.with_extension("wat");
+        let _ = fs::write(&wat_path, wat_code);
+
+        println!("✓ Emitted WebAssembly binary : {} ({} bytes)", out_path.display(), wasm_bytes.len());
+        println!("✓ Emitted WebAssembly text   : {}", wat_path.display());
+        if web_dir.join("index.html").exists() {
+            println!("✓ Web application shell      : web/index.html");
+        }
+        println!("✓ Web target ready to serve  : python3 -m http.server -d web");
+
+        Ok(out_path)
+    }
+
     pub fn check_target(target_path: Option<&str>) -> Result<(), String> {
         let file_path = Self::resolve_entry_file(target_path)?;
         let source = fs::read_to_string(&file_path)
@@ -97,22 +157,24 @@ impl Runner {
     }
 
     pub fn run_tests() -> Result<(), String> {
-        let tests_dir = Path::new("tests");
-        if !tests_dir.exists() {
-            return Err("No 'tests/' directory found in current project.".to_string());
-        }
-
+        let candidate_dirs = [Path::new("tests"), Path::new("test")];
         let mut test_files = Vec::new();
-        for entry in fs::read_dir(tests_dir).map_err(|e| e.to_string())? {
-            let entry = entry.map_err(|e| e.to_string())?;
-            let path = entry.path();
-            if path.extension().map_or(false, |ext| ext == "mantra") {
-                test_files.push(path);
+
+        for dir in &candidate_dirs {
+            if dir.exists() {
+                if let Ok(entries) = fs::read_dir(dir) {
+                    for entry in entries.flatten() {
+                        let path = entry.path();
+                        if path.extension().map_or(false, |ext| ext == "mantra") {
+                            test_files.push(path);
+                        }
+                    }
+                }
             }
         }
 
         if test_files.is_empty() {
-            println!("No test files found in tests/");
+            println!("No test files found in tests/ or test/");
             return Ok(());
         }
 
@@ -159,7 +221,10 @@ impl Runner {
             }
         }
 
-        // Defaults
+        // Defaults (Flutter-style lib/main.mantra first, then src/main.mantra, etc.)
+        if Path::new("lib/main.mantra").exists() {
+            return Ok(PathBuf::from("lib/main.mantra"));
+        }
         if Path::new("src/main.mantra").exists() {
             return Ok(PathBuf::from("src/main.mantra"));
         }
@@ -170,7 +235,7 @@ impl Runner {
             return Ok(PathBuf::from("main.mantra"));
         }
 
-        Err("No entry point found. Provide a file path or ensure src/main.mantra exists.".to_string())
+        Err("No entry point found. Provide a file path or ensure lib/main.mantra or src/main.mantra exists.".to_string())
     }
 }
 

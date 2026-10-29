@@ -15,5 +15,6 @@ members = [
     "crates/mantra_debugger",
     "crates/mantra_bootstrap",
     "crates/mantra_lsp",
+    "crates/mantra_mobile",
 ]
 resolver = "2"
