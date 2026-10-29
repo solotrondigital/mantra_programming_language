@@ -10,4 +10,6 @@ mantrac_parser = { path = "../mantrac_parser" }
 mantrac_checker = { path = "../mantrac_checker" }
 mantrac_vm = { path = "../mantrac_vm" }
 mantrac_codegen = { path = "../mantrac_codegen" }
+mantrac_ir = { path = "../mantrac_ir" }
+mantra_debugger = { path = "../mantra_debugger" }
 

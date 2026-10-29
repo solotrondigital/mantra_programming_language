@@ -1,0 +1,10 @@
+[package]
+name = "mantra_debugger"
+version = "0.2.0"
+edition = "2021"
+
+[dependencies]
+mantrac_ast = { path = "../mantrac_ast" }
+mantrac_lexer = { path = "../mantrac_lexer" }
+mantrac_parser = { path = "../mantrac_parser" }
+mantrac_vm = { path = "../mantrac_vm" }

@@ -1,0 +1,9 @@
+[package]
+name = "mantrac_ir"
+version = "0.2.0"
+edition = "2021"
+
+[dependencies]
+mantrac_ast = { path = "../mantrac_ast" }
+mantrac_checker = { path = "../mantrac_checker" }
+mantrac_vm = { path = "../mantrac_vm" }

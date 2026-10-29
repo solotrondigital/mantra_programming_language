@@ -467,6 +467,8 @@ impl<'a> Lexer<'a> {
             "while" => TokenKind::While,
             "break" => TokenKind::Break,
             "continue" => TokenKind::Continue,
+            "async" => TokenKind::Async,
+            "await" => TokenKind::Await,
             "True" => TokenKind::True,
             "False" => TokenKind::False,
             "None" => TokenKind::None,

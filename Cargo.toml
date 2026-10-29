@@ -11,5 +11,7 @@ members = [
     "crates/mantra_sql_orm",
     "crates/mantra_web",
     "crates/mantra_rest",
+    "crates/mantrac_ir",
+    "crates/mantra_debugger",
 ]
 resolver = "2"

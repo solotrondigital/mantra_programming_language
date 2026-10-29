@@ -1055,6 +1055,9 @@ impl<'a> CEmitter<'a> {
                 }
             }
             Expr::Map(_, _) => "NULL".to_string(),
+            Expr::Await { value, .. } => {
+                format!("({})", self.expr_to_c(value))
+            }
         }
     }
 

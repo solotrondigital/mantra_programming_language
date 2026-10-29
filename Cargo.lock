@@ -3,6 +3,16 @@
 version = 4
 
 [[package]]
+name = "mantra_debugger"
+version = "0.2.0"
+dependencies = [
+ "mantrac_ast",
+ "mantrac_lexer",
+ "mantrac_parser",
+ "mantrac_vm",
+]
+
+[[package]]
 name = "mantra_mdk"
 version = "0.1.0"
 dependencies = [
@@ -42,9 +52,11 @@ dependencies = [
 name = "mantrac"
 version = "0.1.0"
 dependencies = [
+ "mantra_debugger",
  "mantrac_ast",
  "mantrac_checker",
  "mantrac_codegen",
+ "mantrac_ir",
  "mantrac_lexer",
  "mantrac_parser",
  "mantrac_vm",
@@ -72,6 +84,15 @@ dependencies = [
  "mantrac_ast",
  "mantrac_checker",
  "mantrac_lexer",
+]
+
+[[package]]
+name = "mantrac_ir"
+version = "0.2.0"
+dependencies = [
+ "mantrac_ast",
+ "mantrac_checker",
+ "mantrac_vm",
 ]
 
 [[package]]

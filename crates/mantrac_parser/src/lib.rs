@@ -60,9 +60,10 @@ impl Parser {
 
         let mut is_abstract = false;
         let mut is_override = false;
+        let mut is_async = false;
         let mut visibility = Visibility::Default;
 
-        // Parse modifiers: pub, private, abstract, override
+        // Parse modifiers: pub, private, abstract, override, async
         loop {
             if self.match_token(&TokenKind::Pub) {
                 visibility = Visibility::Pub;
@@ -74,6 +75,8 @@ impl Parser {
                 is_abstract = true;
             } else if self.match_token(&TokenKind::Override) {
                 is_override = true;
+            } else if self.match_token(&TokenKind::Async) {
+                is_async = true;
             } else {
                 break;
             }
@@ -114,7 +117,7 @@ impl Parser {
         }
 
         if self.match_token(&TokenKind::Def) {
-            let func = self.parse_function(visibility, is_override, false, is_abstract, decorator)?;
+            let func = self.parse_function(visibility, is_override, false, is_abstract, is_async, decorator)?;
             return Ok(Declaration::Function(func));
         }
 
@@ -260,6 +263,7 @@ impl Parser {
         let mut is_override = false;
         let mut is_static = false;
         let mut is_abstract = false;
+        let mut is_async = false;
         let mut visibility = Visibility::Default;
 
         loop {
@@ -275,13 +279,15 @@ impl Parser {
                 is_override = true;
             } else if self.match_token(&TokenKind::Abstract) {
                 is_abstract = true;
+            } else if self.match_token(&TokenKind::Async) {
+                is_async = true;
             } else {
                 break;
             }
         }
 
         if self.match_token(&TokenKind::Def) {
-            let func = self.parse_function(visibility, is_override, is_static, is_abstract, decorator.clone())?;
+            let func = self.parse_function(visibility, is_override, is_static, is_abstract, is_async, decorator.clone())?;
             if let Some(dec) = decorator {
                 if dec == "property" {
                     return Ok(ClassMember::Property(PropertyDecl {
@@ -362,6 +368,10 @@ impl Parser {
                 break;
             }
 
+            let mut is_async = false;
+            if self.match_token(&TokenKind::Async) {
+                is_async = true;
+            }
             self.consume(&TokenKind::Def, "Expected 'def' in interface method specification")?;
             let m_name = self.consume_ident("Expected method name")?;
             self.consume(&TokenKind::LParen, "Expected '(' after method name")?;
@@ -379,6 +389,7 @@ impl Parser {
                 name: m_name,
                 params,
                 return_type,
+                is_async,
                 span: self.previous().span,
             });
             self.skip_newlines();
@@ -400,6 +411,7 @@ impl Parser {
         is_override: bool,
         is_static: bool,
         is_abstract: bool,
+        is_async: bool,
         decorator: Option<String>,
     ) -> Result<FunctionDecl, ParserError> {
         let start_span = self.previous().span;
@@ -433,6 +445,7 @@ impl Parser {
                 is_override,
                 is_static,
                 is_abstract: true,
+                is_async,
                 decorator,
                 span: start_span,
             });
@@ -453,6 +466,7 @@ impl Parser {
             is_override,
             is_static,
             is_abstract: false,
+            is_async,
             decorator,
             span: start_span,
         })
@@ -860,6 +874,15 @@ impl Parser {
     }
 
     fn parse_unary(&mut self) -> Result<Expr, ParserError> {
+        if self.match_token(&TokenKind::Await) {
+            let op_span = self.previous().span;
+            let operand = self.parse_unary()?;
+            let span = op_span.merge(operand.span());
+            return Ok(Expr::Await {
+                value: Box::new(operand),
+                span,
+            });
+        }
         if self.match_token(&TokenKind::Not) {
             let op_span = self.previous().span;
             let operand = self.parse_unary()?;

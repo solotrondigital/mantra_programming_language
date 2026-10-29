@@ -8,7 +8,7 @@ pub mod runner;
 use docgen::DocGenerator;
 use formatter::Formatter;
 use linter::Linter;
-use manifest::PackageManifest;
+use manifest::{Lockfile, PackageManifest};
 use project::ProjectScaffolder;
 use runner::Runner;
 use std::env;
@@ -18,7 +18,7 @@ use std::process::exit;
 
 fn print_help() {
     println!(
-        r#"Mantra Development Kit (MDK) CLI — v0.1.0-draft
+        r#"Mantra Development Kit (MDK) CLI — v0.2.0
 Usage:
     mantra <command> [arguments] [options]
 
@@ -29,6 +29,7 @@ Commands:
     build [OPTIONS]        Compile target to native executable
     check [TARGET]         Parse and type-check without code generation
     test                   Discover and run tests in tests/
+    lock                   Generate mantra.lock with dependency hashes
     fmt [FILES...]         Format Mantra source files with 4-space indentation
     lint [FILES...]        Run static diagnostics on source files
     doc [FILE]             Generate Markdown documentation for declarations
@@ -44,8 +45,8 @@ Commands:
 }
 
 fn print_version() {
-    println!("Mantra Development Kit (MDK) v0.1.0-draft");
-    println!("Compiler: mantrac 0.1.0-draft");
+    println!("Mantra Development Kit (MDK) v0.2.0");
+    println!("Compiler: mantrac 0.2.0");
     println!("Host Target: {}-{}", env::consts::ARCH, env::consts::OS);
 }
 
@@ -148,6 +149,23 @@ fn main() {
             if let Err(e) = Runner::run_tests() {
                 eprintln!("Tests failed: {}", e);
                 exit(1);
+            }
+        }
+        "lock" => {
+            let cwd = env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf());
+            match PackageManifest::load_from_dir(&cwd) {
+                Ok(manifest) => {
+                    let lockfile = Lockfile::from_manifest(&manifest);
+                    if let Err(e) = lockfile.save_to_dir(&cwd) {
+                        eprintln!("Error saving mantra.lock: {}", e);
+                        exit(1);
+                    }
+                    println!("Generated mantra.lock ({} dependencies locked with integrity hashes).", lockfile.packages.len());
+                }
+                Err(e) => {
+                    eprintln!("Error: {}", e);
+                    exit(1);
+                }
             }
         }
         "fmt" => {

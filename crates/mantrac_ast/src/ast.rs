@@ -89,6 +89,7 @@ pub struct MethodSignature {
     pub name: String,
     pub params: Vec<Param>,
     pub return_type: Type,
+    pub is_async: bool,
     pub span: Span,
 }
 
@@ -103,6 +104,7 @@ pub struct FunctionDecl {
     pub is_override: bool,
     pub is_static: bool,
     pub is_abstract: bool,
+    pub is_async: bool,
     pub decorator: Option<String>,
     pub span: Span,
 }
@@ -221,6 +223,10 @@ pub enum Expr {
         index: Box<Expr>,
         span: Span,
     },
+    Await {
+        value: Box<Expr>,
+        span: Span,
+    },
     List(Vec<Expr>, Span),
     Map(Vec<(Expr, Expr)>, Span),
 }
@@ -238,6 +244,7 @@ impl Expr {
             Expr::SuperInitCall { span, .. } => *span,
             Expr::SuperMethodCall { span, .. } => *span,
             Expr::Index { span, .. } => *span,
+            Expr::Await { span, .. } => *span,
             Expr::List(_, s) => *s,
             Expr::Map(_, s) => *s,
         }

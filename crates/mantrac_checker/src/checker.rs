@@ -940,6 +940,15 @@ impl TypeChecker {
                     Type::Map(Box::new(Type::Any), Box::new(Type::Any))
                 }
             }
+            Expr::Await { value, .. } => {
+                let inner_ty = self.infer_expr(value, scopes);
+                match inner_ty {
+                    Type::Custom(ref name, ref args) if (name == "Task" || name == "Future") && !args.is_empty() => {
+                        args[0].clone()
+                    }
+                    _ => inner_ty,
+                }
+            }
         }
     }
 }

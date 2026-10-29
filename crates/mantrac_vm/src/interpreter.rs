@@ -628,6 +628,9 @@ impl Interpreter {
                 }
                 Ok(Value::Map(Rc::new(RefCell::new(map))))
             }
+            Expr::Await { value, .. } => {
+                self.eval_expr(value, env)
+            }
         }
     }
 
