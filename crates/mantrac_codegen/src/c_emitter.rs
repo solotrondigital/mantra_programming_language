@@ -172,6 +172,23 @@ impl<'a> CEmitter<'a> {
 
     fn write_forward_declarations(&mut self, program: &Program) {
         self.write_line("/* Forward Declarations */");
+
+        // Collect all class names defined in this program for deduplication.
+        let local_classes: HashSet<String> = program.declarations.iter().filter_map(|d| {
+            if let Declaration::Class(cls) = d { Some(cls.name.clone()) } else { None }
+        }).collect();
+
+        // Emit opaque void typedefs for imported stdlib/framework symbols
+        // (e.g. Database, WebApp, Router from mantra.sql_orm / mantra.web).
+        // These symbols are registered by the checker's imported_symbols set.
+        let mut emitted_imports: HashSet<String> = HashSet::new();
+        for sym in &self.symbols.imported_symbols {
+            if !local_classes.contains(sym) && emitted_imports.insert(sym.clone()) {
+                // Emit as opaque typedef so `Database* db;` compiles cleanly.
+                self.write_line(&format!("typedef void {};", sym));
+            }
+        }
+
         for decl in &program.declarations {
             match decl {
                 Declaration::Class(cls) => {
@@ -576,6 +593,10 @@ impl<'a> CEmitter<'a> {
                     if self.symbols.classes.contains_key(name) {
                         return format!("{}*", name);
                     }
+                    // Imported type calls return void* (opaque)
+                    if self.symbols.imported_symbols.contains(name) {
+                        return "void*".to_string();
+                    }
                     if let Some(f) = self.symbols.functions.get(name) {
                         return self.type_to_c(&f.return_type);
                     }
@@ -881,6 +902,25 @@ impl<'a> CEmitter<'a> {
                         let arg_strs: Vec<String> = args.iter().map(|a| self.expr_to_c(a)).collect();
                         return format!("{}_new({})", name, arg_strs.join(", "));
                     }
+                    // `len(x)` free-function: dispatch based on argument type
+                    if name == "len" {
+                        if let Some(arg) = args.first() {
+                            let arg_s = self.expr_to_c(arg);
+                            let arg_ty = self.infer_expr_c_type(arg);
+                            if arg_ty == "MantraList*" {
+                                return format!("mantra_list_len({})", arg_s);
+                            } else {
+                                // Treat as string length
+                                return format!("(MantraInt)strlen({})", arg_s);
+                            }
+                        }
+                        return "0".to_string();
+                    }
+                    // Imported/stdlib type constructor call (e.g. Database.connect is handled below,
+                    // bare imported-class instantiation: return NULL stub)
+                    if self.symbols.imported_symbols.contains(name) {
+                        return "NULL /* imported-type stub */".to_string();
+                    }
                 }
                 let callee_s = self.expr_to_c(callee);
                 let arg_strs: Vec<String> = args.iter().map(|a| self.expr_to_c(a)).collect();
@@ -892,6 +932,10 @@ impl<'a> CEmitter<'a> {
                     if self.symbols.classes.contains_key(cls_name) {
                         let arg_strs: Vec<String> = args.iter().map(|a| self.expr_to_c(a)).collect();
                         return format!("{}_{}({})", cls_name, method, arg_strs.join(", "));
+                    }
+                    // Imported stdlib type (e.g. Database.connect) — return opaque NULL stub
+                    if self.symbols.imported_symbols.contains(cls_name) {
+                        return "NULL /* imported-type static-method stub */".to_string();
                     }
                 }
 
@@ -975,6 +1019,10 @@ impl<'a> CEmitter<'a> {
 
                 if self.symbols.classes.contains_key(&target_class) {
                     format!("{}_{}({})", target_class, method, arg_strs.join(", "))
+                } else if self.symbols.imported_symbols.contains(&target_class)
+                    || target_class == "void" {
+                    // Method call on an imported opaque type — stub as NULL
+                    "NULL /* imported-type instance-method stub */".to_string()
                 } else if let Some(ref cur) = self.current_class {
                     format!("{}_{}({})", cur, method, arg_strs.join(", "))
                 } else {

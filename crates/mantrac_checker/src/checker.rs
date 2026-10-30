@@ -245,12 +245,17 @@ impl TypeChecker {
                                                         } else {
                                                             Type::Any
                                                         };
+                                                        let vis = if field.starts_with('_') {
+                                                            Visibility::Private
+                                                        } else {
+                                                            Visibility::Pub
+                                                        };
                                                         fields.insert(
                                                             field.clone(),
                                                             FieldSymbol {
                                                                 name: field.clone(),
                                                                 ty: inferred,
-                                                                visibility: Visibility::Private,
+                                                                visibility: vis,
                                                                 span: m.span,
                                                             },
                                                         );
@@ -328,6 +333,16 @@ impl TypeChecker {
                             span: f.span,
                         },
                     );
+                }
+                Declaration::Import { module, alias, span: _ } => {
+                    if let Some(al) = alias {
+                        self.symbols.imported_symbols.insert(al.clone());
+                    }
+                    for part in module {
+                        if part != "*" {
+                            self.symbols.imported_symbols.insert(part.clone());
+                        }
+                    }
                 }
                 _ => {}
             }
@@ -808,6 +823,8 @@ impl TypeChecker {
                     var.ty.clone()
                 } else if self.symbols.classes.contains_key(name) {
                     Type::Custom(name.clone(), Vec::new())
+                } else if self.symbols.imported_symbols.contains(name) {
+                    Type::Any
                 } else {
                     self.diagnostics.push(Diagnostic::error(
                         "E0112",
@@ -835,7 +852,11 @@ impl TypeChecker {
                         Type::Bool
                     }
                     BinaryOp::And | BinaryOp::Or => {
-                        if l_ty != Type::Bool || r_ty != Type::Bool {
+                        // Allow Any (unresolved imported types) to flow through without errors.
+                        // Only emit E0113 when both sides are concretely non-boolean.
+                        let l_bad = l_ty != Type::Bool && l_ty != Type::Any && l_ty != Type::None;
+                        let r_bad = r_ty != Type::Bool && r_ty != Type::Any && r_ty != Type::None;
+                        if l_bad || r_bad {
                             self.diagnostics.push(Diagnostic::error(
                                 "E0113",
                                 "Logical operators 'and' and 'or' require boolean operands",

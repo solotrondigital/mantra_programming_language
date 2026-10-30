@@ -1,6 +1,6 @@
 use mantrac_ast::{Type, Visibility};
 use mantrac_lexer::span::Span;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
 pub struct FieldSymbol {
@@ -58,5 +58,6 @@ pub struct GlobalSymbolTable {
     pub classes: HashMap<String, ClassSymbol>,
     pub interfaces: HashMap<String, InterfaceSymbol>,
     pub functions: HashMap<String, FunctionSymbol>,
+    pub imported_symbols: HashSet<String>,
 }
 

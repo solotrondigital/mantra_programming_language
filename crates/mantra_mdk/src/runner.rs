@@ -12,13 +12,7 @@ pub struct Runner;
 impl Runner {
     pub fn run_target(target_path: Option<&str>) -> Result<(), String> {
         let file_path = Self::resolve_entry_file(target_path)?;
-        let source = fs::read_to_string(&file_path)
-            .map_err(|e| format!("Failed to read {}: {}", file_path.display(), e))?;
-
-        let mut lexer = Lexer::new(&source);
-        let tokens = lexer.tokenize().map_err(|e| e.message)?;
-        let mut parser = Parser::new(tokens);
-        let program = parser.parse().map_err(|e| e.message)?;
+        let (program, source) = Self::load_and_merge_project(&file_path)?;
 
         let mut checker = TypeChecker::new();
         if let Err(diags) = checker.check_program(&program) {
@@ -36,13 +30,7 @@ impl Runner {
 
     pub fn build_target(target_path: Option<&str>, release: bool, custom_output: Option<&str>) -> Result<PathBuf, String> {
         let file_path = Self::resolve_entry_file(target_path)?;
-        let source = fs::read_to_string(&file_path)
-            .map_err(|e| format!("Failed to read {}: {}", file_path.display(), e))?;
-
-        let mut lexer = Lexer::new(&source);
-        let tokens = lexer.tokenize().map_err(|e| e.message)?;
-        let mut parser = Parser::new(tokens);
-        let program = parser.parse().map_err(|e| e.message)?;
+        let (program, source) = Self::load_and_merge_project(&file_path)?;
 
         let mut checker = TypeChecker::new();
         if let Err(diags) = checker.check_program(&program) {
@@ -86,13 +74,7 @@ impl Runner {
         }
 
         let file_path = Self::resolve_entry_file(target_path)?;
-        let source = fs::read_to_string(&file_path)
-            .map_err(|e| format!("Failed to read {}: {}", file_path.display(), e))?;
-
-        let mut lexer = Lexer::new(&source);
-        let tokens = lexer.tokenize().map_err(|e| e.message)?;
-        let mut parser = Parser::new(tokens);
-        let program = parser.parse().map_err(|e| e.message)?;
+        let (program, source) = Self::load_and_merge_project(&file_path)?;
 
         let mut checker = TypeChecker::new();
         if let Err(diags) = checker.check_program(&program) {
@@ -183,13 +165,7 @@ impl Runner {
 
     pub fn check_target(target_path: Option<&str>) -> Result<(), String> {
         let file_path = Self::resolve_entry_file(target_path)?;
-        let source = fs::read_to_string(&file_path)
-            .map_err(|e| format!("Failed to read {}: {}", file_path.display(), e))?;
-
-        let mut lexer = Lexer::new(&source);
-        let tokens = lexer.tokenize().map_err(|e| e.message)?;
-        let mut parser = Parser::new(tokens);
-        let program = parser.parse().map_err(|e| e.message)?;
+        let (program, source) = Self::load_and_merge_project(&file_path)?;
 
         let mut checker = TypeChecker::new();
         if let Err(diags) = checker.check_program(&program) {
@@ -249,6 +225,87 @@ impl Runner {
         } else {
             Ok(())
         }
+    }
+
+    fn load_and_merge_project(entry_file: &Path) -> Result<(mantrac_ast::Program, String), String> {
+        let entry_source = fs::read_to_string(entry_file)
+            .map_err(|e| format!("Failed to read {}: {}", entry_file.display(), e))?;
+
+        let parent_dir = entry_file.parent().unwrap_or_else(|| Path::new("."));
+        let root_dir = if parent_dir.ends_with("src") || parent_dir.ends_with("lib") {
+            parent_dir.parent().unwrap_or_else(|| Path::new("."))
+        } else {
+            Path::new(".")
+        };
+
+        let mut files_to_read = Vec::new();
+
+        // Recursively find all .mantra files in the project
+        fn visit_dir(dir: &Path, files: &mut Vec<PathBuf>) {
+            if let Ok(entries) = fs::read_dir(dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                    if name.starts_with('.') || name == "target" || name == "dist" || name == "build" {
+                        continue;
+                    }
+                    if path.is_dir() {
+                        visit_dir(&path, files);
+                    } else if path.extension().and_then(|e| e.to_str()) == Some("mantra") {
+                        files.push(path);
+                    }
+                }
+            }
+        }
+
+        let search_dirs = [root_dir.join("src"), root_dir.join("lib")];
+        for d in &search_dirs {
+            if d.exists() && d.is_dir() {
+                visit_dir(d, &mut files_to_read);
+            }
+        }
+
+        // Sort to ensure deterministic merge order
+        files_to_read.sort();
+
+        // Deduplicate and ensure entry_file is processed
+        let canonical_entry = entry_file.canonicalize().unwrap_or_else(|_| entry_file.to_path_buf());
+
+        let mut merged_declarations = Vec::new();
+        let mut seen_canonical = std::collections::HashSet::new();
+
+        // Process other files first so their declarations are available before entry point
+        for file in &files_to_read {
+            let canon = file.canonicalize().unwrap_or_else(|_| file.to_path_buf());
+            if canon == canonical_entry {
+                continue;
+            }
+            if seen_canonical.insert(canon) {
+                if let Ok(src) = fs::read_to_string(file) {
+                    let mut lexer = Lexer::new(&src);
+                    match lexer.tokenize() {
+                        Ok(tokens) => {
+                            let mut parser = Parser::new(tokens);
+                            match parser.parse() {
+                                Ok(prog) => merged_declarations.extend(prog.declarations),
+                                Err(e) => return Err(format!("Parse error in {}: {}", file.display(), e.message)),
+                            }
+                        }
+                        Err(e) => return Err(format!("Lexer error in {}: {}", file.display(), e.message)),
+                    }
+                }
+            }
+        }
+
+        // Now parse the entry file
+        let mut entry_lexer = Lexer::new(&entry_source);
+        let entry_tokens = entry_lexer.tokenize().map_err(|e| e.message)?;
+        let mut entry_parser = Parser::new(entry_tokens);
+        let entry_prog = entry_parser.parse().map_err(|e| e.message)?;
+
+        merged_declarations.extend(entry_prog.declarations);
+
+        Ok((mantrac_ast::Program { declarations: merged_declarations }, entry_source))
     }
 
     fn resolve_entry_file(target_path: Option<&str>) -> Result<PathBuf, String> {

@@ -93,7 +93,61 @@ impl Parser {
             let start_span = self.previous().span;
             let mut parts = vec![self.consume_ident("Expected package/module name to import")?];
             while self.match_token(&TokenKind::Dot) {
-                parts.push(self.consume_ident("Expected identifier in import path")?);
+                if self.match_token(&TokenKind::LBrace) {
+                    while !self.check(&TokenKind::RBrace) && !self.is_eof() {
+                        let symbol = self.consume_ident("Expected symbol name inside import list")?;
+                        parts.push(symbol);
+                        if !self.match_token(&TokenKind::Comma) {
+                            break;
+                        }
+                    }
+                    self.consume(&TokenKind::RBrace, "Expected '}' after import list")?;
+                    break;
+                } else if self.match_token(&TokenKind::Star) {
+                    parts.push("*".to_string());
+                    break;
+                } else {
+                    parts.push(self.consume_ident("Expected identifier in import path")?);
+                }
+            }
+            let alias = if self.match_token(&TokenKind::As) {
+                Some(self.consume_ident("Expected alias name after 'as'")?)
+            } else {
+                None
+            };
+            self.consume_newline_or_eof()?;
+            return Ok(Declaration::Import {
+                module: parts,
+                alias,
+                span: start_span,
+            });
+        }
+
+        if self.match_token(&TokenKind::From) {
+            let start_span = self.previous().span;
+            let mut parts = vec![self.consume_ident("Expected module name after 'from'")?];
+            while self.match_token(&TokenKind::Dot) {
+                parts.push(self.consume_ident("Expected identifier in module path")?);
+            }
+            self.consume(&TokenKind::Import, "Expected 'import' after module path in from-import")?;
+            if self.match_token(&TokenKind::Star) {
+                parts.push("*".to_string());
+            } else if self.match_token(&TokenKind::LBrace) {
+                while !self.check(&TokenKind::RBrace) && !self.is_eof() {
+                    let symbol = self.consume_ident("Expected symbol name in import list")?;
+                    parts.push(symbol);
+                    if !self.match_token(&TokenKind::Comma) {
+                        break;
+                    }
+                }
+                self.consume(&TokenKind::RBrace, "Expected '}' after import list")?;
+            } else {
+                let first = self.consume_ident("Expected symbol to import")?;
+                parts.push(first);
+                while self.match_token(&TokenKind::Comma) {
+                    let next = self.consume_ident("Expected symbol to import after comma")?;
+                    parts.push(next);
+                }
             }
             let alias = if self.match_token(&TokenKind::As) {
                 Some(self.consume_ident("Expected alias name after 'as'")?)
@@ -682,6 +736,24 @@ impl Parser {
         // Parse expression or assignment
         let expr = self.parse_expr()?;
 
+        // Optional type annotation in assignment: target: Type = value
+        if self.match_token(&TokenKind::Colon) {
+            let _ann_ty = self.parse_type()?;
+            if self.match_token(&TokenKind::Eq) {
+                let value = self.parse_expr()?;
+                let span = expr.span().merge(value.span());
+                self.consume_newline_or_eof()?;
+                return Ok(Stmt::Assign {
+                    target: expr,
+                    value,
+                    span,
+                });
+            } else {
+                self.consume_newline_or_eof()?;
+                return Ok(Stmt::Expr(expr));
+            }
+        }
+
         if self.match_token(&TokenKind::Eq) {
             let value = self.parse_expr()?;
             let span = expr.span().merge(value.span());
@@ -1074,34 +1146,65 @@ impl Parser {
             "None" => Ok(Type::None),
             "Any" => Ok(Type::Any),
             "Option" => {
-                self.consume(&TokenKind::Lt, "Expected '<' after Option")?;
-                let inner = self.parse_type()?;
-                self.consume(&TokenKind::Gt, "Expected '>' after Option type parameter")?;
-                Ok(Type::Option(Box::new(inner)))
+                let closing = if self.match_token(&TokenKind::Lt) {
+                    Some(TokenKind::Gt)
+                } else if self.match_token(&TokenKind::LBracket) {
+                    Some(TokenKind::RBracket)
+                } else {
+                    None
+                };
+                if let Some(close_tok) = closing {
+                    let inner = self.parse_type()?;
+                    self.consume(&close_tok, "Expected closing bracket after Option type parameter")?;
+                    Ok(Type::Option(Box::new(inner)))
+                } else {
+                    Ok(Type::Option(Box::new(Type::Any)))
+                }
             }
             "Result" => {
-                self.consume(&TokenKind::Lt, "Expected '<' after Result")?;
-                let ok = self.parse_type()?;
-                self.consume(&TokenKind::Comma, "Expected ',' in Result type")?;
-                let err = self.parse_type()?;
-                self.consume(&TokenKind::Gt, "Expected '>' after Result type parameters")?;
-                Ok(Type::Result(Box::new(ok), Box::new(err)))
+                let closing = if self.match_token(&TokenKind::Lt) {
+                    Some(TokenKind::Gt)
+                } else if self.match_token(&TokenKind::LBracket) {
+                    Some(TokenKind::RBracket)
+                } else {
+                    None
+                };
+                if let Some(close_tok) = closing {
+                    let ok = self.parse_type()?;
+                    self.consume(&TokenKind::Comma, "Expected ',' in Result type")?;
+                    let err = self.parse_type()?;
+                    self.consume(&close_tok, "Expected closing bracket after Result type parameters")?;
+                    Ok(Type::Result(Box::new(ok), Box::new(err)))
+                } else {
+                    Ok(Type::Result(Box::new(Type::Any), Box::new(Type::Any)))
+                }
             }
             "List" => {
                 if self.match_token(&TokenKind::Lt) {
                     let elem = self.parse_type()?;
                     self.consume(&TokenKind::Gt, "Expected '>' after List type parameter")?;
                     Ok(Type::List(Box::new(elem)))
+                } else if self.match_token(&TokenKind::LBracket) {
+                    let elem = self.parse_type()?;
+                    self.consume(&TokenKind::RBracket, "Expected ']' after List type parameter")?;
+                    Ok(Type::List(Box::new(elem)))
                 } else {
                     Ok(Type::List(Box::new(Type::Any)))
                 }
             }
             "Map" => {
-                if self.match_token(&TokenKind::Lt) {
+                let closing = if self.match_token(&TokenKind::Lt) {
+                    Some(TokenKind::Gt)
+                } else if self.match_token(&TokenKind::LBracket) {
+                    Some(TokenKind::RBracket)
+                } else {
+                    None
+                };
+                if let Some(close_tok) = closing {
                     let k = self.parse_type()?;
                     self.consume(&TokenKind::Comma, "Expected ',' in Map type")?;
                     let v = self.parse_type()?;
-                    self.consume(&TokenKind::Gt, "Expected '>' after Map type parameters")?;
+                    self.consume(&close_tok, "Expected closing bracket after Map type parameters")?;
                     Ok(Type::Map(Box::new(k), Box::new(v)))
                 } else {
                     Ok(Type::Map(Box::new(Type::Any), Box::new(Type::Any)))
@@ -1109,14 +1212,21 @@ impl Parser {
             }
             custom => {
                 let mut type_args = Vec::new();
-                if self.match_token(&TokenKind::Lt) {
+                let closing = if self.match_token(&TokenKind::Lt) {
+                    Some(TokenKind::Gt)
+                } else if self.match_token(&TokenKind::LBracket) {
+                    Some(TokenKind::RBracket)
+                } else {
+                    None
+                };
+                if let Some(close_tok) = closing {
                     loop {
                         type_args.push(self.parse_type()?);
                         if !self.match_token(&TokenKind::Comma) {
                             break;
                         }
                     }
-                    self.consume(&TokenKind::Gt, "Expected '>' after type parameters")?;
+                    self.consume(&close_tok, "Expected closing bracket after type parameters")?;
                 }
                 Ok(Type::Custom(custom.to_string(), type_args))
             }
