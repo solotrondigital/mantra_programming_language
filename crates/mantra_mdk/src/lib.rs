@@ -1,5 +1,6 @@
 pub mod audit;
 pub mod bench;
+pub mod device_selector;
 pub mod docgen;
 pub mod env_loader;
 pub mod formatter;
@@ -13,6 +14,7 @@ pub mod scaffold;
 
 pub use audit::Auditor;
 pub use bench::BenchRunner;
+pub use device_selector::{DetectedDevice, DeviceKind, DeviceSelector};
 pub use docgen::DocGenerator;
 pub use env_loader::EnvLoader;
 pub use formatter::Formatter;

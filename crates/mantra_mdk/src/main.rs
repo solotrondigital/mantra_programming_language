@@ -1,5 +1,6 @@
 pub mod audit;
 pub mod bench;
+pub mod device_selector;
 pub mod docgen;
 pub mod env_loader;
 pub mod formatter;
@@ -13,6 +14,7 @@ pub mod scaffold;
 
 use audit::Auditor;
 use bench::BenchRunner;
+use device_selector::DeviceSelector;
 use docgen::DocGenerator;
 use formatter::Formatter;
 use linter::Linter;
@@ -184,7 +186,7 @@ fn main() {
             }
         }
         "run" => {
-            let mut device = "native".to_string();
+            let mut device: Option<String> = None;
             let mut web_port: u16 = 8080;
             let mut defines_file: Option<String> = None;
             let mut target: Option<String> = None;
@@ -195,17 +197,17 @@ fn main() {
                     "-d" | "--device-id" => {
                         i += 1;
                         if i < args.len() {
-                            device = args[i].clone();
+                            device = Some(args[i].clone());
                         } else {
                             eprintln!("Error: -d requires a device name (e.g. -d android, -d ios, -d chrome)");
                             exit(1);
                         }
                     }
                     opt if opt.starts_with("-d=") => {
-                        device = opt.trim_start_matches("-d=").to_string();
+                        device = Some(opt.trim_start_matches("-d=").to_string());
                     }
                     opt if opt.starts_with("--device-id=") => {
-                        device = opt.trim_start_matches("--device-id=").to_string();
+                        device = Some(opt.trim_start_matches("--device-id=").to_string());
                     }
                     "--web-port" => {
                         i += 1;
@@ -233,39 +235,24 @@ fn main() {
                 i += 1;
             }
 
-            match device.to_lowercase().as_str() {
-                "android" => {
-                    if let Err(e) = MobileBuilder::run_mobile("android", defines_file.as_deref()) {
-                        eprintln!("Android run error: {}", e);
-                        exit(1);
-                    }
+            if let Some(ref dev) = device {
+                if let Err(e) = DeviceSelector::run_with_device_id(
+                    dev,
+                    target.as_deref(),
+                    web_port,
+                    defines_file.as_deref(),
+                ) {
+                    eprintln!("Run error: {}", e);
+                    exit(1);
                 }
-                "ios" => {
-                    if let Err(e) = MobileBuilder::run_mobile("ios", defines_file.as_deref()) {
-                        eprintln!("iOS run error: {}", e);
-                        exit(1);
-                    }
-                }
-                "chrome" | "web" => {
-                    if let Err(e) = Runner::run_web_dev(web_port, defines_file.as_deref()) {
-                        eprintln!("Web run error: {}", e);
-                        exit(1);
-                    }
-                }
-                _ => {
-                    if let Some(ref df) = defines_file {
-                        match env_loader::EnvLoader::load_file(Path::new(df)) {
-                            Ok(vars) => env_loader::EnvLoader::print_summary(df, &vars),
-                            Err(e) => {
-                                eprintln!("Error loading defines: {}", e);
-                                exit(1);
-                            }
-                        }
-                    }
-                    if let Err(e) = Runner::run_target(target.as_deref()) {
-                        eprintln!("Error running target: {}", e);
-                        exit(1);
-                    }
+            } else {
+                if let Err(e) = DeviceSelector::select_and_run(
+                    target.as_deref(),
+                    web_port,
+                    defines_file.as_deref(),
+                ) {
+                    eprintln!("Run error: {}", e);
+                    exit(1);
                 }
             }
         }

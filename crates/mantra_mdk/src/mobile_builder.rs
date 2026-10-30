@@ -658,7 +658,7 @@ fn detect_available_ios_simulator() -> Option<(String, String)> {
     None
 }
 
-fn find_adb() -> Option<PathBuf> {
+pub fn find_adb() -> Option<PathBuf> {
     if let Ok(output) = std::process::Command::new("which").arg("adb").output() {
         if output.status.success() {
             let path_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
