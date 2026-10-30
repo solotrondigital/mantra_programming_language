@@ -63,19 +63,19 @@ impl MobileBuilder {
         let rel_dir = if release { "release" } else { "debug" };
         let apk_filename = if release { "app-release-unsigned.apk" } else { "app-debug.apk" };
 
-        let primary_output = root.join("target/android/app/build/outputs/apk").join(rel_dir).join(apk_filename);
-        let secondary_output = root.join("target/android/app/build/outputs/apk").join(rel_dir).join("app-release.apk");
-        let legacy_output = root.join("android/app/build/outputs/apk").join(rel_dir).join(apk_filename);
+        let primary_output = root.join("android/app/build/outputs/apk").join(rel_dir).join(apk_filename);
+        let secondary_output = root.join("android/app/build/outputs/apk").join(rel_dir).join("app-release.apk");
         let platform_output = root.join("platforms/android/app/build/outputs/apk").join(rel_dir).join(apk_filename);
+        let target_output = root.join("target/android/app/build/outputs/apk").join(rel_dir).join(apk_filename);
 
         write_artifact(&primary_output, &apk_bytes)?;
         if release {
             let _ = write_artifact(&secondary_output, &apk_bytes);
         }
-        let _ = write_artifact(&legacy_output, &apk_bytes);
         if root.join("platforms/android").exists() {
             let _ = write_artifact(&platform_output, &apk_bytes);
         }
+        let _ = write_artifact(&target_output, &apk_bytes);
 
         let display_path = primary_output.to_string_lossy().to_string();
 
@@ -109,17 +109,19 @@ impl MobileBuilder {
         // Package actual AAB archive
         let aab_bytes = Self::package_android_aab(&android_dir, &www_dir)?;
 
-        let primary_output = root.join("target/android/app/build/outputs/bundle/release/app-release.aab");
-        let apk_mirror_output = root.join("target/android/app/build/outputs/apk/release/app-release.aab");
-        let legacy_output = root.join("android/app/build/outputs/bundle/release/app-release.aab");
+        let primary_output = root.join("android/app/build/outputs/bundle/release/app-release.aab");
+        let apk_mirror_output = root.join("android/app/build/outputs/apk/release/app-release.aab");
         let platform_output = root.join("platforms/android/app/build/outputs/bundle/release/app-release.aab");
+        let target_output = root.join("target/android/app/build/outputs/bundle/release/app-release.aab");
+        let target_mirror = root.join("target/android/app/build/outputs/apk/release/app-release.aab");
 
         write_artifact(&primary_output, &aab_bytes)?;
         let _ = write_artifact(&apk_mirror_output, &aab_bytes);
-        let _ = write_artifact(&legacy_output, &aab_bytes);
         if root.join("platforms/android").exists() {
             let _ = write_artifact(&platform_output, &aab_bytes);
         }
+        let _ = write_artifact(&target_output, &aab_bytes);
+        let _ = write_artifact(&target_mirror, &aab_bytes);
 
         let display_path = primary_output.to_string_lossy().to_string();
         let apk_mirror_display = apk_mirror_output.to_string_lossy().to_string();
@@ -278,11 +280,15 @@ impl MobileBuilder {
                 println!("\n>> Preparing Android debug package...");
                 let _ = Self::build_apk(root, false, defines_file);
 
-                let apk_path = root.join("target/android/app/build/outputs/apk/debug/app-debug.apk");
+                let apk_path = root.join("android/app/build/outputs/apk/debug/app-debug.apk");
+                let platform_apk = root.join("platforms/android/app/build/outputs/apk/debug/app-debug.apk");
+                let target_apk = root.join("target/android/app/build/outputs/apk/debug/app-debug.apk");
                 let apk_to_install = if apk_path.exists() {
                     apk_path
+                } else if platform_apk.exists() {
+                    platform_apk
                 } else {
-                    root.join("platforms/android/app/build/outputs/apk/debug/app-debug.apk")
+                    target_apk
                 };
 
                 if apk_to_install.exists() {
