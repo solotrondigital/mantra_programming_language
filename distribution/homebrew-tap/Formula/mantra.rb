@@ -1,6 +1,6 @@
 # ==============================================================================
 # Homebrew Formula for Mantra Programming Language Toolchain
-# Tap: solotrondigital/tap (or mantra-lang/tap)
+# Tap: solotrondigital/tap
 # Formula: mantra.rb
 #
 # Usage:
@@ -12,39 +12,35 @@
 class Mantra < Formula
   desc "Mantra programming language toolchain — Compiler, MDK, LSP, and Runtime"
   homepage "https://solotrondigital.github.io/mantra_website"
-  version "0.4.0"
-  license "MIT"
+  version "0.5.0"
+  license "MIT OR GPL-3.0"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.4.0/mantra-0.4.0-aarch64-apple-darwin.tar.gz"
-      sha256 "a95cf61a6aae982fd7880afdb147692465c4ec5042e261d5a074461d2d1d595d"
+      url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.5.0/Mantra-0.5.0-macOS.dmg"
+      sha256 "82695af8348492832200d6573260c316c1427e1c8de6a98a698355b9c927f3b1"
     else
-      url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.4.0/mantra-0.4.0-x86_64-apple-darwin.tar.gz"
-      sha256 "a95cf61a6aae982fd7880afdb147692465c4ec5042e261d5a074461d2d1d595d"
+      url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.5.0/Mantra-0.5.0-macOS.dmg"
+      sha256 "82695af8348492832200d6573260c316c1427e1c8de6a98a698355b9c927f3b1"
     end
   end
 
   on_linux do
-    if Hardware::CPU.intel?
-      url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.4.0/mantra-0.4.0-x86_64-unknown-linux-gnu.tar.gz"
-      sha256 "a95cf61a6aae982fd7880afdb147692465c4ec5042e261d5a074461d2d1d595d"
-    end
+    url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.5.0/mantra-0.5.0-linux.tar.gz"
+    sha256 "657b5b5e819acaf52ec1c5a403e0b27e17c51f3c238f206021295826e043d30a"
   end
 
-  depends_on "llvm" => :recommended # For native compilation backend (Clang)
+  depends_on "llvm" => :recommended
 
   def install
     bin.install Dir["bin/*"]
     lib.install Dir["lib/*"] if File.directory?("lib")
     include.install Dir["include/*"] if File.directory?("include")
     share.install Dir["share/*"] if File.directory?("share")
-    prefix.install Dir["templates"] if File.directory?("templates")
   end
 
   test do
     system bin/"mantra", "--version"
-    system bin/"mantrac", "--version"
-    system bin/"mantra-lsp", "--version"
+    system bin/"mantrac", "--help"
   end
 end

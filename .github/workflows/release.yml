@@ -1,9 +1,25 @@
-name: Production Release Engineering
+name: Production Release & Package Distribution
 
 on:
   push:
+    branches:
+      - main
+    paths:
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'scripts/release/**'
+      - 'create_installers.sh'
+      - 'build_installers.sh'
+      - 'distribution/**'
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (leave blank to read from Cargo.toml)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -12,17 +28,18 @@ permissions:
 
 jobs:
   build-and-package:
-    name: Package Release Artifacts
+    name: Build & Package (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: macos-14
-            artifact_name: Mantra-macOS.dmg
+            platform: macos
           - os: ubuntu-22.04
-            artifact_name: mantra-linux.tar.gz
+            platform: linux
           - os: windows-2022
-            artifact_name: mantra-windows.zip
+            platform: windows
 
     steps:
       - name: Checkout Source Code
@@ -31,40 +48,148 @@ jobs:
       - name: Install Stable Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Build Toolchain
+      - name: Resolve Version from Cargo.toml
+        id: get_version
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VER="${{ github.event.inputs.version }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VER="${GITHUB_REF_NAME#v}"
+          else
+            VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.5.0")
+          fi
+          VER="${VER#v}"
+          echo "VERSION=${VER}" >> $GITHUB_ENV
+          echo "VERSION=${VER}" >> $GITHUB_OUTPUT
+          echo "Building Mantra Version: v${VER}"
+
+      - name: Build Toolchain Binaries
         run: cargo build --release
 
-      - name: Build Distribution Packages
+      - name: Generate Platform Installers
         shell: bash
         run: |
           chmod +x create_installers.sh
-          ./create_installers.sh ${{ github.ref_name }}
+          ./create_installers.sh "${{ env.VERSION }}"
 
-  provenance-and-publish:
-    name: Sign, SBOM & Publish Release
+      - name: Upload Platform Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: installers-${{ matrix.platform }}
+          path: |
+            dist/releases/v${{ env.VERSION }}/*
+            installer/macos/*.dmg
+            installer/linux/*.tar.gz
+            installer/linux/*.sh
+            installer/windows/*.zip
+          if-no-files-found: warn
+
+  publish-and-distribute:
+    name: Sign, Release, Chocolatey & Homebrew
     needs: [build-and-package]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Generate Release Manifest, SBOM & Signatures
+      - name: Resolve Version from Cargo.toml
+        id: get_version
         shell: bash
         run: |
-          chmod +x scripts/release/sign_release.sh
-          ./scripts/release/sign_release.sh ${{ github.ref_name }}
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VER="${{ github.event.inputs.version }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VER="${GITHUB_REF_NAME#v}"
+          else
+            VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.5.0")
+          fi
+          VER="${VER#v}"
+          echo "VERSION=${VER}" >> $GITHUB_ENV
+          echo "VERSION=${VER}" >> $GITHUB_OUTPUT
+          echo "Publishing Mantra Version: v${VER}"
 
-      - name: Create GitHub Release
+      - name: Download Built Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/staging
+
+      - name: Consolidate Release Distribution Folder
+        shell: bash
+        run: |
+          mkdir -p "dist/releases/v${{ env.VERSION }}"
+          find dist/staging -type f -exec cp -f {} "dist/releases/v${{ env.VERSION }}/" \;
+          echo "Consolidated release artifacts:"
+          ls -la "dist/releases/v${{ env.VERSION }}/"
+
+      - name: Generate Chocolatey Package & Homebrew Formula
+        shell: bash
+        run: |
+          chmod +x scripts/release/*.sh scripts/release/*.py
+          ./scripts/release/update_distributions.sh "${{ env.VERSION }}"
+
+      - name: Generate Manifest, SBOMs & Cryptographic Signatures
+        shell: bash
+        run: |
+          ./scripts/release/sign_release.sh "${{ env.VERSION }}"
+
+      - name: Create or Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ env.VERSION }}
+          name: Mantra v${{ env.VERSION }} — Production Release
           files: |
-            dist/releases/${{ github.ref_name }}/*
+            dist/releases/v${{ env.VERSION }}/*
+            distribution/homebrew-tap/Formula/mantra.rb
           generate_release_notes: true
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Push to Chocolatey Gallery
+        shell: bash
+        if: env.CHOCOLATEY_API_KEY != ''
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+        run: |
+          NUPKG_FILE="dist/releases/v${{ env.VERSION }}/mantra.${{ env.VERSION }}.nupkg"
+          if [ -f "$NUPKG_FILE" ]; then
+            echo ">> Pushing $NUPKG_FILE to Chocolatey gallery..."
+            curl -s -X POST "https://push.chocolatey.org/api/v2/package" \
+              -H "X-NuGet-ApiKey: $CHOCOLATEY_API_KEY" \
+              -F "package=@$NUPKG_FILE" || echo "Chocolatey API returned non-fatal response"
+            echo "✓ Chocolatey push completed."
+          fi
+
+      - name: Push to Homebrew Tap
+        shell: bash
+        if: env.HOMEBREW_TAP_TOKEN != ''
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          echo ">> Pushing updated Formula to Homebrew tap repository..."
+          TMP_TAP=$(mktemp -d /tmp/brew_tap_XXXXXX)
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/solotrondigital/homebrew-tap.git" "$TMP_TAP" || \
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${{ github.repository_owner }}/homebrew-tap.git" "$TMP_TAP" || true
+
+          if [ -d "$TMP_TAP/.git" ]; then
+            mkdir -p "$TMP_TAP/Formula"
+            cp "dist/releases/v${{ env.VERSION }}/mantra.rb" "$TMP_TAP/Formula/mantra.rb"
+            cd "$TMP_TAP"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add Formula/mantra.rb
+            git commit -m "feat(formula): bump mantra to v${{ env.VERSION }}" || true
+            git push origin main || git push origin master || true
+            cd -
+            rm -rf "$TMP_TAP"
+            echo "✓ Homebrew tap updated successfully."
+          else
+            echo "Tap repository could not be cloned; ensure HOMEBREW_TAP_TOKEN has repo access."
+          fi

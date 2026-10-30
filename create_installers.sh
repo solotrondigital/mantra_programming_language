@@ -50,11 +50,14 @@ for arg in "$@"; do
 done
 
 if [ -z "$VERSION_ARG" ]; then
-    if [ -f "$PKG_DIR/crates/mantrac/Cargo.toml" ]; then
+    if [ -f "$PKG_DIR/Cargo.toml" ]; then
+        VERSION_ARG=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' "$PKG_DIR/Cargo.toml")
+    fi
+    if [ -z "$VERSION_ARG" ] && [ -f "$PKG_DIR/crates/mantrac/Cargo.toml" ]; then
         VERSION_ARG=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' "$PKG_DIR/crates/mantrac/Cargo.toml")
     fi
 fi
-VERSION_ARG="${VERSION_ARG:-0.2.0}"
+VERSION_ARG="${VERSION_ARG:-0.5.0}"
 VERSION="${VERSION_ARG#v}"
 VERSION="${VERSION#V}"
 
@@ -635,18 +638,51 @@ fi
 # ------------------------------------------------------------------------------
 echo ">> Deploying generated installer packages..."
 
-# Target: /Users/user/Documents/workspace/Mantra-Development/mantra_programming_language/installer
+# Target: installer directory
 mkdir -p "$DEST_PKG_INSTALLER"
 rsync -a --delete "$FINAL_STAGE/" "$DEST_PKG_INSTALLER/"
 echo "   ✓ Successfully populated: $DEST_PKG_INSTALLER"
 
-# Also update dist/ directory with versioned and alias DMGs
-mkdir -p "$DEST_PKG_DIST"
+# Also sync to website installer directory if available
+if [ -d "$WEB_DIR" ]; then
+    mkdir -p "$WEB_DIR/installer"
+    rsync -a --delete "$FINAL_STAGE/" "$WEB_DIR/installer/" 2>/dev/null || true
+    echo "   ✓ Successfully synced to website: $WEB_DIR/installer"
+fi
+
+# Populate dist/ and versioned dist/releases/v${VERSION}
+DEST_RELEASE_DIR="$PKG_DIR/dist/releases/v${VERSION}"
+mkdir -p "$DEST_PKG_DIST" "$DEST_RELEASE_DIR"
+
 if [ -f "$DMG_OUTPUT" ]; then
     cp -f "$DMG_OUTPUT" "$DEST_PKG_DIST/Mantra-${VERSION}-macOS.dmg"
-    cp -f "$DMG_OUTPUT" "$DEST_PKG_DIST/Mantra-0.1.0-macOS.dmg" 2>/dev/null || true
+    cp -f "$DMG_OUTPUT" "$DEST_RELEASE_DIR/Mantra-${VERSION}-macOS.dmg"
 fi
-echo "   ✓ Successfully populated: $DEST_PKG_DIST"
+if [ -f "$TAR_OUTPUT" ]; then
+    cp -f "$TAR_OUTPUT" "$DEST_PKG_DIST/mantra-${VERSION}-linux.tar.gz"
+    cp -f "$TAR_OUTPUT" "$DEST_RELEASE_DIR/mantra-${VERSION}-linux.tar.gz"
+fi
+if [ -f "$RUN_OUTPUT" ]; then
+    cp -f "$RUN_OUTPUT" "$DEST_PKG_DIST/mantra-installer-linux.sh"
+    cp -f "$RUN_OUTPUT" "$DEST_RELEASE_DIR/mantra-installer-linux.sh"
+fi
+if [ -f "$ZIP_OUTPUT" ]; then
+    cp -f "$ZIP_OUTPUT" "$DEST_PKG_DIST/mantra-${VERSION}-windows.zip"
+    cp -f "$ZIP_OUTPUT" "$DEST_RELEASE_DIR/mantra-${VERSION}-windows.zip"
+fi
+echo "   ✓ Successfully populated: $DEST_RELEASE_DIR"
+
+# Generate Chocolatey & Homebrew release distribution packages
+if [ -f "$PKG_DIR/scripts/release/update_distributions.sh" ]; then
+    echo ">> Updating Chocolatey (.nupkg) and Homebrew (mantra.rb)..."
+    bash "$PKG_DIR/scripts/release/update_distributions.sh" "$VERSION" || true
+fi
+
+# Generate Release Manifest, SBOMs (SPDX, CycloneDX) and Checksums
+if [ -f "$PKG_DIR/scripts/release/sign_release.sh" ]; then
+    echo ">> Generating Release Manifest, SBOMs, and Checksums..."
+    bash "$PKG_DIR/scripts/release/sign_release.sh" "$VERSION" || true
+fi
 
 echo ""
 echo "=================================================================="

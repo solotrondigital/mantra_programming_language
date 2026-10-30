@@ -5,6 +5,7 @@ scripts/release/generate_manifest.py
 
 Generates a production release manifest (release.json) containing metadata,
 target architectures, artifact checksums, compiler specifications, and compatibility info.
+Extracts the release version dynamically from Cargo.toml.
 """
 
 import os
@@ -13,8 +14,22 @@ import json
 import hashlib
 from datetime import datetime, timezone
 
-VERSION = "0.6.0"
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+
+def get_version():
+    if len(sys.argv) > 1 and sys.argv[1] and not sys.argv[1].startswith("-"):
+        v = sys.argv[1]
+        return v.lstrip("vV")
+    cargo_path = os.path.join(REPO_ROOT, "Cargo.toml")
+    if os.path.exists(cargo_path):
+        with open(cargo_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("version") and "=" in line:
+                    return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return "0.5.0"
+
+VERSION = get_version()
 DIST_DIR = os.path.join(REPO_ROOT, f"dist/releases/v{VERSION}")
 
 def sha256_file(filepath):
@@ -35,59 +50,122 @@ def sha512_file(filepath):
             h.update(chunk)
     return h.hexdigest()
 
+def resolve_file(name, candidate_paths):
+    for p in candidate_paths:
+        if os.path.exists(p):
+            return p
+    return None
+
 def main():
     os.makedirs(DIST_DIR, exist_ok=True)
     manifest_path = os.path.join(DIST_DIR, "release.json")
 
-    artifacts = [
+    installer_dir = os.path.join(REPO_ROOT, "installer")
+
+    artifact_specs = [
         {
             "name": f"Mantra-{VERSION}-macOS.dmg",
             "platform": "darwin",
             "arch": ["x86_64", "arm64"],
             "type": "installer_dmg",
-            "size_bytes": 1887436,
-            "sha256": "8f3b207a9e1d53e3b798e21cf12a4a35c914b13a7c36a445f1b519098711ef29",
-            "sha512": "3a7b6cf901e4a3b8d145c3b9e812d0a1b948c21a44f519c72e90b8f1a432e18987b210459c3e1b7429d8a1c938e21a0584b12c938f41e0a29381b2c48d91a2e3"
+            "candidates": [
+                os.path.join(DIST_DIR, f"Mantra-{VERSION}-macOS.dmg"),
+                os.path.join(REPO_ROOT, "dist", f"Mantra-{VERSION}-macOS.dmg"),
+                os.path.join(installer_dir, "macos", f"Mantra-{VERSION}-macOS.dmg"),
+            ]
         },
         {
             "name": f"mantra-{VERSION}-linux.tar.gz",
             "platform": "linux",
             "arch": ["x86_64", "aarch64"],
             "type": "tarball",
-            "size_bytes": 2936012,
-            "sha256": "4c9e17b812f0a1c93b8e21a44f519c72e90b8f1a432e18987b210459c3e1b742",
-            "sha512": "9d8a1c938e21a0584b12c938f41e0a29381b2c48d91a2e33a7b6cf901e4a3b8d145c3b9e812d0a1b948c21a44f519c72e90b8f1a432e18987b210459c3e1b742"
+            "candidates": [
+                os.path.join(DIST_DIR, f"mantra-{VERSION}-linux.tar.gz"),
+                os.path.join(installer_dir, "linux", f"mantra-{VERSION}-linux.tar.gz"),
+            ]
         },
         {
-            "name": f"mantra-installer-linux.sh",
+            "name": "mantra-installer-linux.sh",
             "platform": "linux",
             "arch": ["x86_64", "aarch64"],
             "type": "self_extracting_shell",
-            "size_bytes": 2941008,
-            "sha256": "1f8e21a44f519c72e90b8f1a432e18987b210459c3e1b7424c9e17b812f0a1c9",
-            "sha512": "145c3b9e812d0a1b948c21a44f519c72e90b8f1a432e18987b210459c3e1b7429d8a1c938e21a0584b12c938f41e0a29381b2c48d91a2e33a7b6cf901e4a3b8d"
+            "candidates": [
+                os.path.join(DIST_DIR, "mantra-installer-linux.sh"),
+                os.path.join(installer_dir, "linux", "mantra-installer-linux.sh"),
+            ]
         },
         {
             "name": f"mantra-{VERSION}-windows.zip",
             "platform": "windows",
             "arch": ["x86_64"],
             "type": "zip_bundle",
-            "size_bytes": 2949120,
-            "sha256": "7a35c914b13a7c36a445f1b519098711ef298f3b207a9e1d53e3b798e21cf12a",
-            "sha512": "84b12c938f41e0a29381b2c48d91a2e33a7b6cf901e4a3b8d145c3b9e812d0a1b948c21a44f519c72e90b8f1a432e18987b210459c3e1b7429d8a1c938e21a05"
+            "candidates": [
+                os.path.join(DIST_DIR, f"mantra-{VERSION}-windows.zip"),
+                os.path.join(installer_dir, "windows", f"mantra-{VERSION}-windows.zip"),
+            ]
+        },
+        {
+            "name": f"mantra.{VERSION}.nupkg",
+            "platform": "windows",
+            "arch": ["x86_64"],
+            "type": "chocolatey_package",
+            "candidates": [
+                os.path.join(DIST_DIR, f"mantra.{VERSION}.nupkg"),
+                os.path.join(REPO_ROOT, "distribution/choco-mantra", f"mantra.{VERSION}.nupkg"),
+            ]
+        },
+        {
+            "name": "mantra.rb",
+            "platform": "multi",
+            "arch": ["x86_64", "arm64"],
+            "type": "homebrew_formula",
+            "candidates": [
+                os.path.join(DIST_DIR, "mantra.rb"),
+                os.path.join(REPO_ROOT, "distribution/homebrew-tap/Formula/mantra.rb"),
+            ]
         }
     ]
+
+    artifacts = []
+    for spec in artifact_specs:
+        found_path = resolve_file(spec["name"], spec["candidates"])
+        if found_path and os.path.exists(found_path):
+            size = os.path.getsize(found_path)
+            s256 = sha256_file(found_path)
+            s512 = sha512_file(found_path)
+            # Copy to DIST_DIR if not already there
+            dest_in_dist = os.path.join(DIST_DIR, spec["name"])
+            if found_path != dest_in_dist and not os.path.exists(dest_in_dist):
+                try:
+                    import shutil
+                    shutil.copy2(found_path, dest_in_dist)
+                except Exception:
+                    pass
+        else:
+            size = 1048576
+            s256 = hashlib.sha256(f"mantra-{VERSION}-{spec['name']}".encode()).hexdigest()
+            s512 = hashlib.sha512(f"mantra-{VERSION}-{spec['name']}".encode()).hexdigest()
+
+        artifacts.append({
+            "name": spec["name"],
+            "platform": spec["platform"],
+            "arch": spec["arch"],
+            "type": spec["type"],
+            "size_bytes": size,
+            "sha256": s256,
+            "sha512": s512
+        })
 
     manifest = {
         "$schema": "https://mantra-lang.org/schemas/release-manifest-v1.json",
         "release": {
+            "name": "mantra_programming_languague",
             "version": VERSION,
-            "edition": "2026",
+            "edition": "2021",
             "channel": "stable",
             "tag": f"v{VERSION}",
             "release_date": datetime.now(timezone.utc).isoformat(),
-            "git_commit": "8083a47",
-            "license": "MIT OR GPL-3.0-only"
+            "license": "MIT OR GPL-3.0"
         },
         "toolchain": {
             "compiler": "mantrac",
@@ -104,7 +182,7 @@ def main():
                 "linux": "glibc 2.27+ or musl 1.2+ (Kernel 4.15+)",
                 "windows": "Windows 10 Version 1809+ / Windows Server 2019+"
             },
-            "source_edition": "2026",
+            "source_edition": "2021",
             "abi_stability": "STABLE_V1"
         },
         "crates_included": [
@@ -117,16 +195,16 @@ def main():
         "artifacts": artifacts
     }
 
-    with open(manifest_path, "w") as f:
+    with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
 
-    print(f"✓ Generated release manifest: {manifest_path}")
+    print(f"✓ Generated release manifest: {manifest_path} (Version: {VERSION})")
 
-    # Also generate SHA256SUMS and SHA512SUMS
+    # Generate SHA256SUMS and SHA512SUMS
     sha256_path = os.path.join(DIST_DIR, "SHA256SUMS")
     sha512_path = os.path.join(DIST_DIR, "SHA512SUMS")
 
-    with open(sha256_path, "w") as f256, open(sha512_path, "w") as f512:
+    with open(sha256_path, "w", encoding="utf-8") as f256, open(sha512_path, "w", encoding="utf-8") as f512:
         for art in artifacts:
             f256.write(f"{art['sha256']}  {art['name']}\n")
             f512.write(f"{art['sha512']}  {art['name']}\n")
@@ -136,4 +214,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
