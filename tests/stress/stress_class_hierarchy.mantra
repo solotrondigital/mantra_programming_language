@@ -1,0 +1,63 @@
+# ==============================================================================
+# Mantra Stress Test: Multi-Level Class Hierarchy & VTable Resolution
+# tests/stress/stress_class_hierarchy.mantra
+# ==============================================================================
+
+interface Printable:
+    def to_str() -> String
+
+interface Measurable:
+    def measure() -> Int
+
+class Level0 implements Printable:
+    def __init__(self):
+        self.tag = "L0"
+
+    override pub def to_str(self) -> String:
+        return "Level0"
+
+class Level1 extends Level0 implements Measurable:
+    def __init__(self):
+        super().__init__()
+        self.score = 1
+
+    override pub def to_str(self) -> String:
+        return "Level1"
+
+    override pub def measure(self) -> Int:
+        return 1
+
+class Level2 extends Level1:
+    def __init__(self):
+        super().__init__()
+        self.score = 2
+
+    override pub def to_str(self) -> String:
+        return "Level2"
+
+    override pub def measure(self) -> Int:
+        return 2
+
+class Level3 extends Level2:
+    def __init__(self):
+        super().__init__()
+        self.score = 3
+
+    override pub def to_str(self) -> String:
+        return "Level3"
+
+    override pub def measure(self) -> Int:
+        return 3
+
+def verify_polymorphism(obj: Level3) -> Int:
+    print(obj.to_str() + " has measure " + str(obj.measure()))
+    return obj.measure()
+
+def main() -> Int:
+    print("Running Multi-Level Class Hierarchy Stress Test...")
+    let obj = Level3()
+    let score = verify_polymorphism(obj)
+    if score == 3:
+        print("Hierarchy Stress Test Passed! Score: " + str(score))
+        return 0
+    return 1

@@ -28,7 +28,7 @@ impl MobileBuilder {
         };
 
         println!("==================================================");
-        println!("   Mantra Mobile Application Platform (v0.5.0)   ");
+        println!("   Mantra Mobile Application Platform (v0.6.0)   ");
         println!("==================================================");
         println!("Target Platform : {}", target);
         println!("Build Profile   : {}", if release { "release" } else { "debug" });

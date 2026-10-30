@@ -1,0 +1,70 @@
+name: Production Release Engineering
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+
+jobs:
+  build-and-package:
+    name: Package Release Artifacts
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            artifact_name: Mantra-macOS.dmg
+          - os: ubuntu-22.04
+            artifact_name: mantra-linux.tar.gz
+          - os: windows-2022
+            artifact_name: mantra-windows.zip
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Install Stable Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build Toolchain
+        run: cargo build --release
+
+      - name: Build Distribution Packages
+        shell: bash
+        run: |
+          chmod +x create_installers.sh
+          ./create_installers.sh ${{ github.ref_name }}
+
+  provenance-and-publish:
+    name: Sign, SBOM & Publish Release
+    needs: [build-and-package]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate Release Manifest, SBOM & Signatures
+        shell: bash
+        run: |
+          chmod +x scripts/release/sign_release.sh
+          ./scripts/release/sign_release.sh ${{ github.ref_name }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/releases/${{ github.ref_name }}/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+

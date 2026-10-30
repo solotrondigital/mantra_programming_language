@@ -426,7 +426,12 @@ impl TypeChecker {
             if !cls.is_abstract {
                 if let Some(ref base_name) = cls.base_class {
                     let mut curr = Some(base_name.clone());
+                    let mut visited = HashSet::new();
+                    visited.insert(cls.name.clone());
                     while let Some(b_name) = curr {
+                        if !visited.insert(b_name.clone()) {
+                            break;
+                        }
                         if let Some(base_cls) = self.symbols.classes.get(&b_name).cloned() {
                             for (m_name, m_sym) in &base_cls.methods {
                                 if m_sym.is_abstract {
@@ -453,14 +458,15 @@ impl TypeChecker {
             // Check overrides
             for (m_name, m_sym) in &cls.methods {
                 if m_sym.is_override {
-                    let has_base_method = if let Some(ref base_name) = cls.base_class {
+                    let in_base = if let Some(ref base_name) = cls.base_class {
                         self.lookup_method_in_hierarchy(base_name, m_name).is_some()
                     } else {
-                        // could be overriding an interface method
-                        cls.interfaces.iter().any(|iface_name| {
-                            self.symbols.interfaces.get(iface_name).map_or(false, |iface| iface.methods.contains_key(m_name))
-                        })
+                        false
                     };
+                    let in_iface = cls.interfaces.iter().any(|iface_name| {
+                        self.symbols.interfaces.get(iface_name).map_or(false, |iface| iface.methods.contains_key(m_name))
+                    });
+                    let has_base_method = in_base || in_iface;
 
                     if !has_base_method {
                         self.diagnostics.push(Diagnostic::error(
@@ -479,7 +485,11 @@ impl TypeChecker {
 
     fn lookup_method_in_hierarchy(&self, class_name: &str, method_name: &str) -> Option<MethodSymbol> {
         let mut curr = Some(class_name.to_string());
+        let mut visited = HashSet::new();
         while let Some(name) = curr {
+            if !visited.insert(name.clone()) {
+                break;
+            }
             if let Some(cls) = self.symbols.classes.get(&name) {
                 if let Some(m) = cls.methods.get(method_name) {
                     return Some(m.clone());
@@ -494,7 +504,11 @@ impl TypeChecker {
 
     fn lookup_field_in_hierarchy(&self, class_name: &str, field_name: &str) -> Option<FieldSymbol> {
         let mut curr = Some(class_name.to_string());
+        let mut visited = HashSet::new();
         while let Some(name) = curr {
+            if !visited.insert(name.clone()) {
+                break;
+            }
             if let Some(cls) = self.symbols.classes.get(&name) {
                 if let Some(f) = cls.fields.get(field_name) {
                     return Some(f.clone());
@@ -520,7 +534,11 @@ impl TypeChecker {
                 }
                 // Check if sub_name inherits from sup_name
                 let mut curr = Some(sub_name.clone());
+                let mut visited = HashSet::new();
                 while let Some(name) = curr {
+                    if !visited.insert(name.clone()) {
+                        break;
+                    }
                     if let Some(cls) = self.symbols.classes.get(&name) {
                         if cls.interfaces.contains(sup_name) {
                             return true;

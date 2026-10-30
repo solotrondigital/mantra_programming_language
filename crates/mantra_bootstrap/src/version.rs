@@ -8,11 +8,11 @@
 
 /// Canonical version constants for Mantra v0.3.0 (Self-Hosting Compiler).
 pub const MANTRA_VERSION_MAJOR: u32 = 0;
-pub const MANTRA_VERSION_MINOR: u32 = 3;
+pub const MANTRA_VERSION_MINOR: u32 = 6;
 pub const MANTRA_VERSION_PATCH: u32 = 0;
-pub const MANTRA_VERSION_STR: &str   = "0.3.0";
+pub const MANTRA_VERSION_STR: &str   = "0.6.0";
 pub const MANTRA_EDITION: &str       = "2026";
-pub const MANTRA_CODENAME: &str      = "self-host-alpha";
+pub const MANTRA_CODENAME: &str      = "production-stable";
 
 /// IR schema version — must be bumped whenever the IrContract changes in a
 /// way that produces different serialised output.
@@ -108,7 +108,7 @@ mod tests {
     fn version_string_contains_semver() {
         let v = CompilerVersion::current(BootstrapStage::RustBootstrap);
         let s = v.to_version_string();
-        assert!(s.contains("0.3.0"), "Expected 0.3.0 in version string: {}", s);
+        assert!(s.contains("0.6.0"), "Expected 0.3.0 in version string: {}", s);
     }
 
     #[test]

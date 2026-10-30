@@ -143,7 +143,7 @@ Acceptance criteria: sample applications run on the supported browser target and
 
 ================================
 
-MVP 6 — Mantra v1.0.0
+MVP 6 — Mantra v0.6.0
 Stable Language and Production Toolchain
 Compatibility commitments · Security · Release engineering
 
@@ -162,7 +162,7 @@ Goal: Establish a stable language edition, toolchain compatibility policy, and p
 - Migration guide and compatibility policy for future releases.
 
 Acceptance criteria: the published specification matches the implementation, release artifacts are verifiable, core tests pass on all declared targets, and breaking changes are governed by a documented policy.
-
+====================
 Requirements that apply to every Mantra MVP
 These requirements should be treated as a shared engineering contract, not optional features that can be postponed indefinitely.
 1. Language and OOP specification

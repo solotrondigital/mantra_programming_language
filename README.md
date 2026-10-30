@@ -634,6 +634,7 @@ Source (.mantra)
 - [x] Standard library: mantra.web, mantra.rest, mantra.sql.orm
 - [x] MVP 4: Package Ecosystem, Lockfile, Homebrew/Chocolatey Distribution
 - [x] MVP 5: Web & Mobile Application Platform (Browser WASM, Android Kotlin Bridge, iOS Swift Bridge)
+- [x] MVP 6: Stable Language & Production Toolchain (v0.6.0 Stable Specification, Native ABI, Security Review, SBOM, Multi-Target CI, Fuzzing & Stress Suite)
 - [x] Unified Cross-Platform CLI Scaffolding (`mantra create --org ... --project-name ...`)
 - [x] Multi-Environment Support (`.env`, `.env.development`, `.env.test`, `.env.production`)
 - [x] WebAssembly Target Build (`mantra build web`)

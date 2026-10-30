@@ -230,8 +230,8 @@ def main() -> Int:
             entry: "src/main.mantra".to_string(),
             dependencies: std::collections::HashMap::new(),
         };
-        manifest.dependencies.insert("mantra.web".to_string(), "0.5.0".to_string());
-        manifest.dependencies.insert("mantra.rest".to_string(), "0.5.0".to_string());
+        manifest.dependencies.insert("mantra.web".to_string(), "0.6.0".to_string());
+        manifest.dependencies.insert("mantra.rest".to_string(), "0.6.0".to_string());
         manifest.save_to_dir(root)?;
 
         let main_src = format!(
@@ -396,7 +396,7 @@ def main() -> Int:
             entry: "src/main.mantra".to_string(),
             dependencies: std::collections::HashMap::new(),
         };
-        manifest.dependencies.insert("mantra.mobile".to_string(), "0.5.0".to_string());
+        manifest.dependencies.insert("mantra.mobile".to_string(), "0.6.0".to_string());
         manifest.save_to_dir(root)?;
 
         // 1. Shared Models
@@ -622,7 +622,7 @@ window.MantraBridge = {
 
 document.addEventListener("DOMContentLoaded", () => {
     const status = document.getElementById("bridge-status");
-    status.innerText = "Native Bridge Ready (Mantra v0.5.0)";
+    status.innerText = "Native Bridge Ready (Mantra v0.6.0)";
 
     document.getElementById("btn-info").addEventListener("click", async () => {
         try {
@@ -813,8 +813,8 @@ entry = "lib/main.mantra"
 [targets]
 {targets_toml}
 [dependencies]
-"mantra.mobile" = "0.5.0"
-"mantra.web"    = "0.5.0"
+"mantra.mobile" = "0.6.0"
+"mantra.web"    = "0.6.0"
 "#,
             project_name = project_name,
             org = org,
@@ -843,7 +843,7 @@ def main() -> Int:
 # Entry point: runs on native, web (WASM), Android, and iOS.
 
 def get_platform_info() -> String:
-    return "Mantra v0.5.0 Cross-Platform"
+    return "Mantra v0.6.0 Cross-Platform"
 
 def main() -> Int:
     print("⚡ {project_name} initialized")

@@ -1,0 +1,27 @@
+# ==============================================================================
+# Mantra Performance Benchmark Suite
+# tests/benchmarks/bench_main.mantra
+# ==============================================================================
+
+class MathKernel:
+    def __init__(self, factor: Int):
+        self.factor = factor
+
+    pub def compute(self, n: Int) -> Int:
+        mut acc = 0
+        mut i = 0
+        while i < n:
+            acc = acc + (i * self.factor)
+            i = i + 1
+        return acc
+
+def benchmark_loop_dispatch(iterations: Int) -> Int:
+    let kernel = MathKernel(3)
+    return kernel.compute(iterations)
+
+def main() -> Int:
+    print("Running Mantra Performance Microbenchmarks...")
+    let res = benchmark_loop_dispatch(10000)
+    print("Benchmark Completed. Result: " + str(res))
+    return 0
+

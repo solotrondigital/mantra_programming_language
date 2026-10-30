@@ -1,0 +1,35 @@
+name: Continuous Security & Supply Chain Audit
+
+on:
+  schedule:
+    - cron: '0 4 * * *' # Every night at 04:00 UTC
+  pull_request:
+    paths:
+      - '**/Cargo.lock'
+      - '**/Cargo.toml'
+      - 'crates/**'
+
+jobs:
+  audit:
+    name: Dependency Audit & SBOM Verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Security Vulnerability Scan
+        run: cargo audit
+
+      - name: Build MDK
+        run: cargo build -p mantra_mdk
+
+      - name: Run Mantra Security Audit Subsystem
+        run: |
+          ./target/debug/mantra audit
+
