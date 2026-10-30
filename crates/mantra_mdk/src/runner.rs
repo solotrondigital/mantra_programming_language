@@ -25,6 +25,12 @@ impl Runner {
         let mut interpreter = Interpreter::new();
         interpreter.execute_program(&program).map_err(|e| e.message)?;
 
+        // If the project is configured as a backend service (REST/GraphQL) or web frontend,
+        // start the real HTTP development server and listen for incoming requests.
+        if let Some((host, port, service_kind)) = crate::http_server::detect_service_and_port(target_path) {
+            crate::http_server::serve_http(&host, port, &service_kind)?;
+        }
+
         Ok(())
     }
 
@@ -154,12 +160,8 @@ impl Runner {
         println!(">> Open http://127.0.0.1:{} in Chrome to view the application.", web_port);
         println!(">> Ready for development. Serving static assets and WASM.");
 
-        let _listener = std::net::TcpListener::bind(format!("127.0.0.1:{}", web_port))
-            .map_err(|e| format!("Failed to bind to port {}: {}", web_port, e))?;
-
-        // Handle first request or loop if interactive
-        // To avoid blocking CLI tests, set non-blocking or handle requests
         println!("✓ Development server active on http://127.0.0.1:{}", web_port);
+        crate::http_server::serve_http("127.0.0.1", web_port, "web")?;
         Ok(())
     }
 

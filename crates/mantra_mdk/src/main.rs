@@ -3,6 +3,7 @@ pub mod bench;
 pub mod docgen;
 pub mod env_loader;
 pub mod formatter;
+pub mod http_server;
 pub mod linter;
 pub mod manifest;
 pub mod mobile_builder;
