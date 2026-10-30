@@ -539,12 +539,14 @@ impl MobileBuilder {
         let app_bundle_dir = build_native_ios_app(root, &project_name, &bundle_id, release)?;
 
         let primary_output = if release {
-            let ipa_path = root.join("target/ios/build").join(rel_dir).join(format!("{}.ipa", project_name));
+            let ipa_path = root.join("ios/build").join(rel_dir).join(format!("{}.ipa", project_name));
+            let target_ipa = root.join("target/ios/build").join(rel_dir).join(format!("{}.ipa", project_name));
             let legacy_ipa = root.join("ios/build").join(rel_dir).join("App.ipa");
             let mut entries = Vec::new();
             collect_files_recursive(&app_bundle_dir, app_bundle_dir.parent().unwrap_or(&app_bundle_dir), "Payload", &mut entries);
             let ipa_bytes = build_zip_archive(&entries);
             let _ = write_artifact(&ipa_path, &ipa_bytes);
+            let _ = write_artifact(&target_ipa, &ipa_bytes);
             let _ = write_artifact(&legacy_ipa, &ipa_bytes);
             ipa_path
         } else {
@@ -925,7 +927,7 @@ fn get_ios_bundle_id(root: &Path, project_name: &str) -> String {
 
 fn build_native_ios_app(root: &Path, project_name: &str, bundle_id: &str, release: bool) -> Result<PathBuf, String> {
     let rel_dir = if release { "Release-iphoneos" } else { "Debug-iphonesimulator" };
-    let app_bundle_dir = root.join("target/ios/build").join(rel_dir).join(format!("{}.app", project_name));
+    let app_bundle_dir = root.join("ios/build").join(rel_dir).join(format!("{}.app", project_name));
     fs::create_dir_all(&app_bundle_dir)
         .map_err(|e| format!("Failed to create iOS bundle directory: {}", e))?;
 
@@ -1013,16 +1015,16 @@ fn build_native_ios_app(root: &Path, project_name: &str, bundle_id: &str, releas
         Err(e) => println!("   ! codesign not available: {}", e),
     }
 
-    // Also mirror to legacy outputs
-    let legacy_output = root.join("ios/build").join(rel_dir).join(format!("{}.app", project_name));
-    let generic_output = root.join("target/ios/build").join(rel_dir).join("App.app");
-    let legacy_generic_output = root.join("ios/build").join(rel_dir).join("App.app");
-    if let Some(parent) = legacy_output.parent() { let _ = fs::create_dir_all(parent); }
+    // Mirror to target and generic outputs
+    let target_output = root.join("target/ios/build").join(rel_dir).join(format!("{}.app", project_name));
+    let generic_output = root.join("ios/build").join(rel_dir).join("App.app");
+    let target_generic_output = root.join("target/ios/build").join(rel_dir).join("App.app");
+    if let Some(parent) = target_output.parent() { let _ = fs::create_dir_all(parent); }
     if let Some(parent) = generic_output.parent() { let _ = fs::create_dir_all(parent); }
-    if let Some(parent) = legacy_generic_output.parent() { let _ = fs::create_dir_all(parent); }
-    let _ = copy_dir_recursive(&app_bundle_dir, &legacy_output);
+    if let Some(parent) = target_generic_output.parent() { let _ = fs::create_dir_all(parent); }
+    let _ = copy_dir_recursive(&app_bundle_dir, &target_output);
     let _ = copy_dir_recursive(&app_bundle_dir, &generic_output);
-    let _ = copy_dir_recursive(&app_bundle_dir, &legacy_generic_output);
+    let _ = copy_dir_recursive(&app_bundle_dir, &target_generic_output);
 
     Ok(app_bundle_dir)
 }
