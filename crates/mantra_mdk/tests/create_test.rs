@@ -81,6 +81,13 @@ fn test_frontend_creation_all_platforms() {
     assert!(manifest.contains("android = \"platforms/android\""));
     assert!(manifest.contains("web = \"platforms/web\""));
 
+    // Check README has creation reference
+    let readme = fs::read_to_string(root.join("README.md")).unwrap();
+    assert!(readme.contains("## Mantra Project Creation Reference"));
+    assert!(readme.contains("--type frontend"));
+    assert!(readme.contains("--type backend \\\n  --service REST"));
+    assert!(readme.contains("--type backend \\\n  --service GRAPHQL"));
+
     // Verify NO .mr files
     assert_no_mr_files(root);
 
@@ -207,6 +214,12 @@ fn test_backend_rest_creation() {
     assert!(manifest.contains("type = \"backend\""));
     assert!(manifest.contains("service = \"REST\""));
     assert!(manifest.contains("entry = \"src/main.mantra\""));
+
+    let readme = fs::read_to_string(root.join("README.md")).unwrap();
+    assert!(readme.contains("## Mantra Project Creation Reference"));
+    assert!(readme.contains("--type frontend"));
+    assert!(readme.contains("--type backend \\\n  --service REST"));
+    assert!(readme.contains("--type backend \\\n  --service GRAPHQL"));
 
     assert_no_mr_files(root);
     cleanup(project);
@@ -400,4 +413,50 @@ fn test_overwrite_prevention() {
 
     cleanup(project);
 }
+
+#[test]
+fn test_mobile_build_apk_and_appbundle() {
+    let project = "test_mobile_build";
+    cleanup(project);
+
+    let args = vec![
+        "--type".to_string(),
+        "frontend".to_string(),
+        "--org".to_string(),
+        "com.testapp".to_string(),
+        "--project-name".to_string(),
+        project.to_string(),
+        "--platforms".to_string(),
+        "android,web".to_string(),
+    ];
+
+    let result = CreateCommand::execute(&args);
+    assert!(result.is_ok());
+
+    let root = Path::new(project);
+
+    // 1. Test build APK release
+    let apk_res = mantra_mdk::MobileBuilder::build_apk(root, true, None);
+    assert!(apk_res.is_ok(), "build_apk failed: {:?}", apk_res);
+
+    let apk_path = root.join("target/android/app/build/outputs/apk/release/app-release-unsigned.apk");
+    assert!(apk_path.exists(), "APK not found at {}", apk_path.display());
+    let apk_bytes = fs::read(&apk_path).unwrap();
+    assert!(!apk_bytes.is_empty());
+    // Verify PK header
+    assert_eq!(&apk_bytes[0..2], b"PK");
+
+    // 2. Test build AppBundle release
+    let aab_res = mantra_mdk::MobileBuilder::build_appbundle(root, true, None);
+    assert!(aab_res.is_ok(), "build_appbundle failed: {:?}", aab_res);
+
+    let aab_path = root.join("target/android/app/build/outputs/bundle/release/app-release.aab");
+    assert!(aab_path.exists(), "AAB not found at {}", aab_path.display());
+
+    let aab_mirror = root.join("target/android/app/build/outputs/apk/release/app-release.aab");
+    assert!(aab_mirror.exists(), "AAB mirror not found at {}", aab_mirror.display());
+
+    cleanup(project);
+}
+
 

@@ -134,9 +134,12 @@ mantra build appbundle --release
 ```bash
 mantra test
 ```
+
+{creation_reference}
 "#,
                 name = opts.project_name,
                 description = opts.description,
+                creation_reference = Self::creation_reference(),
                 platforms = opts
                     .platforms
                     .iter()
@@ -192,9 +195,12 @@ mantra run
 ```bash
 mantra test
 ```
+
+{creation_reference}
 "#,
                     name = opts.project_name,
-                    description = opts.description
+                    description = opts.description,
+                    creation_reference = Self::creation_reference()
                 ),
                 BackendService::Graphql => format!(
                     r#"# {name}
@@ -246,12 +252,51 @@ mantra run
 ```bash
 mantra test
 ```
+
+{creation_reference}
 "#,
                     name = opts.project_name,
-                    description = opts.description
+                    description = opts.description,
+                    creation_reference = Self::creation_reference()
                 ),
             },
         }
+    }
+
+    /// Helpful reference commands for creating new Mantra projects
+    pub fn creation_reference() -> &'static str {
+        r#"## Mantra Project Creation Reference
+Use these reference commands to scaffold new Mantra projects:
+
+### 1. Frontend Cross-Platform Application (iOS, Android, Web)
+```bash
+mantra create \
+  --type frontend \
+  --org com.testapp \
+  --project-name testapp \
+  --platforms ios,android,web \
+  --description "TestApp cross-platform application"
+```
+
+### 2. Backend REST API
+```bash
+mantra create \
+  --type backend \
+  --service REST \
+  --org com.testapp \
+  --project-name testapp \
+  --description "TestApp REST API backend"
+```
+
+### 3. Backend GraphQL API
+```bash
+mantra create \
+  --type backend \
+  --service GRAPHQL \
+  --org com.testapp \
+  --project-name testapp \
+  --description "TestApp GraphQL backend"
+```"#
     }
 }
 

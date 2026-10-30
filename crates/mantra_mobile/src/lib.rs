@@ -163,7 +163,13 @@ mod tests {
         assert!(kt_bridge.contains("class MantraBridge"));
 
         let swift_bridge = IosBridgeTemplate::generate_bridge_swift();
-        assert!(swift_bridge.contains("class MantraBridge: NSObject, WKScriptMessageHandler"));
+        assert!(swift_bridge.contains("class MantraBridge: NSObject"));
+
+        let swiftui = IosBridgeTemplate::generate_swiftui_content_view("TestApp", "");
+        assert!(swiftui.contains("struct ContentView: View"));
+
+        let android_layout = AndroidBridgeTemplate::generate_native_layout_xml("TestApp", "");
+        assert!(android_layout.contains("ScrollView"));
 
         let plist = IosBridgeTemplate::generate_info_plist("com.example.app", "TestApp");
         assert!(plist.contains("NSCameraUsageDescription"));

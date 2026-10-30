@@ -82,6 +82,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "mantra_widgets"
+version = "0.5.0"
+
+[[package]]
 name = "mantrac"
 version = "0.3.0"
 dependencies = [

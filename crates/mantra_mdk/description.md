@@ -41,8 +41,8 @@
 * `ProjectGenerator::generate(opts: &ValidatedOptions) -> Result<GenerationSummary, String>`: Emits project metadata and dispatches generation to `FrontendTemplateGenerator`, `RestTemplateGenerator`, or `GraphQLTemplateGenerator`.
 * `validate_project_name(name: &str) -> Result<(), String>`: Enforces `lowercase_with_underscores` naming convention for all project packages.
 * `EnvLoader::load_file(path: &Path) -> Result<HashMap<String, String>, String>`: Parses `.env` lines, resolves variable substitutions, injects entries into `std::env::set_var`, and returns loaded key-value pairs.
-* `MobileBuilder::build_apk(root: &Path, release: bool, defines_file: Option<&str>)`: Builds release or debug Android APK artifact in `android/app/build/outputs/apk/`.
-* `MobileBuilder::build_appbundle(root: &Path, release: bool, defines_file: Option<&str>)`: Generates Google Play Store distribution bundle (AAB) in `android/app/build/outputs/bundle/`.
+* `MobileBuilder::build_apk(root: &Path, release: bool, defines_file: Option<&str>)`: Builds release or debug Android APK artifact in `target/android/app/build/outputs/apk/` (and mirrors to `android/app/build/outputs/apk/`).
+* `MobileBuilder::build_appbundle(root: &Path, release: bool, defines_file: Option<&str>)`: Generates Google Play Store distribution bundle (AAB) in `target/android/app/build/outputs/bundle/` and mirrors to `target/android/app/build/outputs/apk/release/` and `android/app/build/outputs/bundle/`.
 * `Runner::run_web_dev(web_port: u16, defines_file: Option<&str>)`: Launches embedded multi-threaded HTTP server with MIME type dispatch (`application/wasm`, `text/html`, `text/css`, `application/javascript`) on `http://127.0.0.1:<web_port>`.
 * `Runner::build_web(target_file: Option<&str>, release: bool, custom_out: Option<&str>, defines_file: Option<&str>)`: Compiles WebAssembly output (`platforms/web/app.wasm` or `web/app.wasm`) from Mantra source.
 

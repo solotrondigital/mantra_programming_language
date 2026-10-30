@@ -233,9 +233,11 @@ def main() -> Int:
                         .join("platforms/android/app/src/main/java")
                         .join(package_name.replace('.', "/"));
                     let android_res_xml = root.join("platforms/android/app/src/main/res/xml");
+                    let android_res_layout = root.join("platforms/android/app/src/main/res/layout");
 
                     FilesystemService::create_dir_all(&android_pkg_path)?;
                     FilesystemService::create_dir_all(&android_res_xml)?;
+                    FilesystemService::create_dir_all(&android_res_layout)?;
 
                     FilesystemService::write_file(
                         &android_pkg_path.join("MantraBridge.kt"),
@@ -244,6 +246,10 @@ def main() -> Int:
                     FilesystemService::write_file(
                         &android_pkg_path.join("MainActivity.kt"),
                         &AndroidBridgeTemplate::generate_main_activity_kotlin(&package_name, name),
+                    )?;
+                    FilesystemService::write_file(
+                        &android_res_layout.join("activity_main.xml"),
+                        &AndroidBridgeTemplate::generate_native_layout_xml(name, ""),
                     )?;
                     FilesystemService::write_file(
                         &root.join("platforms/android/app/src/main/AndroidManifest.xml"),
@@ -265,6 +271,14 @@ def main() -> Int:
                     FilesystemService::write_file(
                         &ios_app_dir.join("MantraBridge.swift"),
                         IosBridgeTemplate::generate_bridge_swift(),
+                    )?;
+                    FilesystemService::write_file(
+                        &ios_app_dir.join("ContentView.swift"),
+                        &IosBridgeTemplate::generate_swiftui_content_view(name, ""),
+                    )?;
+                    FilesystemService::write_file(
+                        &ios_app_dir.join("App.swift"),
+                        &IosBridgeTemplate::generate_native_app_swift(name),
                     )?;
                     FilesystemService::write_file(
                         &ios_app_dir.join("ViewController.swift"),
