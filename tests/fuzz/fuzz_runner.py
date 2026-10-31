@@ -15,6 +15,12 @@ import random
 import string
 import tempfile
 
+# Force UTF-8 output so Windows cp1252 stdout does not choke on Unicode symbols
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 MANTRAC = None
 for base in ["../../target/release", "../../target/debug"]:
     for name in ["mantrac.exe", "mantrac"]:
@@ -108,7 +114,7 @@ def main():
         if i % 50 == 0:
             print(f"   [{i}/{total_iters}] iterations completed safely...")
 
-    print(f"✓ All {passed}/{total_iters} fuzzing iterations survived! 0 crashes, 0 panics.")
+    print(f"[OK] All {passed}/{total_iters} fuzzing iterations survived! 0 crashes, 0 panics.")
 
 if __name__ == "__main__":
     main()
