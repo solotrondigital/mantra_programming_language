@@ -340,53 +340,38 @@ jobs:
       - name: Push to Chocolatey Gallery
         if: steps.gate_check.outputs.should_release == 'true'
         shell: pwsh
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
         run: |
-          $apiKey = "${{ secrets.CHOCOLATEY_API_KEY }}"
-          if (-not $apiKey) {
-            $apiKey = "1ac46c92-993e-4dba-bf40-b69cfa549dfe"
-          }
-          if (-not $apiKey) {
-            Write-Host "::warning::CHOCOLATEY_API_KEY secret is not set. Skipping Chocolatey push."
-            Write-Host ">> ACTION REQUIRED: Go to https://community.chocolatey.org/account"
-            Write-Host ">> Copy your API key and add it as repository secret CHOCOLATEY_API_KEY at:"
-            Write-Host ">> https://github.com/solotrondigital/mantra_programming_language/settings/secrets/actions"
-            exit 0
-          }
+          $apiKey = $env:CHOCOLATEY_API_KEY
 
-          Write-Host ">> Validating Chocolatey API key with https://push.chocolatey.org/ ..."
-          try {
-            $testAuth = Invoke-RestMethod -Uri "https://push.chocolatey.org/" -Method Post -Headers @{ "X-NuGet-ApiKey" = $apiKey } -TimeoutSec 10 -ErrorAction SilentlyContinue
-            if ($testAuth -and $testAuth.isAuthenticated -eq $false) {
-              Write-Warning "Chocolatey API key authentication failed: the key is invalid, revoked, or expired on community.chocolatey.org."
-              Write-Warning ">> ACTION REQUIRED: Log in to https://community.chocolatey.org/account as solotron.digital"
-              Write-Warning ">> Copy your active API key and configure it as secret CHOCOLATEY_API_KEY in repository settings:"
-              Write-Warning ">> https://github.com/solotrondigital/mantra_programming_language/settings/secrets/actions"
-              Write-Host ">> Skipping push until a valid API key is configured."
+          if ([string]::IsNullOrWhiteSpace($apiKey)) {
+              Write-Warning "CHOCOLATEY_API_KEY is missing."
               exit 0
-            }
-          } catch {
-            Write-Host ">> Pre-validation check skipped, proceeding with choco push..."
           }
 
-          Write-Host ">> Setting Chocolatey API Key for https://push.chocolatey.org/ ..."
-          choco apikey --key $apiKey --source https://push.chocolatey.org/
+          $nupkg = Get-ChildItem `
+              -Path "dist/releases/v${{ env.VERSION }}" `
+              -Filter "*.nupkg" `
+              -ErrorAction SilentlyContinue |
+              Select-Object -First 1
 
-          $nupkg = (Get-ChildItem -Path "dist/releases/v${{ env.VERSION }}" -Filter "*.nupkg" -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
           if (-not $nupkg) {
-            $nupkg = (Get-ChildItem -Path "." -Filter "*.nupkg" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
+              $nupkg = Get-ChildItem -Path "." -Filter "*.nupkg" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
           }
-          if ($nupkg -and (Test-Path $nupkg)) {
-            Write-Host ">> Pushing $nupkg to Chocolatey gallery..."
-            choco push $nupkg --source https://push.chocolatey.org/ --api-key $apiKey
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "[OK] Chocolatey package successfully pushed to gallery."
-            } else {
-              Write-Warning "Chocolatey push returned exit code $LASTEXITCODE."
-              Write-Warning "If 403 Forbidden: verify your API key at https://community.chocolatey.org/account"
-              Write-Warning "Update the CHOCOLATEY_API_KEY repository secret and re-run this workflow."
-              $global:LASTEXITCODE = 0
-            }
-          } else {
-            Write-Warning "Could not find .nupkg file to push to Chocolatey"
+
+          if (-not $nupkg) {
+              Write-Error "Chocolatey .nupkg package not found."
+              exit 1
           }
+
+          choco push $nupkg.FullName `
+              --source https://push.chocolatey.org/ `
+              --api-key $apiKey
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Chocolatey package upload failed with exit code $LASTEXITCODE"
+          }
+
+          Write-Host "[OK] Chocolatey package successfully published."
             
