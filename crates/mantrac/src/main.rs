@@ -412,7 +412,16 @@ fn main() {
 
     // Determine output executable name
     let out_path = if let Some(ref o) = output_file {
-        PathBuf::from(o)
+        let p = PathBuf::from(o);
+        // On Windows, always ensure the output binary has .exe extension so
+        // clang/gcc produce and the shell can execute it predictably.
+        if cfg!(windows) && p.extension().map(|e| e != "exe").unwrap_or(true) {
+            let mut exe = p.clone();
+            exe.set_extension("exe");
+            exe
+        } else {
+            p
+        }
     } else {
         let p = Path::new(&input_path);
         let stem = p.file_stem().unwrap_or_default().to_string_lossy();

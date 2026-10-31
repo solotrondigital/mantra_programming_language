@@ -51,7 +51,8 @@ bash "$DIR/tests/run_all.sh"
 # 2. Run Stress Testing Suite
 echo ""
 echo ">> [2/5] Executing Stress Testing Suite (VM & Native)..."
-TMP_STRESS_BIN="/tmp/mantra_stress_bins"
+# Use a temp dir that works on Linux/macOS/Windows Git Bash
+TMP_STRESS_BIN="${TEMP:-${TMPDIR:-/tmp}}/mantra_stress_bins"
 mkdir -p "$TMP_STRESS_BIN"
 
 for test in tests/stress/*.mantra; do
@@ -61,11 +62,16 @@ for test in tests/stress/*.mantra; do
     echo -e "\033[32mPASS\033[0m"
 
     printf "  Stress (Native): %-36s ... " "$tname"
-    $MANTRAC "$test" -o "$TMP_STRESS_BIN/$tname" > /dev/null
-    if [ -f "$TMP_STRESS_BIN/$tname.exe" ]; then
-        "$TMP_STRESS_BIN/$tname.exe" > /dev/null
+    bin_path="$TMP_STRESS_BIN/$tname"
+    $MANTRAC "$test" -o "$bin_path" > /dev/null
+    # On Windows, mantrac auto-appends .exe; try both
+    if [ -f "${bin_path}.exe" ]; then
+        "${bin_path}.exe" > /dev/null
+    elif [ -f "$bin_path" ]; then
+        "$bin_path" > /dev/null
     else
-        "$TMP_STRESS_BIN/$tname" > /dev/null
+        echo -e "\033[31mFAIL (binary not found at $bin_path)\033[0m"
+        exit 1
     fi
     echo -e "\033[32mPASS\033[0m"
 done
@@ -87,9 +93,12 @@ $MANTRAC "tests/benchmarks/bench_main.mantra" --run
 # 5. Run Security Audit Integrity Check
 echo ""
 echo ">> [5/5] Executing MDK Security Audit Verification..."
-if [ -d "/tmp/mantra_mdk_integration_test" ]; then
-    cd /tmp/mantra_mdk_integration_test
+MDK_TEST_DIR="${TEMP:-${TMPDIR:-/tmp}}/mantra_mdk_integration_test"
+if [ -d "$MDK_TEST_DIR" ]; then
+    cd "$MDK_TEST_DIR"
     $MANTRA audit || true
+else
+    echo ">> Skipping audit: MDK integration test directory not found at $MDK_TEST_DIR"
 fi
 
 echo ""

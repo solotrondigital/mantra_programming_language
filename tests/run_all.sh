@@ -58,7 +58,7 @@ done
 
 echo ""
 echo "[2/4] Running Conformance Tests in Native Mode (-o)..."
-TMP_BIN_DIR="/tmp/mantra_conformance_bins"
+TMP_BIN_DIR="${TEMP:-${TMPDIR:-/tmp}}/mantra_conformance_bins"
 mkdir -p "$TMP_BIN_DIR"
 for test in tests/conformance/*.mantra; do
     tname=$(basename "$test" .mantra)
@@ -96,10 +96,11 @@ check_negative "tests/negative/err_unimplemented_abstract.mantra" "E0105"
 
 echo ""
 echo "[4/4] Running MDK CLI Integration Tests..."
-TEST_APP_DIR="/tmp/mantra_mdk_integration_test"
+TEST_APP_DIR="${TEMP:-${TMPDIR:-/tmp}}/mantra_mdk_integration_test"
+PARENT_TMP="${TEMP:-${TMPDIR:-/tmp}}"
 rm -rf "$TEST_APP_DIR"
 
-run_test "MDK: mantra new test_app" "cd /tmp && rm -rf mantra_mdk_integration_test && $MANTRA new mantra_mdk_integration_test"
+run_test "MDK: mantra new test_app" "cd \"$PARENT_TMP\" && rm -rf mantra_mdk_integration_test && $MANTRA new mantra_mdk_integration_test"
 run_test "MDK: mantra check" "cd $TEST_APP_DIR && $MANTRA check"
 run_test "MDK: mantra run" "cd $TEST_APP_DIR && echo 'q' | $MANTRA run"
 run_test "MDK: mantra test" "cd $TEST_APP_DIR && $MANTRA test"
