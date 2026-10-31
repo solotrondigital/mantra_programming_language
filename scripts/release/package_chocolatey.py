@@ -13,6 +13,11 @@ import zipfile
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 def get_version():
@@ -42,7 +47,7 @@ def update_nuspec(version):
     with open(nuspec_path, "w", encoding="utf-8") as f:
         f.write(content)
 
-    print(f"✓ Updated mantra.nuspec to version {version}")
+    print(f"[OK] Updated mantra.nuspec to version {version}")
     return nuspec_path
 
 def update_install_ps1(version):
@@ -78,7 +83,7 @@ def update_install_ps1(version):
     with open(ps1_path, "w", encoding="utf-8") as f:
         f.write(content)
 
-    print(f"✓ Updated chocolateyInstall.ps1 to version {version}")
+    print(f"[OK] Updated chocolateyInstall.ps1 to version {version}")
     return ps1_path
 
 def create_nupkg(version):
@@ -117,7 +122,7 @@ def create_nupkg(version):
                     rel_p = os.path.relpath(full_p, choco_dir)
                     z.write(full_p, rel_p)
 
-    print(f"✓ Generated Chocolatey package: {nupkg_path}")
+    print(f"[OK] Generated Chocolatey package: {nupkg_path}")
     return nupkg_path
 
 def main():

@@ -14,6 +14,11 @@ import json
 import hashlib
 from datetime import datetime, timezone
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 def get_version():
@@ -198,7 +203,7 @@ def main():
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
 
-    print(f"✓ Generated release manifest: {manifest_path} (Version: {VERSION})")
+    print(f"[OK] Generated release manifest: {manifest_path} (Version: {VERSION})")
 
     # Generate SHA256SUMS and SHA512SUMS
     sha256_path = os.path.join(DIST_DIR, "SHA256SUMS")
@@ -209,8 +214,8 @@ def main():
             f256.write(f"{art['sha256']}  {art['name']}\n")
             f512.write(f"{art['sha512']}  {art['name']}\n")
 
-    print(f"✓ Generated SHA256SUMS: {sha256_path}")
-    print(f"✓ Generated SHA512SUMS: {sha512_path}")
+    print(f"[OK] Generated SHA256SUMS: {sha256_path}")
+    print(f"[OK] Generated SHA512SUMS: {sha512_path}")
 
 if __name__ == "__main__":
     main()

@@ -26,6 +26,9 @@ permissions:
   packages: write
   id-token: write
 
+env:
+  PYTHONIOENCODING: "utf-8"
+
 jobs:
   build-and-package:
     name: Build & Package (${{ matrix.os }})

@@ -14,6 +14,11 @@ import json
 import uuid
 from datetime import datetime, timezone
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 def get_version():
@@ -108,7 +113,7 @@ def generate_spdx():
     out_path = os.path.join(DIST_DIR, "sbom-spdx.json")
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(spdx, f, indent=2)
-    print(f"✓ Generated SPDX 2.3 SBOM: {out_path} (Version: {VERSION})")
+    print(f"[OK] Generated SPDX 2.3 SBOM: {out_path} (Version: {VERSION})")
 
 def generate_cyclonedx():
     components = []
@@ -146,7 +151,7 @@ def generate_cyclonedx():
     out_path = os.path.join(DIST_DIR, "sbom-cyclonedx.json")
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(cyclonedx, f, indent=2)
-    print(f"✓ Generated CycloneDX 1.5 SBOM: {out_path} (Version: {VERSION})")
+    print(f"[OK] Generated CycloneDX 1.5 SBOM: {out_path} (Version: {VERSION})")
 
 def main():
     os.makedirs(DIST_DIR, exist_ok=True)
