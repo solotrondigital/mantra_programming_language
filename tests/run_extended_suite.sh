@@ -20,12 +20,17 @@ echo "    MANTRA EXTENDED TESTING, FUZZING & REGRESSION SUITE (v0.6.0)  "
 echo "=================================================================="
 echo ""
 
-MANTRAC="$DIR/target/debug/mantrac"
-MANTRA="$DIR/target/debug/mantra"
-
-if [ ! -f "$MANTRAC" ] || [ ! -f "$MANTRA" ]; then
+if [ -f "$DIR/target/release/mantrac" ] && [ -f "$DIR/target/release/mantra" ]; then
+    MANTRAC="$DIR/target/release/mantrac"
+    MANTRA="$DIR/target/release/mantra"
+elif [ -f "$DIR/target/debug/mantrac" ] && [ -f "$DIR/target/debug/mantra" ]; then
+    MANTRAC="$DIR/target/debug/mantrac"
+    MANTRA="$DIR/target/debug/mantra"
+else
     echo ">> Compiling workspace binaries..."
     cargo build
+    MANTRAC="$DIR/target/debug/mantrac"
+    MANTRA="$DIR/target/debug/mantra"
 fi
 
 # 1. Run Standard Conformance & Diagnostic Tests

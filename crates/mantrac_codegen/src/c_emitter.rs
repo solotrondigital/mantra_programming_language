@@ -316,8 +316,10 @@ impl<'a> CEmitter<'a> {
             if let Some(ref base) = cls.base_class {
                 // Use the typedef name (no 'struct' keyword) — MSVC/Clang require the tag
                 // to exist if 'struct X' is used; since forward_declarations emits
-                // 'typedef struct Foo Foo;', using 'Foo __super;' is portable everywhere.
-                self.write_line(&format!("{} __super;", base));
+                // 'typedef struct Foo Foo;', using 'Foo __parent;' is portable everywhere.
+                // NOTE: Do NOT use '__super' because MSVC and Clang on Windows treat '__super'
+                // as a reserved keyword for Microsoft C++ extensions.
+                self.write_line(&format!("{} __parent;", base));
             } else {
                 self.write_line("MantraObject __base;");
             }
