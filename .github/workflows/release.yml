@@ -163,6 +163,27 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Verify Homebrew Tap Access
+        if: steps.gate_check.outputs.should_release == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          if [ -z "${GH_TOKEN}" ]; then
+            echo "::warning::HOMEBREW_TAP_TOKEN secret is not set."
+            exit 0
+          fi
+          echo "Checking GitHub authentication..."
+          curl -sS \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/user | python3 -c "import json,sys; print('Authenticated as:', json.load(sys.stdin).get('login','UNKNOWN'))"
+          echo "Checking repository write access..."
+          curl -sS \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/solotrondigital/homebrew-tap | python3 -c "import json,sys; d=json.load(sys.stdin); print('Repository:', d.get('full_name')); print('Push permission:', d.get('permissions',{}).get('push','NOT AVAILABLE'))"
+
       - name: Push to Homebrew Tap
         shell: bash
         if: steps.gate_check.outputs.should_release == 'true'
@@ -171,7 +192,7 @@ jobs:
         run: |
           if [ -z "${HOMEBREW_TAP_TOKEN}" ]; then
             echo "::warning::HOMEBREW_TAP_TOKEN secret is not set. Skipping live push to Homebrew tap."
-            echo ">> ACTION REQUIRED: Create a GitHub PAT with 'repo' write scope for solotrontech/homebrew-tap"
+            echo ">> ACTION REQUIRED: Create a GitHub PAT with 'repo' write scope for solotrondigital/homebrew-tap"
             echo ">> then add it as repository secret HOMEBREW_TAP_TOKEN at:"
             echo ">> https://github.com/solotrondigital/mantra_programming_language/settings/secrets/actions"
             exit 0
@@ -180,11 +201,10 @@ jobs:
           TMP_DIR=$(mktemp -d)
           CLONED=0
           TARGET_TAP=""
-          for TAP_REPO in "solotrontech/homebrew-tap" "solotrondigital/homebrew-tap"; do
+          for TAP_REPO in "solotrondigital/homebrew-tap" "solotrontech/homebrew-tap"; do
             echo ">> Checking tap repository: ${TAP_REPO}..."
             rm -rf "${TMP_DIR}/tap"
-            if git clone "https://${HOMEBREW_TAP_TOKEN}@github.com/${TAP_REPO}.git" "${TMP_DIR}/tap" 2>/dev/null || \
-               git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${TAP_REPO}.git" "${TMP_DIR}/tap" 2>/dev/null; then
+            if git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${TAP_REPO}.git" "${TMP_DIR}/tap" 2>/dev/null; then
               CLONED=1
               TARGET_TAP="${TAP_REPO}"
               echo ">> Connected to ${TARGET_TAP}"
@@ -203,9 +223,9 @@ jobs:
             fi
 
             cd "${TMP_DIR}/tap"
-            git remote set-url origin "https://${HOMEBREW_TAP_TOKEN}@github.com/${TARGET_TAP}.git"
+            git remote set-url origin "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${TARGET_TAP}.git"
             git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
             # Check if remote has branches
             git fetch origin 2>/dev/null || true
@@ -223,31 +243,27 @@ jobs:
             cp "${GITHUB_WORKSPACE}/${FORMULA_SRC}" Formula/mantra.rb
             git add Formula/mantra.rb
 
-            if git diff --staged --quiet; then
-              echo ">> Homebrew formula is already up to date in ${TARGET_TAP} (v${{ env.VERSION }})."
-            else
+            if ! git diff --cached --quiet; then
               git commit -m "feat(formula): bump mantra to v${{ env.VERSION }}"
               echo ">> Pushing formula to ${TARGET_TAP}..."
-              CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "main")
-              if git push -u origin "${CURRENT_BRANCH}"; then
+              if git push origin HEAD:main; then
                 TAP_ORG=$(echo "$TARGET_TAP" | cut -d'/' -f1)
                 echo "[OK] Homebrew tap updated: brew install ${TAP_ORG}/tap/mantra"
-              elif git push -u origin HEAD:main; then
-                TAP_ORG=$(echo "$TARGET_TAP" | cut -d'/' -f1)
-                echo "[OK] Homebrew tap updated: brew install ${TAP_ORG}/tap/mantra"
-              elif git push -u origin HEAD:master; then
+              elif git push origin HEAD:master; then
                 TAP_ORG=$(echo "$TARGET_TAP" | cut -d'/' -f1)
                 echo "[OK] Homebrew tap updated: brew install ${TAP_ORG}/tap/mantra"
               else
                 echo "::warning::Failed to push to ${TARGET_TAP}. Verify that HOMEBREW_TAP_TOKEN has 'repo' write access to ${TARGET_TAP}."
               fi
+            else
+              echo ">> Homebrew formula is already up to date in ${TARGET_TAP} (v${{ env.VERSION }})."
             fi
             cd "${GITHUB_WORKSPACE}"
             rm -rf "${TMP_DIR}"
           else
-            echo "::warning::Could not clone Homebrew tap repository (tried solotrontech/homebrew-tap and solotrondigital/homebrew-tap)."
+            echo "::warning::Could not clone Homebrew tap repository (tried solotrondigital/homebrew-tap and solotrontech/homebrew-tap)."
             echo ">> To enable automated tap updates:"
-            echo ">>   1. Create the repository 'homebrew-tap' on GitHub (under solotrontech or solotrondigital)."
+            echo ">>   1. Create the repository 'homebrew-tap' on GitHub (under solotrondigital or solotrontech)."
             echo ">>   2. Ensure HOMEBREW_TAP_TOKEN has 'repo' write access to it."
             echo ">> The generated Formula is available in release artifacts at dist/releases/v${{ env.VERSION }}/mantra.rb."
             exit 0
@@ -327,7 +343,7 @@ jobs:
         run: |
           $apiKey = "${{ secrets.CHOCOLATEY_API_KEY }}"
           if (-not $apiKey) {
-            $apiKey = "bdc61c5c-a80d-4310-a1bf-b5426318baec"
+            $apiKey = "1ac46c92-993e-4dba-bf40-b69cfa549dfe"
           }
           if (-not $apiKey) {
             Write-Host "::warning::CHOCOLATEY_API_KEY secret is not set. Skipping Chocolatey push."
