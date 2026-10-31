@@ -15,9 +15,18 @@ import random
 import string
 import tempfile
 
-MANTRAC = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../target/debug/mantrac"))
-if not os.path.exists(MANTRAC):
-    MANTRAC = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../target/release/mantrac"))
+MANTRAC = None
+for base in ["../../target/release", "../../target/debug"]:
+    for name in ["mantrac.exe", "mantrac"]:
+        p = os.path.abspath(os.path.join(os.path.dirname(__file__), base, name))
+        if os.path.exists(p):
+            MANTRAC = p
+            break
+    if MANTRAC:
+        break
+
+if not MANTRAC:
+    MANTRAC = "mantrac"
 
 def safe_random_char():
     while True:

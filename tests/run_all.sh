@@ -9,17 +9,28 @@ echo "    MANTRA TOOLCHAIN VERIFICATION SUITE    "
 echo "=========================================="
 echo ""
 
-if [ -f "$DIR/target/release/mantrac" ] && [ -f "$DIR/target/release/mantra" ]; then
+if [ -f "$DIR/target/release/mantrac.exe" ] && [ -f "$DIR/target/release/mantra.exe" ]; then
+    MANTRAC="$DIR/target/release/mantrac.exe"
+    MANTRA="$DIR/target/release/mantra.exe"
+elif [ -f "$DIR/target/release/mantrac" ] && [ -f "$DIR/target/release/mantra" ]; then
     MANTRAC="$DIR/target/release/mantrac"
     MANTRA="$DIR/target/release/mantra"
+elif [ -f "$DIR/target/debug/mantrac.exe" ] && [ -f "$DIR/target/debug/mantra.exe" ]; then
+    MANTRAC="$DIR/target/debug/mantrac.exe"
+    MANTRA="$DIR/target/debug/mantra.exe"
 elif [ -f "$DIR/target/debug/mantrac" ] && [ -f "$DIR/target/debug/mantra" ]; then
     MANTRAC="$DIR/target/debug/mantrac"
     MANTRA="$DIR/target/debug/mantra"
 else
     echo "Building toolchain binaries..."
     cargo build
-    MANTRAC="$DIR/target/debug/mantrac"
-    MANTRA="$DIR/target/debug/mantra"
+    if [ -f "$DIR/target/debug/mantrac.exe" ]; then
+        MANTRAC="$DIR/target/debug/mantrac.exe"
+        MANTRA="$DIR/target/debug/mantra.exe"
+    else
+        MANTRAC="$DIR/target/debug/mantrac"
+        MANTRA="$DIR/target/debug/mantra"
+    fi
 fi
 
 PASSED=0
@@ -52,7 +63,7 @@ mkdir -p "$TMP_BIN_DIR"
 for test in tests/conformance/*.mantra; do
     tname=$(basename "$test" .mantra)
     bin_path="$TMP_BIN_DIR/$tname"
-    run_test "Native: $tname" "$MANTRAC $test -o $bin_path && $bin_path"
+    run_test "Native: $tname" "$MANTRAC $test -o $bin_path && ( [ -f \"$bin_path\" ] && \"$bin_path\" || \"${bin_path}.exe\" )"
 done
 
 echo ""
