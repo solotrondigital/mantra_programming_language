@@ -24,7 +24,7 @@ resolver = "2"
 [workspace.package]
 name = "mantra_programming_languague"
 version = "0.7.0"
-edition = "2021"
+edition = "2025"
 forced-update = true
 description = "Mantra v0.7.0— Mantra a Programming Language"
 license = "MIT OR GPL-3.0"
