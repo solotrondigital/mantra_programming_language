@@ -1,6 +1,7 @@
 # Mantra IDE Integrations — Visual Studio Code & Editors
 
 Official IDE ecosystem for the **Mantra Programming Language** (`.mantra`), developed and maintained by **[Solotron Technologies Private Limited](http://www.solotrontech.com)**.
+Publisher ID: **`solotrondigital`**
 
 ---
 
@@ -52,22 +53,22 @@ code --install-extension mantra_programming_language/tooling/ide/vscode-cli/mant
 
 ---
 
-## ⚡ Activating Extensions
+## 🌐 Publishing to Registries
 
-After installation:
-1. Press <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd> (or <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>P</kbd>).
-2. Select **`Developer: Reload Window`**.
+### 1. Open VSX (Eclipse Foundation)
+* **Namespace**: `solotrondigital` (matches your Open VSX account `@solotrondigital`)
+* **Web Upload**: [https://open-vsx.org/publish](https://open-vsx.org/publish)
+* **CLI Upload**:
+  ```bash
+  npx ovsx publish mantra_programming_language/tooling/ide/vscode/mantra-language-support-0.5.0.vsix -p <OPEN_VSX_TOKEN>
+  npx ovsx publish mantra_programming_language/tooling/ide/vscode-cli/mantra-cli-0.6.0.vsix -p <OPEN_VSX_TOKEN>
+  ```
 
-Both extensions will activate immediately on all `.mantra` projects.
-
----
-
-## 🔍 Features & Navigation Support
-
-* 🎨 **Syntax Highlighting & TextMate Grammar**: Covers classes, interfaces, traits, decorators, visibility modifiers, and control flow.
-* 💡 **IntelliSense & Autocomplete**: Keyword completions, member completion after `.`, and standard library documentation.
-* 🚨 **Real-Time Compiler Diagnostics**: Error and warning markers directly in the editor.
-* 🔍 **Go to Definition & Backtrack**:
-  - Jump to class/method/function with <kbd>F12</kbd> or <kbd>Cmd</kbd>/<kbd>Ctrl</kbd> + Click.
-  - Backtrack with <kbd>Ctrl</kbd> + <kbd>-</kbd> (macOS) or <kbd>Alt</kbd> + <kbd>←</kbd> (Windows/Linux).
-* 🛠️ **Mantra CLI Sidebar & Status Bar**: One-click actions for `mantra run`, `mantra build`, `mantra test`, `mantra fmt`, and `mantra doctor`.
+### 2. Visual Studio Marketplace (Microsoft)
+* **Publisher ID**: `solotrondigital` (managed under `solotron.digital@outlook.com`)
+* **Portal**: [https://marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage)
+* **CLI Upload**:
+  ```bash
+  npx vsce publish --packagePath mantra_programming_language/tooling/ide/vscode/mantra-language-support-0.5.0.vsix -p <VS_MARKETPLACE_TOKEN>
+  npx vsce publish --packagePath mantra_programming_language/tooling/ide/vscode-cli/mantra-cli-0.6.0.vsix -p <VS_MARKETPLACE_TOKEN>
+  ```

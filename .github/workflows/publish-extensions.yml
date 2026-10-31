@@ -29,7 +29,7 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - name: Setup Node.js Environment
         uses: actions/setup-node@v4
@@ -54,26 +54,34 @@ jobs:
             echo "Force publish requested."
             PUBLISH_LANG="true"
             PUBLISH_CLI="true"
-          elif git rev-parse HEAD~1 >/dev/null 2>&1; then
-            PREV_LANG_VER=$(git show HEAD~1:tooling/ide/vscode/package.json 2>/dev/null | jq -r '.version // empty')
-            PREV_CLI_VER=$(git show HEAD~1:tooling/ide/vscode-cli/package.json 2>/dev/null | jq -r '.version // empty')
+          else
+            set +e
+            HAS_PARENT=0
+            git rev-parse --verify HEAD~1 >/dev/null 2>&1 && HAS_PARENT=1
 
-            echo "Previous Language Support Version: $PREV_LANG_VER"
-            echo "Previous CLI Extension Version: $PREV_CLI_VER"
+            if [ "$HAS_PARENT" -eq 1 ]; then
+              PREV_LANG_VER=$(git show HEAD~1:tooling/ide/vscode/package.json 2>/dev/null | jq -r '.version // empty')
+              PREV_CLI_VER=$(git show HEAD~1:tooling/ide/vscode-cli/package.json 2>/dev/null | jq -r '.version // empty')
+              set -e
 
-            if [ "$LANG_VER" != "$PREV_LANG_VER" ] && [ -n "$LANG_VER" ]; then
-              echo ">> Detected version change in Mantra Language Support ($PREV_LANG_VER -> $LANG_VER)"
+              echo "Previous Language Support Version: $PREV_LANG_VER"
+              echo "Previous CLI Extension Version: $PREV_CLI_VER"
+
+              if [ -z "$PREV_LANG_VER" ] || [ "$LANG_VER" != "$PREV_LANG_VER" ]; then
+                echo ">> Detected version update in Mantra Language Support ($PREV_LANG_VER -> $LANG_VER)"
+                PUBLISH_LANG="true"
+              fi
+
+              if [ -z "$PREV_CLI_VER" ] || [ "$CLI_VER" != "$PREV_CLI_VER" ]; then
+                echo ">> Detected version update in Mantra CLI Extension ($PREV_CLI_VER -> $CLI_VER)"
+                PUBLISH_CLI="true"
+              fi
+            else
+              set -e
+              echo "Initial commit or single commit push detected; enabling publish."
               PUBLISH_LANG="true"
-            fi
-
-            if [ "$CLI_VER" != "$PREV_CLI_VER" ] && [ -n "$CLI_VER" ]; then
-              echo ">> Detected version change in Mantra CLI Extension ($PREV_CLI_VER -> $CLI_VER)"
               PUBLISH_CLI="true"
             fi
-          else
-            echo "Initial commit or no parent commit found; enabling publish."
-            PUBLISH_LANG="true"
-            PUBLISH_CLI="true"
           fi
 
           echo "publish_lang=$PUBLISH_LANG" >> $GITHUB_OUTPUT

@@ -640,13 +640,21 @@ echo ">> Deploying generated installer packages..."
 
 # Target: installer directory
 mkdir -p "$DEST_PKG_INSTALLER"
-rsync -a --delete "$FINAL_STAGE/" "$DEST_PKG_INSTALLER/"
+if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete "$FINAL_STAGE/" "$DEST_PKG_INSTALLER/"
+else
+    cp -Rf "$FINAL_STAGE/"* "$DEST_PKG_INSTALLER/" 2>/dev/null || cp -rf "$FINAL_STAGE"/* "$DEST_PKG_INSTALLER/" || true
+fi
 echo "   ✓ Successfully populated: $DEST_PKG_INSTALLER"
 
 # Also sync to website installer directory if available
 if [ -d "$WEB_DIR" ]; then
     mkdir -p "$WEB_DIR/installer"
-    rsync -a --delete "$FINAL_STAGE/" "$WEB_DIR/installer/" 2>/dev/null || true
+    if command -v rsync >/dev/null 2>&1; then
+        rsync -a --delete "$FINAL_STAGE/" "$WEB_DIR/installer/" 2>/dev/null || true
+    else
+        cp -Rf "$FINAL_STAGE/"* "$WEB_DIR/installer/" 2>/dev/null || cp -rf "$FINAL_STAGE"/* "$WEB_DIR/installer/" 2>/dev/null || true
+    fi
     echo "   ✓ Successfully synced to website: $WEB_DIR/installer"
 fi
 

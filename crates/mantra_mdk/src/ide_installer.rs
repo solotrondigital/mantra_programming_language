@@ -112,7 +112,7 @@ Supported Targets:
 
             for root in &ext_roots {
                 // 1. Install Mantra Language Support Extension
-                let lang_dir = root.join("mantra-lang.mantra-language-support-0.5.0");
+                let lang_dir = root.join("solotrondigital.mantra-language-support-0.5.0");
                 if let Ok(_) = fs::create_dir_all(&lang_dir) {
                     let _ = copy_file_if_exists(&vscode_lang_src.join("package.json"), &lang_dir.join("package.json"));
                     let _ = copy_file_if_exists(&vscode_lang_src.join("language-configuration.json"), &lang_dir.join("language-configuration.json"));
@@ -136,7 +136,7 @@ Supported Targets:
 
                 // 2. Install Mantra CLI Extension
                 if vscode_cli_src.exists() {
-                    let cli_dir = root.join("mantra-lang.mantra-cli-0.6.0");
+                    let cli_dir = root.join("solotrondigital.mantra-cli-0.6.0");
                     if let Ok(_) = fs::create_dir_all(&cli_dir) {
                         let _ = copy_file_if_exists(&vscode_cli_src.join("package.json"), &cli_dir.join("package.json"));
                         let _ = copy_file_if_exists(&vscode_cli_src.join("README.md"), &cli_dir.join("README.md"));

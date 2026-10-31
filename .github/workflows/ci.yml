@@ -69,11 +69,14 @@ jobs:
       - name: Verify MDK CLI Commands
         shell: bash
         run: |
-          ./target/release/mantra --version
-          ./target/release/mantrac --version
-          ./target/release/mantra new /tmp/ci_test_app
+          ROOT_DIR="$(pwd)"
+          export PATH="$ROOT_DIR/target/release:$PATH"
+          mantra --version
+          mantrac --version
+          rm -rf /tmp/ci_test_app
+          mantra new /tmp/ci_test_app
           cd /tmp/ci_test_app
-          ../../target/release/mantra check
-          ../../target/release/mantra test
-          ../../target/release/mantra audit
+          mantra check
+          mantra test
+          mantra audit
 
