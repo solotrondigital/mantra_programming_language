@@ -140,16 +140,24 @@ fi
 if [ -n "${HOMEBREW_TAP_TOKEN}" ]; then
     echo ">> Pushing updated formula to Homebrew tap repository..."
     TMP_TAP=$(mktemp -d /tmp/homebrew_tap_XXXXXX)
-    git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/solotrontech/homebrew-tap.git" "${TMP_TAP}" || true
-    if [ -d "${TMP_TAP}/.git" ]; then
+    CLONED=0
+    for TAP in "solotrontech/homebrew-tap" "solotrondigital/homebrew-tap"; do
+        if git clone "https://${HOMEBREW_TAP_TOKEN}@github.com/${TAP}.git" "${TMP_TAP}" 2>/dev/null; then
+            CLONED=1
+            TARGET_TAP="${TAP}"
+            break
+        fi
+    done
+    if [ "$CLONED" -eq 1 ] && [ -d "${TMP_TAP}/.git" ]; then
         mkdir -p "${TMP_TAP}/Formula"
         cp "${FORMULA_PATH}" "${TMP_TAP}/Formula/mantra.rb"
         cd "${TMP_TAP}"
+        git remote set-url origin "https://${HOMEBREW_TAP_TOKEN}@github.com/${TARGET_TAP}.git"
         git config user.name "Mantra Release Bot"
         git config user.email "release@solotron.tech"
         git add Formula/mantra.rb
         git commit -m "feat(formula): bump mantra to v${VERSION}" || true
-        git push origin main || git push origin master || true
+        git push -u origin main || git push -u origin master || true
         cd "${REPO_ROOT}"
         rm -rf "${TMP_TAP}"
         echo "✓ Successfully pushed updated formula to Homebrew tap!"

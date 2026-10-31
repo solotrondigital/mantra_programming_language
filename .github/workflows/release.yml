@@ -177,12 +177,14 @@ jobs:
             exit 0
           fi
           echo ">> Pushing updated Formula to Homebrew tap repository..."
-          TMP_TAP=$(mktemp -d)
+          TMP_DIR=$(mktemp -d)
           CLONED=0
           TARGET_TAP=""
           for TAP_REPO in "solotrontech/homebrew-tap" "solotrondigital/homebrew-tap"; do
             echo ">> Checking tap repository: ${TAP_REPO}..."
-            if git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${TAP_REPO}.git" "$TMP_TAP" 2>/dev/null; then
+            rm -rf "${TMP_DIR}/tap"
+            if git clone "https://${HOMEBREW_TAP_TOKEN}@github.com/${TAP_REPO}.git" "${TMP_DIR}/tap" 2>/dev/null || \
+               git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${TAP_REPO}.git" "${TMP_DIR}/tap" 2>/dev/null; then
               CLONED=1
               TARGET_TAP="${TAP_REPO}"
               echo ">> Connected to ${TARGET_TAP}"
@@ -191,34 +193,57 @@ jobs:
           done
 
           if [ "$CLONED" -eq 1 ]; then
-            mkdir -p "$TMP_TAP/Formula"
             FORMULA_SRC="dist/releases/v${{ env.VERSION }}/mantra.rb"
             if [ ! -f "$FORMULA_SRC" ]; then
-              # Try local distribution path as fallback
               FORMULA_SRC="distribution/homebrew-tap/Formula/mantra.rb"
             fi
             if [ ! -f "$FORMULA_SRC" ]; then
               echo "::warning::mantra.rb formula file not found. Expected at dist/releases/v${{ env.VERSION }}/mantra.rb"
               exit 0
             fi
-            cp "$FORMULA_SRC" "$TMP_TAP/Formula/mantra.rb"
-            cd "$TMP_TAP"
+
+            cd "${TMP_DIR}/tap"
+            git remote set-url origin "https://${HOMEBREW_TAP_TOKEN}@github.com/${TARGET_TAP}.git"
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
+
+            # Check if remote has branches
+            git fetch origin 2>/dev/null || true
+            if git rev-parse --verify origin/main >/dev/null 2>&1; then
+              git checkout -B main origin/main
+              git pull origin main --rebase 2>/dev/null || true
+            elif git rev-parse --verify origin/master >/dev/null 2>&1; then
+              git checkout -B master origin/master
+              git pull origin master --rebase 2>/dev/null || true
+            else
+              git checkout -B main 2>/dev/null || true
+            fi
+
+            mkdir -p Formula
+            cp "${GITHUB_WORKSPACE}/${FORMULA_SRC}" Formula/mantra.rb
             git add Formula/mantra.rb
+
             if git diff --staged --quiet; then
-              echo ">> Homebrew formula is already up to date (v${{ env.VERSION }})."
+              echo ">> Homebrew formula is already up to date in ${TARGET_TAP} (v${{ env.VERSION }})."
             else
               git commit -m "feat(formula): bump mantra to v${{ env.VERSION }}"
-              if git push origin main 2>/dev/null || git push origin master 2>/dev/null; then
+              echo ">> Pushing formula to ${TARGET_TAP}..."
+              CURRENT_BRANCH=$(git branch --show-current 2>/dev/null || echo "main")
+              if git push -u origin "${CURRENT_BRANCH}"; then
+                TAP_ORG=$(echo "$TARGET_TAP" | cut -d'/' -f1)
+                echo "[OK] Homebrew tap updated: brew install ${TAP_ORG}/tap/mantra"
+              elif git push -u origin HEAD:main; then
+                TAP_ORG=$(echo "$TARGET_TAP" | cut -d'/' -f1)
+                echo "[OK] Homebrew tap updated: brew install ${TAP_ORG}/tap/mantra"
+              elif git push -u origin HEAD:master; then
                 TAP_ORG=$(echo "$TARGET_TAP" | cut -d'/' -f1)
                 echo "[OK] Homebrew tap updated: brew install ${TAP_ORG}/tap/mantra"
               else
-                echo "::warning::Failed to push to branch of ${TARGET_TAP}."
+                echo "::warning::Failed to push to ${TARGET_TAP}. Verify that HOMEBREW_TAP_TOKEN has 'repo' write access to ${TARGET_TAP}."
               fi
             fi
-            cd -
-            rm -rf "$TMP_TAP"
+            cd "${GITHUB_WORKSPACE}"
+            rm -rf "${TMP_DIR}"
           else
             echo "::warning::Could not clone Homebrew tap repository (tried solotrontech/homebrew-tap and solotrondigital/homebrew-tap)."
             echo ">> To enable automated tap updates:"
@@ -310,6 +335,21 @@ jobs:
             Write-Host ">> Copy your API key and add it as repository secret CHOCOLATEY_API_KEY at:"
             Write-Host ">> https://github.com/solotrondigital/mantra_programming_language/settings/secrets/actions"
             exit 0
+          }
+
+          Write-Host ">> Validating Chocolatey API key with https://push.chocolatey.org/ ..."
+          try {
+            $testAuth = Invoke-RestMethod -Uri "https://push.chocolatey.org/" -Method Post -Headers @{ "X-NuGet-ApiKey" = $apiKey } -TimeoutSec 10 -ErrorAction SilentlyContinue
+            if ($testAuth -and $testAuth.isAuthenticated -eq $false) {
+              Write-Warning "Chocolatey API key authentication failed: the key is invalid, revoked, or expired on community.chocolatey.org."
+              Write-Warning ">> ACTION REQUIRED: Log in to https://community.chocolatey.org/account as solotron.digital"
+              Write-Warning ">> Copy your active API key and configure it as secret CHOCOLATEY_API_KEY in repository settings:"
+              Write-Warning ">> https://github.com/solotrondigital/mantra_programming_language/settings/secrets/actions"
+              Write-Host ">> Skipping push until a valid API key is configured."
+              exit 0
+            }
+          } catch {
+            Write-Host ">> Pre-validation check skipped, proceeding with choco push..."
           }
 
           Write-Host ">> Setting Chocolatey API Key for https://push.chocolatey.org/ ..."
