@@ -40,7 +40,14 @@ jobs:
         id: version_check
         shell: bash
         run: |
+          python3 scripts/release/sync_versions.py
+
           FORCE="${{ github.event.inputs.force_publish }}"
+          CARGO_FORCED=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' Cargo.toml 2>/dev/null || echo "false")
+          if [ "$CARGO_FORCED" = "true" ]; then
+            echo "Forced update enabled in Cargo.toml."
+            FORCE="true"
+          fi
 
           LANG_VER=$(jq -r '.version' tooling/ide/vscode/package.json)
           CLI_VER=$(jq -r '.version' tooling/ide/vscode-cli/package.json)

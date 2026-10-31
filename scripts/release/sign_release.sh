@@ -19,7 +19,7 @@ if [ -n "$1" ]; then
 else
     VERSION=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || true)
 fi
-VERSION="${VERSION:-0.5.0}"
+VERSION="${VERSION:-0.7.0}"
 DIST_DIR="${REPO_ROOT}/dist/releases/v${VERSION}"
 
 echo "=================================================================="

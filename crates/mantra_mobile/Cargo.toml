@@ -1,6 +1,6 @@
 [package]
 name = "mantra_mobile"
-version = "0.5.0"
+version = "0.7.0"
 edition = "2021"
 authors = ["Solotron Technologies Private Limited"]
 description = "Mantra Mobile Runtime and Bridge Framework for Android and iOS"

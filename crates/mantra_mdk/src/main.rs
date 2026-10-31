@@ -33,7 +33,7 @@ use std::process::exit;
 
 fn print_help() {
     println!(
-        r#"Mantra Development Kit (MDK) CLI — v0.6.0 (Stable Language & Production Toolchain)
+        r#"Mantra Development Kit (MDK) CLI — v0.7.0 (Stable Language & Production Toolchain)
 Usage:
     mantra <command> [arguments] [options]
 
@@ -105,7 +105,7 @@ Bootstrap & Toolchain:
 }
 
 fn print_version() {
-    println!("Mantra Development Kit (MDK) v0.6.0 (Stable Language & Production Toolchain)");
+    println!("Mantra Development Kit (MDK) v0.7.0 (Stable Language & Production Toolchain)");
     println!("Compiler: mantrac 0.6.0");
     println!("Language Server: mantra-lsp 0.6.0");
     println!("Mobile Engine: mantra_mobile 0.6.0 (Android & iOS Bridge)");

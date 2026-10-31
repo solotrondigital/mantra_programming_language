@@ -1,6 +1,6 @@
 [package]
 name = "mantra_web"
-version = "0.2.0"
+version = "0.7.0"
 edition = "2021"
 description = "Native web framework runtime for the Mantra programming language — HTTP server, router, middleware, and templates."
 license = "MIT"

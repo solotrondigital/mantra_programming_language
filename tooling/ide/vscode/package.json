@@ -2,7 +2,7 @@
   "name": "mantra-language-support",
   "displayName": "Mantra Language Support",
   "description": "Official IDE ecosystem for the Mantra Programming Language: Universal LSP, IntelliSense, rich syntax highlighting, and semantic navigation. Owned by Solotron Technologies (http://www.solotrontech.com).",
-  "version": "0.5.0",
+  "version": "0.7.0",
   "publisher": "solotrondigital",
   "icon": "images/mantra_color_logo.png",
   "homepage": "http://www.solotrontech.com",

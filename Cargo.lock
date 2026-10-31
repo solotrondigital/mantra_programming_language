@@ -10,7 +10,7 @@ checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
 
 [[package]]
 name = "mantra_bootstrap"
-version = "0.3.0"
+version = "0.7.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_checker",
@@ -23,7 +23,7 @@ dependencies = [
 
 [[package]]
 name = "mantra_debugger"
-version = "0.2.0"
+version = "0.7.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_lexer",
@@ -33,11 +33,11 @@ dependencies = [
 
 [[package]]
 name = "mantra_graphql"
-version = "0.5.0"
+version = "0.7.0"
 
 [[package]]
 name = "mantra_lsp"
-version = "0.5.0"
+version = "0.7.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_checker",
@@ -48,7 +48,7 @@ dependencies = [
 
 [[package]]
 name = "mantra_mdk"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "mantra_mobile",
  "mantrac_ast",
@@ -62,11 +62,11 @@ dependencies = [
 
 [[package]]
 name = "mantra_mobile"
-version = "0.5.0"
+version = "0.7.0"
 
 [[package]]
 name = "mantra_rest"
-version = "0.2.0"
+version = "0.7.0"
 dependencies = [
  "mantra_sql_orm",
  "mantra_web",
@@ -75,14 +75,14 @@ dependencies = [
 
 [[package]]
 name = "mantra_sql_orm"
-version = "0.2.0"
+version = "0.7.0"
 dependencies = [
  "mantrac_vm",
 ]
 
 [[package]]
 name = "mantra_web"
-version = "0.2.0"
+version = "0.7.0"
 dependencies = [
  "mantra_sql_orm",
  "mantrac_vm",
@@ -90,11 +90,11 @@ dependencies = [
 
 [[package]]
 name = "mantra_widgets"
-version = "0.5.0"
+version = "0.7.0"
 
 [[package]]
 name = "mantrac"
-version = "0.3.0"
+version = "0.7.0"
 dependencies = [
  "mantra_bootstrap",
  "mantra_debugger",
@@ -109,14 +109,14 @@ dependencies = [
 
 [[package]]
 name = "mantrac_ast"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "mantrac_lexer",
 ]
 
 [[package]]
 name = "mantrac_checker"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_lexer",
@@ -124,7 +124,7 @@ dependencies = [
 
 [[package]]
 name = "mantrac_codegen"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_checker",
@@ -133,7 +133,7 @@ dependencies = [
 
 [[package]]
 name = "mantrac_ir"
-version = "0.2.0"
+version = "0.7.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_checker",
@@ -142,11 +142,11 @@ dependencies = [
 
 [[package]]
 name = "mantrac_lexer"
-version = "0.1.0"
+version = "0.7.0"
 
 [[package]]
 name = "mantrac_parser"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_lexer",
@@ -154,7 +154,7 @@ dependencies = [
 
 [[package]]
 name = "mantrac_vm"
-version = "0.1.0"
+version = "0.7.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_checker",

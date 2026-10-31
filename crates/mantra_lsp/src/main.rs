@@ -9,7 +9,7 @@ use std::io::{self, BufRead, Read, Write};
 
 fn print_help() {
     eprintln!(
-        "Mantra Language Server (mantra-lsp) v0.5.0
+        "Mantra Language Server (mantra-lsp) v0.7.0
 Usage:
     mantra-lsp [options]
 

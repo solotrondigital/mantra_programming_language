@@ -51,21 +51,27 @@ jobs:
       - name: Install Stable Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Resolve Version from Cargo.toml
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Synchronize Versions from Cargo.toml & Check Gate
         id: get_version
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            VER="${{ github.event.inputs.version }}"
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VER="${GITHUB_REF_NAME#v}"
-          else
-            VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.5.0")
-          fi
+          python3 scripts/release/sync_versions.py
+          python3 scripts/release/check_release_status.py
+          VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.7.0")
+          FORCED=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' Cargo.toml 2>/dev/null || echo "false")
           VER="${VER#v}"
           echo "VERSION=${VER}" >> $GITHUB_ENV
           echo "VERSION=${VER}" >> $GITHUB_OUTPUT
-          echo "Building Mantra Version: v${VER}"
+          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_ENV
+          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_OUTPUT
+          echo "Building Mantra Version: v${VER} (forced-update=${FORCED})"
 
       - name: Build Toolchain Binaries
         run: cargo build --release
@@ -101,21 +107,22 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Resolve Version from Cargo.toml
-        id: get_version
+      - name: Resolve Version and Gate Check
+        id: gate_check
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            VER="${{ github.event.inputs.version }}"
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VER="${GITHUB_REF_NAME#v}"
-          else
-            VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.5.0")
-          fi
+          python3 scripts/release/sync_versions.py
+          python3 scripts/release/check_release_status.py
+          VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.7.0")
+          FORCED=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' Cargo.toml 2>/dev/null || echo "false")
           VER="${VER#v}"
           echo "VERSION=${VER}" >> $GITHUB_ENV
           echo "VERSION=${VER}" >> $GITHUB_OUTPUT
-          echo "Publishing Mantra Version: v${VER}"
+          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_ENV
+          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_OUTPUT
+          echo "Publishing Mantra Version: v${VER} (forced-update=${FORCED})"
 
       - name: Download Built Artifacts
         uses: actions/download-artifact@v4
@@ -142,6 +149,7 @@ jobs:
           ./scripts/release/sign_release.sh "${{ env.VERSION }}"
 
       - name: Create or Update GitHub Release
+        if: steps.gate_check.outputs.should_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
@@ -157,7 +165,7 @@ jobs:
 
       - name: Push to Homebrew Tap
         shell: bash
-        if: env.HOMEBREW_TAP_TOKEN != ''
+        if: steps.gate_check.outputs.should_release == 'true' && env.HOMEBREW_TAP_TOKEN != ''
         env:
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
@@ -196,21 +204,22 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Resolve Version from Cargo.toml
-        id: get_version
+      - name: Resolve Version and Gate Check
+        id: gate_check
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            VER="${{ github.event.inputs.version }}"
-          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            VER="${GITHUB_REF_NAME#v}"
-          else
-            VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.5.0")
-          fi
+          python3 scripts/release/sync_versions.py
+          python3 scripts/release/check_release_status.py
+          VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.7.0")
+          FORCED=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' Cargo.toml 2>/dev/null || echo "false")
           VER="${VER#v}"
           echo "VERSION=${VER}" >> $GITHUB_ENV
           echo "VERSION=${VER}" >> $GITHUB_OUTPUT
-          echo "Chocolatey Release Mantra Version: v${VER}"
+          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_ENV
+          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_OUTPUT
+          echo "Chocolatey Release Mantra Version: v${VER} (forced-update=${FORCED})"
 
       - name: Download Built Artifacts
         uses: actions/download-artifact@v4
@@ -235,6 +244,7 @@ jobs:
           ls -la "dist/releases/v${{ env.VERSION }}"
 
       - name: Upload Chocolatey Package to GitHub Release
+        if: steps.gate_check.outputs.should_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
@@ -249,6 +259,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push to Chocolatey Gallery
+        if: steps.gate_check.outputs.should_release == 'true'
         shell: pwsh
         run: |
           $apiKey = "${{ secrets.CHOCOLATEY_API_KEY }}"

@@ -1,6 +1,6 @@
 [package]
 name = "mantra_lsp"
-version = "0.5.0"
+version = "0.7.0"
 edition = "2021"
 description = "Mantra Language Server Protocol (LSP) Server — Diagnostics, Completion, Hover, Navigation, Semantic Tokens, Formatting, Rename, Code Actions"
 license = "MIT OR GPL-3.0"

@@ -8,9 +8,9 @@
 
 /// Canonical version constants for Mantra v0.3.0 (Self-Hosting Compiler).
 pub const MANTRA_VERSION_MAJOR: u32 = 0;
-pub const MANTRA_VERSION_MINOR: u32 = 6;
+pub const MANTRA_VERSION_MINOR: u32 = 7;
 pub const MANTRA_VERSION_PATCH: u32 = 0;
-pub const MANTRA_VERSION_STR: &str   = "0.6.0";
+pub const MANTRA_VERSION_STR: &str   = "0.7.0";
 pub const MANTRA_EDITION: &str       = "2026";
 pub const MANTRA_CODENAME: &str      = "production-stable";
 
@@ -108,7 +108,7 @@ mod tests {
     fn version_string_contains_semver() {
         let v = CompilerVersion::current(BootstrapStage::RustBootstrap);
         let s = v.to_version_string();
-        assert!(s.contains("0.6.0"), "Expected 0.3.0 in version string: {}", s);
+        assert!(s.contains("0.7.0"), "Expected 0.3.0 in version string: {}", s);
     }
 
     #[test]

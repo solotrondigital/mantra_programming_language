@@ -1,6 +1,6 @@
 [package]
 name = "mantra_sql_orm"
-version = "0.2.0"
+version = "0.7.0"
 edition = "2021"
 description = "Native ORM runtime for the Mantra programming language — models, query builder, migrations, and pluggable DB adapters."
 license = "MIT"

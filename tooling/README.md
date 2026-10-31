@@ -230,3 +230,12 @@ On Microsoft Visual Studio Marketplace (marketplace.visualstudio.com/manage
 Sign in with solotron.digital@outlook.com.
 Create your Publisher ID as solotrondigital.
 Upload mantra-language-support-0.5.0.vsix and mantra-cli-0.6.0.vsix.
+
+
+npx ovsx unpublish mantra-lang.mantra-language-support \
+  --pat PAT \
+  --force
+
+  npx ovsx unpublish mantra-lang.mantra-cli \
+  --pat PAT \
+  --force

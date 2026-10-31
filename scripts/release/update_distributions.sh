@@ -23,7 +23,11 @@ if [ -n "$1" ]; then
 else
     VERSION=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || true)
 fi
-VERSION="${VERSION:-0.5.0}"
+VERSION="${VERSION:-0.7.0}"
+FORCED_UPDATE=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || echo "false")
+if [ "$FORCED_UPDATE" = "true" ]; then
+    echo ">> [Forced Update] forced-update=true: overriding distribution packages for v${VERSION}."
+fi
 DIST_DIR="${REPO_ROOT}/dist/releases/v${VERSION}"
 
 echo "=================================================================="

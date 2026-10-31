@@ -49,6 +49,10 @@ for arg in "$@"; do
     fi
 done
 
+if [ -f "$PKG_DIR/scripts/release/sync_versions.py" ]; then
+    python3 "$PKG_DIR/scripts/release/sync_versions.py" || true
+fi
+
 if [ -z "$VERSION_ARG" ]; then
     if [ -f "$PKG_DIR/Cargo.toml" ]; then
         VERSION_ARG=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' "$PKG_DIR/Cargo.toml")
@@ -57,9 +61,23 @@ if [ -z "$VERSION_ARG" ]; then
         VERSION_ARG=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' "$PKG_DIR/crates/mantrac/Cargo.toml")
     fi
 fi
-VERSION_ARG="${VERSION_ARG:-0.5.0}"
+VERSION_ARG="${VERSION_ARG:-0.7.0}"
 VERSION="${VERSION_ARG#v}"
 VERSION="${VERSION#V}"
+
+FORCED_UPDATE=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' "$PKG_DIR/Cargo.toml" 2>/dev/null || echo "false")
+
+DEST_RELEASE_DIR="$PKG_DIR/dist/releases/v${VERSION}"
+if [ "$FORCED_UPDATE" != "true" ] && [ -d "$DEST_RELEASE_DIR" ] && [ -n "$(ls -A "$DEST_RELEASE_DIR" 2>/dev/null)" ]; then
+    echo ">> [Skip] Distribution packages for v${VERSION} already exist in $DEST_RELEASE_DIR and forced-update is false. Skipping installer build."
+    exit 0
+fi
+
+if [ "$FORCED_UPDATE" = "true" ]; then
+    echo ">> [Forced Update] forced-update=true: overriding all distribution packages for v${VERSION} irrespective of versions."
+    rm -rf "$DEST_RELEASE_DIR"
+    mkdir -p "$DEST_RELEASE_DIR"
+fi
 
 echo "=================================================================="
 echo "   MANTRA PROGRAMMING LANGUAGE — INSTALLER GENERATOR (v${VERSION})"
