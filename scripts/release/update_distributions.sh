@@ -69,12 +69,12 @@ fi
 cat << EOF > "${FORMULA_PATH}"
 # ==============================================================================
 # Homebrew Formula for Mantra Programming Language Toolchain
-# Tap: solotrondigital/tap
+# Tap: solotrontech/tap
 # Formula: mantra.rb
 #
 # Usage:
-#   brew tap solotrondigital/tap
-#   brew install mantra
+#   brew tap solotrontech/tap
+#   brew install solotrontech/tap/mantra
 #   mantra --version
 # ==============================================================================
 
@@ -140,7 +140,7 @@ fi
 if [ -n "${HOMEBREW_TAP_TOKEN}" ]; then
     echo ">> Pushing updated formula to Homebrew tap repository..."
     TMP_TAP=$(mktemp -d /tmp/homebrew_tap_XXXXXX)
-    git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/solotrondigital/homebrew-tap.git" "${TMP_TAP}" || true
+    git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/solotrontech/homebrew-tap.git" "${TMP_TAP}" || true
     if [ -d "${TMP_TAP}/.git" ]; then
         mkdir -p "${TMP_TAP}/Formula"
         cp "${FORMULA_PATH}" "${TMP_TAP}/Formula/mantra.rb"

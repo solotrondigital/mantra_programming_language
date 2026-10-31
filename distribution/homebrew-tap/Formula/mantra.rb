@@ -1,33 +1,33 @@
 # ==============================================================================
 # Homebrew Formula for Mantra Programming Language Toolchain
-# Tap: solotrondigital/tap
+# Tap: solotrontech/tap
 # Formula: mantra.rb
 #
 # Usage:
-#   brew tap solotrondigital/tap
-#   brew install mantra
+#   brew tap solotrontech/tap
+#   brew install solotrontech/tap/mantra
 #   mantra --version
 # ==============================================================================
 
 class Mantra < Formula
   desc "Mantra programming language toolchain — Compiler, MDK, LSP, and Runtime"
   homepage "https://solotrondigital.github.io/mantra_website"
-  version "0.5.0"
+  version "0.7.0"
   license "MIT OR GPL-3.0"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.5.0/Mantra-0.5.0-macOS.dmg"
-      sha256 "82695af8348492832200d6573260c316c1427e1c8de6a98a698355b9c927f3b1"
+      url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.7.0/Mantra-0.7.0-macOS.dmg"
+      sha256 "MACOS_ARM64_SHA256_PLACEHOLDER"
     else
-      url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.5.0/Mantra-0.5.0-macOS.dmg"
-      sha256 "82695af8348492832200d6573260c316c1427e1c8de6a98a698355b9c927f3b1"
+      url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.7.0/Mantra-0.7.0-macOS.dmg"
+      sha256 "MACOS_X86_64_SHA256_PLACEHOLDER"
     end
   end
 
   on_linux do
-    url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.5.0/mantra-0.5.0-linux.tar.gz"
-    sha256 "657b5b5e819acaf52ec1c5a403e0b27e17c51f3c238f206021295826e043d30a"
+    url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.7.0/mantra-0.7.0-linux.tar.gz"
+    sha256 "LINUX_SHA256_PLACEHOLDER"
   end
 
   depends_on "llvm" => :recommended
