@@ -1,0 +1,190 @@
+{
+  "name": "mantra-cli",
+  "displayName": "Mantra CLI & Project Manager",
+  "description": "Official Visual Studio Code extension for the Mantra Development Kit (MDK) CLI: Project scaffolding, multi-platform builds (Web, Android, iOS), testing, formatting, and toolchain diagnostics. Owned by Solotron Technologies (http://www.solotrontech.com).",
+  "version": "0.6.0",
+  "publisher": "mantra-lang",
+  "icon": "images/mantra_color_logo.png",
+  "homepage": "http://www.solotrontech.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/solotrontech/mantra.git"
+  },
+  "bugs": {
+    "url": "http://www.solotrontech.com"
+  },
+  "author": {
+    "name": "Solotron Technologies Private Limited",
+    "url": "http://www.solotrontech.com"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Programming Languages",
+    "Build",
+    "Linters",
+    "Formatters"
+  ],
+  "keywords": [
+    "mantra",
+    "mantra-cli",
+    "compiler",
+    "mobile",
+    "webassembly",
+    "solotron"
+  ],
+  "extensionDependencies": [
+    "mantra-lang.mantra-language-support"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "workspaceContains:mantra.toml",
+    "onLanguage:mantra",
+    "onCommand:mantra.cli.doctor",
+    "onCommand:mantra.cli.menu"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mantra-sidebar",
+          "title": "Mantra",
+          "icon": "images/mantra_color_logo.png"
+        }
+      ]
+    },
+    "views": {
+      "mantra-sidebar": [
+        {
+          "id": "mantraCommandsView",
+          "name": "Project & Build Commands"
+        },
+        {
+          "id": "mantraDoctorView",
+          "name": "Mantra Toolchain Health"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "mantra.cli.menu",
+        "title": "Mantra: Open Command Menu",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.doctor",
+        "title": "Mantra CLI: Check Toolchain Health (mantra doctor)",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.create",
+        "title": "Mantra CLI: Create New Project...",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.run",
+        "title": "Mantra CLI: Run Application",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.runWeb",
+        "title": "Mantra CLI: Run Application on Web (Browser)",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.runAndroid",
+        "title": "Mantra CLI: Run Application on Android",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.runIos",
+        "title": "Mantra CLI: Run Application on iOS",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.buildWeb",
+        "title": "Mantra CLI: Build WebAssembly Bundle (wasm32)",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.buildApk",
+        "title": "Mantra CLI: Build Android APK Package",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.buildAppBundle",
+        "title": "Mantra CLI: Build Android App Bundle (AAB)",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.buildIos",
+        "title": "Mantra CLI: Build iOS Application Package",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.test",
+        "title": "Mantra CLI: Run Test Suite",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.mobileTest",
+        "title": "Mantra CLI: Run Mobile Security & Bridge Test",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.check",
+        "title": "Mantra CLI: Check / Type-Check Project",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.format",
+        "title": "Mantra CLI: Format Files (mantra fmt)",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.lint",
+        "title": "Mantra CLI: Lint Source Code (mantra lint)",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.bench",
+        "title": "Mantra CLI: Run Benchmark Suite",
+        "category": "Mantra"
+      },
+      {
+        "command": "mantra.cli.targetList",
+        "title": "Mantra CLI: List Supported Targets",
+        "category": "Mantra"
+      }
+    ],
+    "configuration": {
+      "title": "Mantra CLI",
+      "properties": {
+        "mantra.cliPath": {
+          "type": "string",
+          "default": "mantra",
+          "description": "Path to the Mantra CLI (mantra) executable."
+        },
+        "mantra.autoShowTerminal": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically show the integrated Mantra terminal when a CLI command is triggered."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.0"
+  }
+}

@@ -1,0 +1,92 @@
+%YAML 1.2
+---
+name: Mantra
+file_extensions: [mantra]
+scope: source.mantra
+
+contexts:
+  main:
+    - include: comments
+    - include: strings
+    - include: numbers
+    - include: keywords
+    - include: builtins
+    - include: classes
+    - include: functions
+    - include: operators
+    - include: punctuation
+
+  comments:
+    - match: '##.*$'
+      scope: comment.block.documentation.mantra
+    - match: '#.*$'
+      scope: comment.line.number-sign.mantra
+
+  strings:
+    - match: '"'
+      scope: punctuation.definition.string.begin.mantra
+      push:
+        - meta_scope: string.quoted.double.mantra
+        - match: '\\.'
+          scope: constant.character.escape.mantra
+        - match: '"'
+          scope: punctuation.definition.string.end.mantra
+          pop: true
+    - match: "'"
+      scope: punctuation.definition.string.begin.mantra
+      push:
+        - meta_scope: string.quoted.single.mantra
+        - match: '\\.'
+          scope: constant.character.escape.mantra
+        - match: "'"
+          scope: punctuation.definition.string.end.mantra
+          pop: true
+
+  numbers:
+    - match: '\b\d+\.\d+([eE][+-]?\d+)?\b'
+      scope: constant.numeric.float.mantra
+    - match: '\b0[xX][0-9a-fA-F]+\b'
+      scope: constant.numeric.hex.mantra
+    - match: '\b\d+\b'
+      scope: constant.numeric.integer.mantra
+
+  keywords:
+    - match: '\b(if|elif|else|for|while|break|continue|return|in)\b'
+      scope: keyword.control.mantra
+    - match: '\b(def|class|interface|module|import|from|as|let|mut)\b'
+      scope: keyword.other.mantra
+    - match: '\b(pub|private|protected|static|abstract|override|async|await)\b'
+      scope: storage.modifier.mantra
+    - match: '\b(extends|implements)\b'
+      scope: keyword.other.oop.mantra
+    - match: '\b(and|or|not)\b'
+      scope: keyword.operator.logical.mantra
+    - match: '\b(True|False|None)\b'
+      scope: constant.language.mantra
+    - match: '\b(self|super)\b'
+      scope: variable.language.self.mantra
+    - match: '\b(Int|Float|Bool|String|Byte|Unit|Any|Option|Result|List|Map|Task)\b'
+      scope: support.type.mantra
+
+  builtins:
+    - match: '\b(print|len|range|str|int|float|assert|read_file|write_file|system_exec|get_env)\b'
+      scope: support.function.builtin.mantra
+
+  classes:
+    - match: '(?<=class\s)([A-Z]\w*)'
+      scope: entity.name.class.mantra
+    - match: '(?<=interface\s)([A-Z]\w*)'
+      scope: entity.name.type.interface.mantra
+
+  functions:
+    - match: '(?<=def\s)(\w+)'
+      scope: entity.name.function.mantra
+
+  operators:
+    - match: '(==|!=|<=|>=|<|>|\+|-|\*|/|%|=|\+=|-=|\*=|/=|->)'
+      scope: keyword.operator.mantra
+
+  punctuation:
+    - match: '[\(\)\[\]\{\},\.:@]'
+      scope: punctuation.mantra
+

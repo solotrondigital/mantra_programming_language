@@ -1,0 +1,199 @@
+# Mantra Widgets — Carousel and Slider Components Family
+# Complete Carousel & Slider suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class Carousel:
+    def __init__(self):
+        self._children = ""
+        self._autoplay = False
+        self._interval_ms = 3000
+
+    pub def add(self, slide_html: String):
+        self._children = self._children + "<div class='mw-carousel-slide' style='min-width:100%;box-sizing:border-box;scroll-snap-align:start;'>" + slide_html + "</div>"
+
+    pub def set_autoplay(self, autoplay: Bool, interval_ms: Int):
+        self._autoplay = autoplay
+        self._interval_ms = interval_ms
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-carousel' style='display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;width:100%;border-radius:12px;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.viewpager2.widget.ViewPager2 android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "TabView { " + self._children + " }.tabViewStyle(.page)"
+
+
+pub class ImageCarousel:
+    def __init__(self, images_csv: String):
+        self._images = images_csv
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-image-carousel' data-images='" + self._images + "' style='display:flex;overflow-x:auto;scroll-snap-type:x mandatory;width:100%;border-radius:12px;'></div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.viewpager2.widget.ViewPager2 android:layout_width='match_parent' android:layout_height='220dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "TabView { Text(\"Image\") }.tabViewStyle(.page)"
+
+
+pub class ProductCarousel:
+    def __init__(self):
+        self._products = ""
+
+    pub def add(self, product_card_html: String):
+        self._products = self._products + "<div style='min-width:280px;scroll-snap-align:start;'>" + product_card_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-product-carousel' style='display:flex;overflow-x:auto;gap:16px;scroll-snap-type:x mandatory;padding:8px 0;width:100%;'>" + self._products + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.recyclerview.widget.RecyclerView android:layout_width='match_parent' android:layout_height='wrap_content' android:orientation='horizontal'/>"
+
+    pub def render_ios(self) -> String:
+        return "ScrollView(.horizontal, showsIndicators: false) { HStack(spacing: 16) { " + self._products + " } }"
+
+
+pub class CardCarousel:
+    def __init__(self):
+        self._cards = ""
+
+    pub def add(self, card_html: String):
+        self._cards = self._cards + "<div style='min-width:300px;scroll-snap-align:center;'>" + card_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-card-carousel' style='display:flex;gap:20px;overflow-x:auto;scroll-snap-type:x mandatory;padding:12px 0;'>" + self._cards + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.recyclerview.widget.RecyclerView android:orientation='horizontal' android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "ScrollView(.horizontal) { HStack(spacing: 20) { " + self._cards + " } }"
+
+
+pub class BannerCarousel:
+    def __init__(self, banners_csv: String):
+        self._banners = banners_csv
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-banner-carousel' data-banners='" + self._banners + "' style='width:100%;height:160px;overflow:hidden;border-radius:12px;'></div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.viewpager2.widget.ViewPager2 android:layout_width='match_parent' android:layout_height='160dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "TabView { Text(\"Banner\") }.tabViewStyle(.page).frame(height: 160)"
+
+
+pub class HorizontalCarousel:
+    def __init__(self):
+        self._items = ""
+
+    pub def add(self, item_html: String):
+        self._items = self._items + "<div style='flex-shrink:0;'>" + item_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-horizontal-carousel' style='display:flex;overflow-x:auto;gap:12px;padding:4px 0;width:100%;'>" + self._items + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<HorizontalScrollView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='horizontal'>" + self._items + "</LinearLayout></HorizontalScrollView>"
+
+    pub def render_ios(self) -> String:
+        return "ScrollView(.horizontal) { HStack { " + self._items + " } }"
+
+
+pub class VerticalCarousel:
+    def __init__(self):
+        self._items = ""
+
+    pub def add(self, item_html: String):
+        self._items = self._items + "<div style='min-height:200px;scroll-snap-align:start;'>" + item_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-vertical-carousel' style='display:flex;flex-direction:column;overflow-y:auto;scroll-snap-type:y mandatory;height:400px;'>" + self._items + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.viewpager2.widget.ViewPager2 android:orientation='vertical' android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "ScrollView(.vertical) { VStack { " + self._items + " } }"
+
+
+pub class InfiniteCarousel:
+    def __init__(self, items_csv: String):
+        self._items = items_csv
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-infinite-carousel' data-items='" + self._items + "' style='display:flex;overflow:hidden;width:100%;'></div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.viewpager2.widget.ViewPager2 android:layout_width='match_parent' android:layout_height='200dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "TabView { Text(\"Infinite Item\") }.tabViewStyle(.page)"
+
+
+pub class PageSlider:
+    def __init__(self, current_page: Int, total_pages: Int):
+        self._current = current_page
+        self._total = total_pages
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-page-slider' style='display:flex;justify-content:center;gap:6px;padding:8px;'><span style='font-size:12px;color:var(--mw-muted,#94a3b8);'>Page " + str(self._current) + " of " + str(self._total) + "</span></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.tabs.TabLayout android:layout_width='wrap_content' android:layout_height='wrap_content' app:tabIndicatorGravity='bottom'/>"
+
+    pub def render_ios(self) -> String:
+        return "ProgressView(value: Double(" + str(self._current) + "), total: Double(" + str(self._total) + "))"
+
+
+pub class ImageSlider:
+    def __init__(self, before_url: String, after_url: String):
+        self._before = before_url
+        self._after = after_url
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-image-slider' style='position:relative;width:100%;height:300px;overflow:hidden;border-radius:12px;'><img src='" + self._before + "' style='width:100%;height:100%;object-fit:cover;'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:layout_width='match_parent' android:layout_height='300dp'><ImageView android:src='@drawable/before'/></FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "ZStack { AsyncImage(url: URL(string: \"" + self._before + "\")) }"
+
+
+pub class RangeSlider:
+    def __init__(self, min_val: Int, max_val: Int, current_min: Int, current_max: Int):
+        self._min = min_val
+        self._max = max_val
+        self._curr_min = current_min
+        self._curr_max = current_max
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-range-slider' style='width:100%;padding:12px 0;'><input type='range' min='" + str(self._min) + "' max='" + str(self._max) + "' value='" + str(self._curr_min) + "' style='width:100%;'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.slider.RangeSlider android:valueFrom='" + str(self._min) + ".0' android:valueTo='" + str(self._max) + ".0' android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "Slider(value: .constant(" + str(self._curr_min) + ".0), in: " + str(self._min) + ".0..." + str(self._max) + ".0)"
+
+
+pub class CustomSlider:
+    def __init__(self, value: Int, min_val: Int, max_val: Int, step: Int):
+        self._value = value
+        self._min = min_val
+        self._max = max_val
+        self._step = step
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-custom-slider'><input type='range' min='" + str(self._min) + "' max='" + str(self._max) + "' step='" + str(self._step) + "' value='" + str(self._value) + "' style='width:100%;accent-color:var(--mw-primary,#4f46e5);'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.slider.Slider android:valueFrom='" + str(self._min) + ".0' android:valueTo='" + str(self._max) + ".0' android:stepSize='" + str(self._step) + ".0' android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "Slider(value: .constant(" + str(self._value) + ".0), in: " + str(self._min) + ".0..." + str(self._max) + ".0, step: " + str(self._step) + ".0)"
+

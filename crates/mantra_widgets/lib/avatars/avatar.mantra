@@ -1,0 +1,156 @@
+# Mantra Widgets — Avatar and Profile Components Family
+# Complete Avatar suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class Avatar:
+    def __init__(self, initials: String, size: Int):
+        self._initials = initials
+        self._size = size
+        self._bg_color = "var(--mw-primary,#4f46e5)"
+        self._text_color = "#fff"
+        self._font_size = 14
+
+    pub def set_bg_color(self, color: String):
+        self._bg_color = color
+
+    pub def set_text_color(self, color: String):
+        self._text_color = color
+
+    pub def set_font_size(self, size: Int):
+        self._font_size = size
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-avatar' style='width:" + str(self._size) + "px;height:" + str(self._size) + "px;border-radius:50%;background:" + self._bg_color + ";color:" + self._text_color + ";display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:" + str(self._font_size) + "px;flex-shrink:0;'>" + self._initials + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._initials + "' android:layout_width='" + str(self._size) + "dp' android:layout_height='" + str(self._size) + "dp' android:gravity='center' android:background='@drawable/avatar_circle' android:textColor='@android:color/white' android:textStyle='bold'/>"
+
+    pub def render_ios(self) -> String:
+        return "ZStack { Circle().fill(Color.accentColor).frame(width: " + str(self._size) + ", height: " + str(self._size) + "); Text(\"" + self._initials + "\").foregroundColor(.white).font(.system(size: " + str(self._font_size) + ", weight: .bold)) }"
+
+
+pub class CircleAvatar:
+    def __init__(self, initials: String, radius: Int):
+        self._initials = initials
+        self._radius = radius
+
+    pub def render_web(self) -> String:
+        let diameter = str(self._radius * 2)
+        return "<div class='mw-circle-avatar' style='width:" + diameter + "px;height:" + diameter + "px;border-radius:50%;background:var(--mw-primary,#4f46e5);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;'>" + self._initials + "</div>"
+
+    pub def render_android(self) -> String:
+        let d = str(self._radius * 2)
+        return "<TextView android:text='" + self._initials + "' android:layout_width='" + d + "dp' android:layout_height='" + d + "dp' android:gravity='center' android:background='@drawable/avatar_circle'/>"
+
+    pub def render_ios(self) -> String:
+        return "Circle().frame(width: " + str(self._radius * 2) + ", height: " + str(self._radius * 2) + ").overlay(Text(\"" + self._initials + "\").foregroundColor(.white))"
+
+
+pub class SquareAvatar:
+    def __init__(self, initials: String, size: Int):
+        self._initials = initials
+        self._size = size
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-square-avatar' style='width:" + str(self._size) + "px;height:" + str(self._size) + "px;border-radius:0px;background:var(--mw-primary,#4f46e5);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;'>" + self._initials + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._initials + "' android:layout_width='" + str(self._size) + "dp' android:layout_height='" + str(self._size) + "dp' android:gravity='center' android:background='@android:color/holo_blue_dark'/>"
+
+    pub def render_ios(self) -> String:
+        return "Rectangle().frame(width: " + str(self._size) + ", height: " + str(self._size) + ").overlay(Text(\"" + self._initials + "\").foregroundColor(.white))"
+
+
+pub class RoundedAvatar:
+    def __init__(self, initials: String, size: Int, radius: Int):
+        self._initials = initials
+        self._size = size
+        self._radius = radius
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-rounded-avatar' style='width:" + str(self._size) + "px;height:" + str(self._size) + "px;border-radius:" + str(self._radius) + "px;background:var(--mw-primary,#4f46e5);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:bold;'>" + self._initials + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._initials + "' android:layout_width='" + str(self._size) + "dp' android:layout_height='" + str(self._size) + "dp' android:gravity='center' android:background='@drawable/avatar_rounded'/>"
+
+    pub def render_ios(self) -> String:
+        return "RoundedRectangle(cornerRadius: " + str(self._radius) + ").frame(width: " + str(self._size) + ", height: " + str(self._size) + ").overlay(Text(\"" + self._initials + "\").foregroundColor(.white))"
+
+
+pub class AvatarGroup:
+    def __init__(self):
+        self._children = ""
+
+    pub def add(self, avatar_html: String):
+        self._children = self._children + avatar_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-avatar-group' style='display:inline-flex;align-items:center;margin-left:8px;'><style>.mw-avatar-group > * { margin-left: -10px; border: 2px solid #fff; }</style>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='horizontal' android:layout_width='wrap_content' android:layout_height='wrap_content'>" + self._children + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "HStack(spacing: -10) { " + self._children + " }"
+
+
+pub class AvatarBadge:
+    def __init__(self, avatar_html: String, badge_text: String):
+        self._avatar = avatar_html
+        self._badge = badge_text
+
+    pub def render_web(self) -> String:
+        return "<div style='position:relative;display:inline-block;'>" + self._avatar + "<span style='position:absolute;bottom:0;right:0;background:#10b981;color:#fff;border-radius:50%;width:12px;height:12px;border:2px solid #fff;'></span></div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:layout_width='wrap_content' android:layout_height='wrap_content'>" + self._avatar + "<View android:layout_width='12dp' android:layout_height='12dp' android:layout_gravity='bottom|end' android:background='@drawable/green_dot'/></FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "ZStack(alignment: .bottomTrailing) { " + self._avatar + "; Circle().fill(Color.green).frame(width: 12, height: 12) }"
+
+
+pub class ProfileAvatar:
+    def __init__(self, image_url: String, size: Int):
+        self._image_url = image_url
+        self._size = size
+
+    pub def render_web(self) -> String:
+        return "<img class='mw-profile-avatar' src='" + self._image_url + "' style='width:" + str(self._size) + "px;height:" + str(self._size) + "px;border-radius:50%;object-fit:cover;display:inline-block;'/>"
+
+    pub def render_android(self) -> String:
+        return "<ImageView android:layout_width='" + str(self._size) + "dp' android:layout_height='" + str(self._size) + "dp' android:background='@drawable/avatar_circle'/>"
+
+    pub def render_ios(self) -> String:
+        return "AsyncImage(url: URL(string: \"" + self._image_url + "\")).frame(width: " + str(self._size) + ", height: " + str(self._size) + ").clipShape(Circle())"
+
+
+pub class UserProfile:
+    def __init__(self, name: String, email: String, avatar_url: String):
+        self._name = name
+        self._email = email
+        self._avatar_url = avatar_url
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-user-profile' style='display:flex;align-items:center;gap:14px;padding:12px;'><img src='" + self._avatar_url + "' style='width:48px;height:48px;border-radius:50%;object-fit:cover;'/><div><div style='font-weight:600;font-size:15px;'>" + self._name + "</div><div style='font-size:13px;color:var(--mw-muted,#94a3b8);'>" + self._email + "</div></div></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='horizontal' android:layout_width='match_parent' android:layout_height='wrap_content' android:gravity='center_vertical' android:padding='12dp'><ImageView android:layout_width='48dp' android:layout_height='48dp'/><LinearLayout android:orientation='vertical' android:layout_marginStart='12dp'><TextView android:text='" + self._name + "' android:textStyle='bold'/><TextView android:text='" + self._email + "'/></LinearLayout></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "HStack(spacing: 12) { AsyncImage(url: URL(string: \"" + self._avatar_url + "\")).frame(width: 48, height: 48).clipShape(Circle()); VStack(alignment: .leading) { Text(\"" + self._name + "\").bold(); Text(\"" + self._email + "\").font(.caption).foregroundColor(.secondary) } }"
+
+
+pub class OnlineStatusIndicator:
+    def __init__(self, is_online: Bool):
+        self._is_online = is_online
+
+    pub def render_web(self) -> String:
+        mut color = "#ef4444"
+        if self._is_online:
+            color = "#10b981"
+        return "<span class='mw-status-dot' style='display:inline-block;width:10px;height:10px;border-radius:50%;background:" + color + ";'></span>"
+
+    pub def render_android(self) -> String:
+        return "<View android:layout_width='10dp' android:layout_height='10dp' android:background='@drawable/status_indicator'/>"
+
+    pub def render_ios(self) -> String:
+        return "Circle().fill(Color.green).frame(width: 10, height: 10)"

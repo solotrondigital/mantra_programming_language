@@ -1,0 +1,201 @@
+# Mantra Widgets — Dialogs and Notifications Components Family
+# Complete Dialog & Notification suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class AlertDialog:
+    def __init__(self, title: String, message: String):
+        self._title = title
+        self._message = message
+        self._confirm_text = "OK"
+
+    pub def set_confirm_text(self, text: String):
+        self._confirm_text = text
+
+    pub def render_web(self) -> String:
+        return "<dialog class='mw-alert-dialog' style='background:var(--mw-surface,#1e293b);border-radius:14px;padding:24px;border:1px solid var(--mw-border,#334155);color:var(--mw-text,#f1f5f9);max-width:400px;'><h3 style='margin:0 0 10px 0;'>" + self._title + "</h3><p style='color:var(--mw-muted,#94a3b8);'>" + self._message + "</p><button onclick='this.closest(\"dialog\").close()' class='mw-btn' style='margin-top:16px;width:100%;'>" + self._confirm_text + "</button></dialog>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.dialog.MaterialAlertDialogBuilder/>"
+
+    pub def render_ios(self) -> String:
+        return "EmptyView().alert(\"" + self._title + "\", isPresented: .constant(true)) { Button(\"" + self._confirm_text + "\") {} } message: { Text(\"" + self._message + "\") }"
+
+
+pub class ConfirmationDialog:
+    def __init__(self, title: String, message: String, confirm_handler: String):
+        self._title = title
+        self._message = message
+        self._confirm = confirm_handler
+
+    pub def render_web(self) -> String:
+        return "<dialog class='mw-confirm-dialog' style='background:var(--mw-surface,#1e293b);padding:24px;border-radius:12px;border:1px solid var(--mw-border,#334155);'><h3>" + self._title + "</h3><p>" + self._message + "</p><div style='display:flex;gap:12px;justify-content:flex-end;margin-top:16px;'><button onclick='this.closest(\"dialog\").close()'>Cancel</button><button onclick='" + self._confirm + "'>Confirm</button></div></dialog>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.dialog.MaterialAlertDialogBuilder/>"
+
+    pub def render_ios(self) -> String:
+        return "EmptyView().confirmationDialog(\"" + self._title + "\", isPresented: .constant(true)) { Button(\"Confirm\") { " + self._confirm + " } }"
+
+
+pub class CustomDialog:
+    def __init__(self, content_html: String):
+        self._content = content_html
+
+    pub def render_web(self) -> String:
+        return "<dialog class='mw-custom-dialog' style='background:var(--mw-surface,#1e293b);padding:20px;border-radius:12px;border:1px solid var(--mw-border,#334155);'>" + self._content + "</dialog>"
+
+    pub def render_android(self) -> String:
+        return "<Dialog android:layout_width='wrap_content' android:layout_height='wrap_content'>" + self._content + "</Dialog>"
+
+    pub def render_ios(self) -> String:
+        return "EmptyView().sheet(isPresented: .constant(true)) { " + self._content + " }"
+
+
+pub class BottomSheet:
+    def __init__(self, content_html: String):
+        self._content = content_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-bottom-sheet' style='position:fixed;bottom:0;left:0;right:0;background:var(--mw-surface,#1e293b);border-top:1px solid var(--mw-border,#334155);border-radius:16px 16px 0 0;padding:24px;box-shadow:0 -8px 24px rgba(0,0,0,0.3);z-index:150;'><div style='width:36px;height:4px;background:#64748b;border-radius:2px;margin:0 auto 16px auto;'></div>" + self._content + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.bottomsheet.BottomSheetDialogFragment>" + self._content + "</com.google.android.material.bottomsheet.BottomSheetDialogFragment>"
+
+    pub def render_ios(self) -> String:
+        return "EmptyView().sheet(isPresented: .constant(true)) { " + self._content + ".presentationDetents([.medium, .large]) }"
+
+
+pub class ModalBottomSheet:
+    def __init__(self, content_html: String):
+        self._content = content_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-modal-backdrop' style='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:149;'><div class='mw-modal-sheet' style='position:fixed;bottom:0;left:0;right:0;background:var(--mw-surface,#1e293b);border-radius:16px 16px 0 0;padding:24px;z-index:150;'>" + self._content + "</div></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.bottomsheet.BottomSheetDialog/>"
+
+    pub def render_ios(self) -> String:
+        return "EmptyView().sheet(isPresented: .constant(true)) { " + self._content + " }"
+
+
+pub class Toast:
+    def __init__(self, message: String):
+        self._message = message
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-toast' style='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 20px;border-radius:8px;box-shadow:0 8px 16px rgba(0,0,0,0.3);z-index:300;font-size:14px;'>" + self._message + "</div>"
+
+    pub def render_android(self) -> String:
+        return "Toast.makeText(context, \"" + self._message + "\", Toast.LENGTH_SHORT).show()"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._message + "\").padding().background(Color.black.opacity(0.8)).foregroundColor(.white).cornerRadius(8)"
+
+
+pub class Snackbar:
+    def __init__(self, message: String, action_label: String):
+        self._message = message
+        self._action = action_label
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-snackbar' style='position:fixed;bottom:24px;left:24px;right:24px;background:#1e293b;color:#fff;padding:14px 20px;border-radius:8px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:300;'><span>" + self._message + "</span><button style='background:transparent;border:none;color:var(--mw-primary,#4f46e5);font-weight:700;cursor:pointer;'>" + self._action + "</button></div>"
+
+    pub def render_android(self) -> String:
+        return "Snackbar.make(view, \"" + self._message + "\", Snackbar.LENGTH_LONG).setAction(\"" + self._action + "\", listener).show()"
+
+    pub def render_ios(self) -> String:
+        return "HStack { Text(\"" + self._message + "\"); Spacer(); Button(\"" + self._action + "\") {} }.padding().background(Color(.secondarySystemBackground)).cornerRadius(8)"
+
+
+pub class Notification:
+    def __init__(self, title: String, message: String):
+        self._title = title
+        self._message = message
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-notification' style='position:fixed;top:20px;right:20px;background:var(--mw-surface,#1e293b);border-left:4px solid var(--mw-primary,#4f46e5);border-radius:8px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:300;min-width:280px;'><strong style='display:block;margin-bottom:4px;'>" + self._title + "</strong><p style='margin:0;font-size:13px;color:var(--mw-muted,#94a3b8);'>" + self._message + "</p></div>"
+
+    pub def render_android(self) -> String:
+        return "NotificationCompat.Builder(context, CHANNEL_ID).setContentTitle(\"" + self._title + "\").setContentText(\"" + self._message + "\").build()"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading) { Text(\"" + self._title + "\").bold(); Text(\"" + self._message + "\").font(.caption) }.padding().background(Color(.secondarySystemBackground)).cornerRadius(8)"
+
+
+pub class Banner:
+    def __init__(self, text: String):
+        self._text = text
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-banner' style='background:var(--mw-primary,#4f46e5);color:#fff;padding:10px 16px;text-align:center;font-size:14px;font-weight:600;width:100%;box-sizing:border-box;'>" + self._text + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._text + "' android:layout_width='match_parent' android:layout_height='wrap_content' android:background='@color/primary' android:gravity='center'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._text + "\").frame(maxWidth: .infinity).padding(8).background(Color.accentColor).foregroundColor(.white)"
+
+
+pub class PopupMenu:
+    def __init__(self):
+        self._items = ""
+
+    pub def add_item(self, label: String, on_click: String):
+        self._items = self._items + "<div onclick='" + on_click + "' style='padding:8px 14px;cursor:pointer;font-size:13px;'> " + label + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-popup-menu' style='position:absolute;background:var(--mw-surface,#1e293b);border-radius:8px;box-shadow:0 8px 16px rgba(0,0,0,0.3);padding:6px 0;border:1px solid var(--mw-border,#334155);z-index:200;'>" + self._items + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.appcompat.widget.PopupMenu/>"
+
+    pub def render_ios(self) -> String:
+        return "Menu(\"Options\") { Button(\"Item\") {} }"
+
+
+pub class Tooltip:
+    def __init__(self, text: String, child_html: String):
+        self._text = text
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-tooltip' title='" + self._text + "'>" + self._child + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout app:tooltipText='" + self._text + "'>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }.help(\"" + self._text + "\")"
+
+
+pub class ContextMenu:
+    def __init__(self, target_html: String):
+        self._target = target_html
+        self._items = ""
+
+    pub def add_item(self, label: String):
+        self._items = self._items + "<div class='mw-context-item'>" + label + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-context-menu-wrapper'>" + self._target + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout>" + self._target + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._target + " }.contextMenu { Button(\"Option\") {} }"
+
+
+pub class LoadingDialog:
+    def __init__(self, message: String):
+        self._message = message
+
+    pub def render_web(self) -> String:
+        return "<dialog class='mw-loading-dialog' style='background:var(--mw-surface,#1e293b);border-radius:12px;padding:24px;border:none;text-align:center;'><div class='mw-spinner' style='width:32px;height:32px;border:3px solid #6366f1;border-top-color:transparent;border-radius:50%;margin:0 auto 12px auto;animation:spin 0.6s linear infinite;'></div><p style='margin:0;'>" + self._message + "</p></dialog>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.dialog.MaterialAlertDialogBuilder/>"
+
+    pub def render_ios(self) -> String:
+        return "ProgressView(\"" + self._message + "\")"
+

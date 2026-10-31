@@ -1,0 +1,415 @@
+# Mantra Widgets — Lists and Layout Components Family
+# Complete Layout suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class ListView:
+    def __init__(self):
+        self._children = ""
+
+    pub def add(self, item_html: String):
+        self._children = self._children + "<div class='mw-list-item'>" + item_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-list-view' style='display:flex;flex-direction:column;width:100%;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.recyclerview.widget.RecyclerView android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "List { " + self._children + " }"
+
+
+pub class ListTile:
+    def __init__(self, title: String):
+        self._title = title
+        self._subtitle = ""
+        self._leading = ""
+        self._trailing = ""
+
+    pub def set_subtitle(self, sub: String):
+        self._subtitle = sub
+
+    pub def set_leading(self, leading_html: String):
+        self._leading = leading_html
+
+    pub def set_trailing(self, trailing_html: String):
+        self._trailing = trailing_html
+
+    pub def render_web(self) -> String:
+        mut sub_html = ""
+        if len(self._subtitle) > 0:
+            sub_html = "<div style='font-size:12px;color:var(--mw-muted,#94a3b8);'>" + self._subtitle + "</div>"
+        return "<div class='mw-list-tile' style='display:flex;align-items:center;padding:12px 16px;gap:16px;border-bottom:1px solid var(--mw-border,#334155);width:100%;box-sizing:border-box;'><div>" + self._leading + "</div><div style='flex:1;'><div style='font-weight:600;font-size:15px;'>" + self._title + "</div>" + sub_html + "</div><div>" + self._trailing + "</div></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='horizontal' android:layout_width='match_parent' android:layout_height='?attr/listPreferredItemHeight' android:gravity='center_vertical'><TextView android:text='" + self._title + "'/></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { " + self._leading + "; VStack(alignment: .leading) { Text(\"" + self._title + "\").bold(); Text(\"" + self._subtitle + "\").font(.caption).foregroundColor(.secondary) }; Spacer(); " + self._trailing + " }"
+
+
+pub class GridView:
+    def __init__(self, columns: Int, gap: Int):
+        self._columns = columns
+        self._gap = gap
+        self._children = ""
+
+    pub def add(self, item_html: String):
+        self._children = self._children + item_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-grid-view' style='display:grid;grid-template-columns:repeat(" + str(self._columns) + ", 1fr);gap:" + str(self._gap) + "px;width:100%;box-sizing:border-box;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.gridlayout.widget.GridLayout app:columnCount='" + str(self._columns) + "' android:layout_width='match_parent' android:layout_height='match_parent'>" + self._children + "</androidx.gridlayout.widget.GridLayout>"
+
+    pub def render_ios(self) -> String:
+        return "LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: " + str(self._columns) + "), spacing: " + str(self._gap) + ") { " + self._children + " }"
+
+
+pub class StaggeredGrid:
+    def __init__(self, columns: Int):
+        self._columns = columns
+        self._children = ""
+
+    pub def add(self, item_html: String):
+        self._children = self._children + item_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-staggered-grid' style='column-count:" + str(self._columns) + ";column-gap:16px;width:100%;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.recyclerview.widget.RecyclerView app:layoutManager='androidx.recyclerview.widget.StaggeredGridLayoutManager'/>"
+
+    pub def render_ios(self) -> String:
+        return "ScrollView { LazyVGrid(columns: [GridItem(.adaptive(minimum: 150))]) { " + self._children + " } }"
+
+
+pub class MasonryGrid:
+    def __init__(self, columns: Int):
+        self._columns = columns
+        self._children = ""
+
+    pub def add(self, item_html: String):
+        self._children = self._children + "<div style='break-inside:avoid;margin-bottom:16px;'>" + item_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-masonry-grid' style='column-count:" + str(self._columns) + ";column-gap:16px;width:100%;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.recyclerview.widget.RecyclerView android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "ScrollView { LazyVGrid(columns: [GridItem(.adaptive(minimum: 140))]) { " + self._children + " } }"
+
+
+pub class Wrap:
+    def __init__(self, spacing: Int):
+        self._spacing = spacing
+        self._children = ""
+
+    pub def add(self, item_html: String):
+        self._children = self._children + item_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-wrap' style='display:flex;flex-wrap:wrap;gap:" + str(self._spacing) + "px;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.flexbox.FlexboxLayout app:flexWrap='wrap' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._children + "</com.google.android.flexbox.FlexboxLayout>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { " + self._children + " }"
+
+
+pub class Row:
+    def __init__(self):
+        self._children = ""
+        self._gap = 12
+
+    pub def add(self, child: String):
+        self._children = self._children + child
+
+    pub def set_gap(self, gap: Int):
+        self._gap = gap
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-row' style='display:flex;flex-direction:row;gap:" + str(self._gap) + "px;align-items:center;width:100%;box-sizing:border-box;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='horizontal' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._children + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "HStack(spacing: " + str(self._gap) + ") { " + self._children + " }"
+
+
+pub class Column:
+    def __init__(self):
+        self._children = ""
+        self._gap = 16
+
+    pub def add(self, child: String):
+        self._children = self._children + child
+
+    pub def set_gap(self, gap: Int):
+        self._gap = gap
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-column' style='display:flex;flex-direction:column;gap:" + str(self._gap) + "px;width:100%;box-sizing:border-box;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._children + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(spacing: " + str(self._gap) + ") { " + self._children + " }"
+
+
+pub class Stack:
+    def __init__(self):
+        self._children = ""
+
+    pub def add(self, child_html: String):
+        self._children = self._children + "<div style='position:absolute;inset:0;'>" + child_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-stack' style='position:relative;width:100%;height:100%;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:layout_width='match_parent' android:layout_height='match_parent'>" + self._children + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "ZStack { " + self._children + " }"
+
+
+pub class Container:
+    def __init__(self, child_content: String):
+        self._content = child_content
+        self._padding = 16
+        self._radius = 8
+
+    pub def set_padding(self, padding: Int):
+        self._padding = padding
+
+    pub def set_radius(self, radius: Int):
+        self._radius = radius
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-container' style='padding:" + str(self._padding) + "px;border-radius:" + str(self._radius) + "px;background:var(--mw-surface,#1e293b);box-sizing:border-box;width:100%;'>" + self._content + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:padding='" + str(self._padding) + "dp' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._content + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._content + " }.padding(" + str(self._padding) + ").cornerRadius(" + str(self._radius) + ")"
+
+
+pub class Padding:
+    def __init__(self, padding: Int, child_html: String):
+        self._padding = padding
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div style='padding:" + str(self._padding) + "px;box-sizing:border-box;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:padding='" + str(self._padding) + "dp'>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }.padding(" + str(self._padding) + ")"
+
+
+pub class Center:
+    def __init__(self, child_html: String):
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div style='display:flex;align-items:center;justify-content:center;width:100%;height:100%;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:layout_gravity='center'>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { Spacer(); HStack { Spacer(); " + self._child + "; Spacer() }; Spacer() }"
+
+
+pub class Align:
+    def __init__(self, alignment: String, child_html: String):
+        self._alignment = alignment
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div style='display:flex;justify-content:" + self._alignment + ";'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:layout_gravity='" + self._alignment + "'>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading) { " + self._child + " }"
+
+
+pub class Expanded:
+    def __init__(self, child_html: String):
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div style='flex:1;width:100%;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:layout_weight='1' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._child + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._child + " }.frame(maxWidth: .infinity)"
+
+
+pub class Flexible:
+    def __init__(self, flex: Int, child_html: String):
+        self._flex = flex
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div style='flex:" + str(self._flex) + ";'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:layout_weight='" + str(self._flex) + "'>" + self._child + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }"
+
+
+pub class Spacer:
+    def __init__(self):
+        self._dummy = 0
+
+    pub def render_web(self) -> String:
+        return "<div style='flex:1;'></div>"
+
+    pub def render_android(self) -> String:
+        return "<Space android:layout_weight='1' android:layout_width='0dp' android:layout_height='0dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "Spacer()"
+
+
+pub class Divider:
+    def __init__(self):
+        self._label = ""
+
+    pub def set_label(self, label: String):
+        self._label = label
+
+    pub def render_web(self) -> String:
+        mut lbl = ""
+        if len(self._label) > 0:
+            lbl = "<span style='padding:0 12px;font-size:12px;color:var(--mw-muted,#94a3b8);'>" + self._label + "</span>"
+        return "<div style='display:flex;align-items:center;width:100%;margin:12px 0;'><div style='flex:1;height:1px;background:var(--mw-border,#334155);'></div>" + lbl + "<div style='flex:1;height:1px;background:var(--mw-border,#334155);'></div></div>"
+
+    pub def render_android(self) -> String:
+        return "<View android:layout_width='match_parent' android:layout_height='1dp' android:background='@color/divider'/>"
+
+    pub def render_ios(self) -> String:
+        return "Divider()"
+
+
+pub class VerticalDivider:
+    def __init__(self):
+        self._height = 24
+
+    pub def render_web(self) -> String:
+        return "<div style='width:1px;height:" + str(self._height) + "px;background:var(--mw-border,#334155);margin:0 8px;'></div>"
+
+    pub def render_android(self) -> String:
+        return "<View android:layout_width='1dp' android:layout_height='24dp' android:background='@color/divider'/>"
+
+    pub def render_ios(self) -> String:
+        return "Divider().frame(height: 24)"
+
+
+pub class ScrollView:
+    def __init__(self, content_html: String):
+        self._content = content_html
+
+    pub def render_web(self) -> String:
+        return "<div style='overflow-y:auto;max-height:100vh;width:100%;'>" + self._content + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<ScrollView android:layout_width='match_parent' android:layout_height='match_parent'>" + self._content + "</ScrollView>"
+
+    pub def render_ios(self) -> String:
+        return "ScrollView { " + self._content + " }"
+
+
+pub class HorizontalScrollView:
+    def __init__(self, content_html: String):
+        self._content = content_html
+
+    pub def render_web(self) -> String:
+        return "<div style='overflow-x:auto;width:100%;display:flex;'>" + self._content + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<HorizontalScrollView android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._content + "</HorizontalScrollView>"
+
+    pub def render_ios(self) -> String:
+        return "ScrollView(.horizontal) { " + self._content + " }"
+
+
+pub class StickyHeader:
+    def __init__(self, header_html: String, body_html: String):
+        self._header = header_html
+        self._body = body_html
+
+    pub def render_web(self) -> String:
+        return "<div><div style='position:sticky;top:0;background:var(--mw-surface,#1e293b);z-index:10;padding:8px 0;'>" + self._header + "</div><div>" + self._body + "</div></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical'>" + self._header + self._body + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Section(header: " + self._header + ") { " + self._body + " }"
+
+
+pub class ExpandableList:
+    def __init__(self, title: String):
+        self._title = title
+        self._items = ""
+
+    pub def add_item(self, item_html: String):
+        self._items = self._items + "<div style='padding:6px 0;'>" + item_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<details style='cursor:pointer;'><summary style='font-weight:600;padding:8px 0;'>" + self._title + "</summary><div style='padding-left:16px;'>" + self._items + "</div></details>"
+
+    pub def render_android(self) -> String:
+        return "<ExpandableListView android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "DisclosureGroup(\"" + self._title + "\") { " + self._items + " }"
+
+
+pub class ReorderableList:
+    def __init__(self):
+        self._items = ""
+
+    pub def add_item(self, item_html: String):
+        self._items = self._items + "<div class='mw-draggable-item'>" + item_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-reorderable-list'>" + self._items + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.recyclerview.widget.RecyclerView android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "List { " + self._items + " }.onMove { _, _ in }"
+
+
+pub class InfiniteList:
+    def __init__(self, fetch_url: String):
+        self._fetch_url = fetch_url
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-infinite-list' data-endpoint='" + self._fetch_url + "'></div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.recyclerview.widget.RecyclerView android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "List { Text(\"Infinite Item\") }"
+

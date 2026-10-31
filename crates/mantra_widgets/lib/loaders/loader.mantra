@@ -1,0 +1,149 @@
+# Mantra Widgets — Progress and Loading Components Family
+# Complete Loader suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class Loader:
+    def __init__(self):
+        self._size = 24
+
+    pub def set_size(self, size: Int):
+        self._size = size
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-loader' style='width:" + str(self._size) + "px;height:" + str(self._size) + "px;border:3px solid rgba(255,255,255,0.2);border-top-color:var(--mw-primary,#4f46e5);border-radius:50%;animation:spin 0.6s linear infinite;'></div>"
+
+    pub def render_android(self) -> String:
+        return "<ProgressBar android:layout_width='" + str(self._size) + "dp' android:layout_height='" + str(self._size) + "dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "ProgressView().scaleEffect(" + str(self._size) + ".0 / 24.0)"
+
+
+pub class CircularLoader:
+    def __init__(self, size: Int):
+        self._size = size
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-circular-loader' style='width:" + str(self._size) + "px;height:" + str(self._size) + "px;border:3px solid rgba(255,255,255,0.15);border-top-color:var(--mw-primary,#4f46e5);border-radius:50%;display:inline-block;'></div>"
+
+    pub def render_android(self) -> String:
+        return "<ProgressBar style='?android:attr/progressBarStyle' android:layout_width='" + str(self._size) + "dp' android:layout_height='" + str(self._size) + "dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "ProgressView()"
+
+
+pub class LinearLoader:
+    def __init__(self):
+        self._height = 4
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-linear-loader' style='width:100%;height:" + str(self._height) + "px;background:rgba(255,255,255,0.1);overflow:hidden;'><div style='width:40%;height:100%;background:var(--mw-primary,#4f46e5);animation:indeterminate 1.2s infinite ease-in-out;'></div></div>"
+
+    pub def render_android(self) -> String:
+        return "<ProgressBar style='?android:attr/progressBarStyleHorizontal' android:indeterminate='true' android:layout_width='match_parent' android:layout_height='4dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "ProgressView().progressViewStyle(.linear)"
+
+
+pub class ProgressBar:
+    def __init__(self, percent: Int):
+        self._percent = percent
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-progress-bar' style='width:100%;height:8px;background:rgba(255,255,255,0.1);border-radius:9999px;overflow:hidden;'><div style='width:" + str(self._percent) + "%;height:100%;background:var(--mw-primary,#4f46e5);border-radius:9999px;'></div></div>"
+
+    pub def render_android(self) -> String:
+        return "<ProgressBar style='?android:attr/progressBarStyleHorizontal' android:progress='" + str(self._percent) + "' android:max='100' android:layout_width='match_parent' android:layout_height='8dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "ProgressView(value: Double(" + str(self._percent) + "), total: 100.0)"
+
+
+pub class CircularProgress:
+    def __init__(self, percent: Int):
+        self._percent = percent
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-circular-progress' style='display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;'>" + str(self._percent) + "%</div>"
+
+    pub def render_android(self) -> String:
+        return "<ProgressBar style='?android:attr/progressBarStyle' android:progress='" + str(self._percent) + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "ProgressView(value: Double(" + str(self._percent) + "), total: 100.0).progressViewStyle(.circular)"
+
+
+pub class Shimmer:
+    def __init__(self, width: String, height: String):
+        self._width = width
+        self._height = height
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-shimmer' style='width:" + self._width + ";height:" + self._height + ";background:linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%);border-radius:8px;'></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.facebook.shimmer.ShimmerFrameLayout android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "RoundedRectangle(cornerRadius: 8).fill(Color.gray.opacity(0.3)).frame(height: 20)"
+
+
+pub class SkeletonLoader:
+    def __init__(self, lines: Int):
+        self._lines = lines
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-skeleton' style='display:flex;flex-direction:column;gap:8px;'><div style='height:16px;width:60%;background:rgba(255,255,255,0.08);border-radius:4px;'></div><div style='height:16px;width:90%;background:rgba(255,255,255,0.08);border-radius:4px;'></div></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical'><View android:layout_height='16dp'/></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading, spacing: 8) { RoundedRectangle(cornerRadius: 4).frame(height: 16); RoundedRectangle(cornerRadius: 4).frame(height: 16) }.redacted(reason: .placeholder)"
+
+
+pub class LoadingOverlay:
+    def __init__(self, is_active: Bool):
+        self._active = is_active
+
+    pub def render_web(self) -> String:
+        mut disp = "none"
+        if self._active:
+            disp = "flex"
+        return "<div class='mw-loading-overlay' style='display:" + disp + ";position:fixed;inset:0;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;z-index:999;'><div class='mw-spinner' style='width:40px;height:40px;border:4px solid #fff;border-top-color:transparent;border-radius:50%;'></div></div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:visibility='visible'><ProgressBar/></FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "ZStack { Color.black.opacity(0.4); ProgressView() }"
+
+
+pub class RefreshIndicator:
+    def __init__(self):
+        self._dummy = 0
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-refresh-indicator' style='text-align:center;padding:12px;font-size:13px;color:var(--mw-muted,#94a3b8);'>Pull to refresh</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.swiperefreshlayout.widget.SwipeRefreshLayout/>"
+
+    pub def render_ios(self) -> String:
+        return "EmptyView().refreshable {}"
+
+
+pub class PullToRefresh:
+    def __init__(self, content_html: String):
+        self._content = content_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-pull-to-refresh'>" + self._content + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.swiperefreshlayout.widget.SwipeRefreshLayout>" + self._content + "</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>"
+
+    pub def render_ios(self) -> String:
+        return "ScrollView { " + self._content + " }.refreshable {}"
+

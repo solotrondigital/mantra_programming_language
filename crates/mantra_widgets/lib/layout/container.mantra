@@ -1,0 +1,18 @@
+# Mantra Widgets: Container Component
+
+pub class Container:
+    def __init__(self, child_content: String):
+        self.child_content = child_content
+        self.padding = 16
+        self.border_radius = 8
+        self.background_color = "var(--mantra-surface, #ffffff)"
+
+    pub def set_padding(self, padding: Int):
+        self.padding = padding
+
+    pub def set_radius(self, radius: Int):
+        self.border_radius = radius
+
+    pub def render(self) -> String:
+        return "<div class='mantra-container' style='padding:" + str(self.padding) + "px;border-radius:" + str(self.border_radius) + "px;background:" + self.background_color + ";box-sizing:border-box;'>" + self.child_content + "</div>"
+

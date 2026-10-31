@@ -1,0 +1,174 @@
+# Mantra Widgets — Image Components Family
+# Complete Image suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class MantraImage:
+    def __init__(self, src: String, alt: String):
+        self._src = src
+        self._alt = alt
+        self._width = "100%"
+        self._height = "auto"
+        self._fit = "cover"
+
+    pub def set_size(self, width: String, height: String):
+        self._width = width
+        self._height = height
+
+    pub def set_fit(self, fit: String):
+        self._fit = fit
+
+    pub def render_web(self) -> String:
+        return "<img class='mw-image' src='" + self._src + "' alt='" + self._alt + "' style='width:" + self._width + ";height:" + self._height + ";object-fit:" + self._fit + ";display:block;'/>"
+
+    pub def render_android(self) -> String:
+        return "<ImageView android:layout_width='match_parent' android:layout_height='wrap_content' android:scaleType='centerCrop'/>"
+
+    pub def render_ios(self) -> String:
+        return "AsyncImage(url: URL(string: \"" + self._src + "\")) { image in image.resizable().scaledToFill() } placeholder: { ProgressView() }"
+
+
+pub class NetworkImage:
+    def __init__(self, url: String):
+        self._url = url
+
+    pub def render_web(self) -> String:
+        return "<img class='mw-network-image' src='" + self._url + "' style='width:100%;height:auto;object-fit:cover;' loading='lazy'/>"
+
+    pub def render_android(self) -> String:
+        return "<ImageView android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "AsyncImage(url: URL(string: \"" + self._url + "\"))"
+
+
+pub class AssetImage:
+    def __init__(self, asset_name: String):
+        self._asset = asset_name
+
+    pub def render_web(self) -> String:
+        return "<img class='mw-asset-image' src='/assets/" + self._asset + "' style='width:100%;height:auto;'/>"
+
+    pub def render_android(self) -> String:
+        return "<ImageView android:layout_width='wrap_content' android:layout_height='wrap_content' android:src='@drawable/" + self._asset + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Image(\"" + self._asset + "\").resizable()"
+
+
+pub class CircularImage:
+    def __init__(self, src: String, diameter: Int):
+        self._src = src
+        self._diameter = diameter
+
+    pub def render_web(self) -> String:
+        let d = str(self._diameter)
+        return "<img class='mw-circular-image' src='" + self._src + "' style='width:" + d + "px;height:" + d + "px;border-radius:50%;object-fit:cover;'/>"
+
+    pub def render_android(self) -> String:
+        return "<ImageView android:layout_width='" + str(self._diameter) + "dp' android:layout_height='" + str(self._diameter) + "dp' android:background='@drawable/circle_crop'/>"
+
+    pub def render_ios(self) -> String:
+        return "AsyncImage(url: URL(string: \"" + self._src + "\")).frame(width: " + str(self._diameter) + ", height: " + str(self._diameter) + ").clipShape(Circle())"
+
+
+pub class RoundedImage:
+    def __init__(self, src: String, radius: Int):
+        self._src = src
+        self._radius = radius
+
+    pub def render_web(self) -> String:
+        return "<img class='mw-rounded-image' src='" + self._src + "' style='border-radius:" + str(self._radius) + "px;width:100%;object-fit:cover;'/>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.imageview.ShapeableImageView app:shapeAppearanceOverlay='@style/RoundedCorners' android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "AsyncImage(url: URL(string: \"" + self._src + "\")).cornerRadius(" + str(self._radius) + ")"
+
+
+pub class ImageOverlay:
+    def __init__(self, src: String, overlay_text: String):
+        self._src = src
+        self._overlay_text = overlay_text
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-image-overlay' style='position:relative;display:inline-block;border-radius:12px;overflow:hidden;'><img src='" + self._src + "' style='width:100%;display:block;'/><div style='position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.8), transparent);display:flex;align-items:flex-end;padding:16px;color:#fff;font-weight:600;'>" + self._overlay_text + "</div></div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:layout_width='match_parent' android:layout_height='200dp'><ImageView android:src='@drawable/bg' android:layout_width='match_parent' android:layout_height='match_parent'/><TextView android:text='" + self._overlay_text + "' android:layout_gravity='bottom' android:padding='16dp'/></FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "ZStack(alignment: .bottomLeading) { AsyncImage(url: URL(string: \"" + self._src + "\")); Text(\"" + self._overlay_text + "\").bold().padding().foregroundColor(.white) }"
+
+
+pub class ImageGallery:
+    def __init__(self, images_csv: String):
+        self._images = images_csv
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-image-gallery' data-images='" + self._images + "' style='display:grid;grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:12px;'></div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.recyclerview.widget.RecyclerView android:layout_width='match_parent' android:layout_height='wrap_content' app:layoutManager='androidx.recyclerview.widget.GridLayoutManager'/>"
+
+    pub def render_ios(self) -> String:
+        return "LazyVGrid(columns: [GridItem(.adaptive(minimum: 120))]) { Text(\"Gallery\") }"
+
+
+pub class ImageCarousel:
+    def __init__(self, images_csv: String):
+        self._images = images_csv
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-image-carousel' data-images='" + self._images + "' style='display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:16px;'></div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.viewpager2.widget.ViewPager2 android:layout_width='match_parent' android:layout_height='220dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "TabView { Text(\"Slide\") }.tabViewStyle(.page)"
+
+
+pub class ImagePlaceholder:
+    def __init__(self, width: Int, height: Int):
+        self._width = width
+        self._height = height
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-image-placeholder' style='width:" + str(self._width) + "px;height:" + str(self._height) + "px;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;color:var(--mw-muted,#94a3b8);border-radius:8px;'><span>🖼️ Placeholder</span></div>"
+
+    pub def render_android(self) -> String:
+        return "<View android:layout_width='" + str(self._width) + "dp' android:layout_height='" + str(self._height) + "dp' android:background='@color/placeholder'/>"
+
+    pub def render_ios(self) -> String:
+        return "Rectangle().fill(Color.gray.opacity(0.3)).frame(width: " + str(self._width) + ", height: " + str(self._height) + ")"
+
+
+pub class ImageWithCaption:
+    def __init__(self, src: String, caption: String):
+        self._src = src
+        self._caption = caption
+
+    pub def render_web(self) -> String:
+        return "<figure class='mw-image-caption' style='margin:0;'><img src='" + self._src + "' style='width:100%;border-radius:8px;'/><figcaption style='font-size:13px;color:var(--mw-muted,#94a3b8);margin-top:6px;text-align:center;'>" + self._caption + "</figcaption></figure>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='wrap_content'><ImageView android:layout_width='match_parent' android:layout_height='wrap_content'/><TextView android:text='" + self._caption + "' android:gravity='center'/></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { AsyncImage(url: URL(string: \"" + self._src + "\")); Text(\"" + self._caption + "\").font(.caption).foregroundColor(.secondary) }"
+
+
+pub class ImageWithBadge:
+    def __init__(self, src: String, badge_text: String):
+        self._src = src
+        self._badge = badge_text
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-image-with-badge' style='position:relative;display:inline-block;'><img src='" + self._src + "' style='border-radius:8px;display:block;'/><span style='position:absolute;top:8px;right:8px;background:var(--mw-primary,#4f46e5);color:#fff;border-radius:9999px;font-size:11px;font-weight:700;padding:2px 8px;'>" + self._badge + "</span></div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:layout_width='wrap_content' android:layout_height='wrap_content'><ImageView android:layout_width='wrap_content' android:layout_height='wrap_content'/><TextView android:text='" + self._badge + "' android:layout_gravity='top|end'/></FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "ZStack(alignment: .topTrailing) { AsyncImage(url: URL(string: \"" + self._src + "\")); Text(\"" + self._badge + "\").font(.caption).padding(4).background(Color.accentColor).foregroundColor(.white).cornerRadius(9999) }"
+

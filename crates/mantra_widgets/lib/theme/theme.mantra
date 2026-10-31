@@ -1,0 +1,35 @@
+# Mantra Widgets: Theme Engine
+
+pub class MantraTheme:
+    def __init__(self, name: String, is_dark: Bool, primary: String, background: String, surface: String, text: String):
+        self.name = name
+        self.is_dark = is_dark
+        self.primary = primary
+        self.background = background
+        self.surface = surface
+        self.text = text
+
+    pub def is_dark_mode(self) -> Bool:
+        return self.is_dark
+
+    pub def get_primary(self) -> String:
+        return self.primary
+
+    pub def get_background(self) -> String:
+        return self.background
+
+    pub def get_surface(self) -> String:
+        return self.surface
+
+    pub def get_text(self) -> String:
+        return self.text
+
+    pub def to_css(self) -> String:
+        return ":root { --mantra-primary: " + self.primary + "; --mantra-bg: " + self.background + "; --mantra-surface: " + self.surface + "; --mantra-text: " + self.text + "; }"
+
+def light_theme() -> MantraTheme:
+    return MantraTheme("Light", False, "#4f46e5", "#f8fafc", "#ffffff", "#0f172a")
+
+def dark_theme() -> MantraTheme:
+    return MantraTheme("Dark", True, "#6366f1", "#0f172a", "#1e293b", "#f8fafc")
+

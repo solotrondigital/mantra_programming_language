@@ -1,0 +1,16 @@
+# Mantra Widgets: Responsive Engine
+
+pub class ScreenSize:
+    def __init__(self, width: Int, height: Int):
+        self.width = width
+        self.height = height
+
+    pub def is_mobile(self) -> Bool:
+        return self.width < 768
+
+    pub def is_tablet(self) -> Bool:
+        return self.width >= 768 and self.width < 1024
+
+    pub def is_desktop(self) -> Bool:
+        return self.width >= 1024
+

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <!-- File association for *.mantra -->
+   <extension point="org.eclipse.core.contenttype.contentTypes">
+      <content-type
+            base-type="org.eclipse.core.runtime.text"
+            file-extensions="mantra"
+            id="dev.mantra.eclipse.contentType"
+            name="Mantra Source File"
+            priority="normal">
+      </content-type>
+   </extension>
+
+   <!-- LSP4E Server Definition for mantra-lsp -->
+   <extension point="org.eclipse.lsp4e.languageServer">
+      <server
+            class="org.eclipse.lsp4e.server.ProcessStreamConnectionProvider"
+            id="dev.mantra.eclipse.lsp"
+            label="Mantra Language Server">
+      </server>
+      <contentTypeMapping
+            contentType="dev.mantra.eclipse.contentType"
+            id="dev.mantra.eclipse.lsp">
+      </contentTypeMapping>
+   </extension>
+</plugin>
+

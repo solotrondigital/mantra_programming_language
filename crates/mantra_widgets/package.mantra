@@ -1,0 +1,11 @@
+# Mantra Widgets Package Definition
+# Package: mantra_widgets
+# Version: 0.5.0
+# Author: Solotron Technologies Private Limited
+
+module mantra_widgets
+
+pub let VERSION: String = "0.5.0"
+pub let AUTHOR: String = "Solotron Technologies Private Limited"
+pub let PLATFORMS: String = "iOS, Android, Web, Desktop"
+

@@ -1,0 +1,417 @@
+# Mantra Widgets — Forms and Input Controls Components Family
+# Complete Form suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class TextField:
+    def __init__(self, input_id: String):
+        self._id = input_id
+        self._label = ""
+        self._placeholder = ""
+        self._input_type = "text"
+        self._on_change = ""
+
+    pub def set_label(self, label: String):
+        self._label = label
+
+    pub def set_placeholder(self, placeholder: String):
+        self._placeholder = placeholder
+
+    pub def on_change(self, handler: String):
+        self._on_change = handler
+
+    pub def render_web(self) -> String:
+        mut lbl = ""
+        if len(self._label) > 0:
+            lbl = "<label class='mw-label' for='" + self._id + "'>" + self._label + "</label>"
+        return "<div class='mw-form-field'>" + lbl + "<input id='" + self._id + "' class='mw-input' type='" + self._input_type + "' placeholder='" + self._placeholder + "'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.textfield.TextInputLayout android:hint='" + self._label + "'><com.google.android.material.textfield.TextInputEditText android:id='@+id/" + self._id + "' android:layout_width='match_parent' android:layout_height='wrap_content'/></com.google.android.material.textfield.TextInputLayout>"
+
+    pub def render_ios(self) -> String:
+        return "TextField(\"" + self._placeholder + "\", text: $" + self._id + ")"
+
+
+pub class TextArea:
+    def __init__(self, input_id: String, rows: Int):
+        self._id = input_id
+        self._rows = rows
+        self._placeholder = ""
+        self._label = ""
+
+    pub def set_label(self, label: String):
+        self._label = label
+
+    pub def set_placeholder(self, placeholder: String):
+        self._placeholder = placeholder
+
+    pub def render_web(self) -> String:
+        mut lbl = ""
+        if len(self._label) > 0:
+            lbl = "<label class='mw-label'>" + self._label + "</label>"
+        return "<div class='mw-form-field'>" + lbl + "<textarea id='" + self._id + "' rows='" + str(self._rows) + "' class='mw-textarea' placeholder='" + self._placeholder + "' style='width:100%;border-radius:8px;padding:10px;background:var(--mw-surface,#1e293b);border:1px solid var(--mw-border,#334155);color:var(--mw-text,#f1f5f9);'></textarea></div>"
+
+    pub def render_android(self) -> String:
+        return "<EditText android:id='@+id/" + self._id + "' android:layout_width='match_parent' android:layout_height='wrap_content' android:lines='" + str(self._rows) + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "TextEditor(text: $" + self._id + ")"
+
+
+pub class PasswordField:
+    def __init__(self, input_id: String):
+        self._id = input_id
+        self._placeholder = "••••••••"
+        self._label = "Password"
+
+    pub def set_label(self, label: String):
+        self._label = label
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-form-field'><label class='mw-label'>" + self._label + "</label><input id='" + self._id + "' class='mw-input' type='password' placeholder='" + self._placeholder + "'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.textfield.TextInputLayout app:passwordToggleEnabled='true'><com.google.android.material.textfield.TextInputEditText android:inputType='textPassword'/></com.google.android.material.textfield.TextInputLayout>"
+
+    pub def render_ios(self) -> String:
+        return "SecureField(\"" + self._placeholder + "\", text: $" + self._id + ")"
+
+
+pub class EmailField:
+    def __init__(self, input_id: String):
+        self._id = input_id
+        self._placeholder = "user@example.com"
+        self._label = "Email"
+
+    pub def set_label(self, label: String):
+        self._label = label
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-form-field'><label class='mw-label'>" + self._label + "</label><input id='" + self._id + "' class='mw-input' type='email' placeholder='" + self._placeholder + "'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<EditText android:id='@+id/" + self._id + "' android:inputType='textEmailAddress'/>"
+
+    pub def render_ios(self) -> String:
+        return "TextField(\"" + self._placeholder + "\", text: $" + self._id + ").keyboardType(.emailAddress)"
+
+
+pub class SearchField:
+    def __init__(self, placeholder: String):
+        self._placeholder = placeholder
+        self._query = ""
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-search-field' style='position:relative;width:100%;'><span style='position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--mw-muted,#94a3b8);'>🔍</span><input type='search' class='mw-input' placeholder='" + self._placeholder + "' style='padding-left:36px;width:100%;'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.appcompat.widget.SearchView android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { Image(systemName: \"magnifyingglass\"); TextField(\"" + self._placeholder + "\", text: $searchQuery) }.padding(8).background(Color(.systemGray6)).cornerRadius(8)"
+
+
+pub class NumberField:
+    def __init__(self, input_id: String, min_val: Int, max_val: Int):
+        self._id = input_id
+        self._min = min_val
+        self._max = max_val
+
+    pub def render_web(self) -> String:
+        return "<input id='" + self._id + "' class='mw-input' type='number' min='" + str(self._min) + "' max='" + str(self._max) + "'/>"
+
+    pub def render_android(self) -> String:
+        return "<EditText android:id='@+id/" + self._id + "' android:inputType='number'/>"
+
+    pub def render_ios(self) -> String:
+        return "TextField(\"Number\", value: $" + self._id + ", format: .number).keyboardType(.numberPad)"
+
+
+pub class PhoneField:
+    def __init__(self, input_id: String):
+        self._id = input_id
+
+    pub def render_web(self) -> String:
+        return "<input id='" + self._id + "' class='mw-input' type='tel' placeholder='+1 (555) 000-0000'/>"
+
+    pub def render_android(self) -> String:
+        return "<EditText android:id='@+id/" + self._id + "' android:inputType='phone'/>"
+
+    pub def render_ios(self) -> String:
+        return "TextField(\"Phone\", text: $" + self._id + ").keyboardType(.phonePad)"
+
+
+pub class DatePicker:
+    def __init__(self, input_id: String):
+        self._id = input_id
+
+    pub def render_web(self) -> String:
+        return "<input id='" + self._id + "' class='mw-input' type='date'/>"
+
+    pub def render_android(self) -> String:
+        return "<Button android:text='Select Date' android:id='@+id/" + self._id + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "DatePicker(\"Select Date\", selection: $" + self._id + ", displayedComponents: .date)"
+
+
+pub class TimePicker:
+    def __init__(self, input_id: String):
+        self._id = input_id
+
+    pub def render_web(self) -> String:
+        return "<input id='" + self._id + "' class='mw-input' type='time'/>"
+
+    pub def render_android(self) -> String:
+        return "<TimePicker android:id='@+id/" + self._id + "' android:layout_width='wrap_content' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "DatePicker(\"Select Time\", selection: $" + self._id + ", displayedComponents: .hourAndMinute)"
+
+
+pub class DateRangePicker:
+    def __init__(self, start_id: String, end_id: String):
+        self._start_id = start_id
+        self._end_id = end_id
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-date-range' style='display:flex;gap:8px;'><input id='" + self._start_id + "' type='date' class='mw-input'/><span style='align-self:center;'>to</span><input id='" + self._end_id + "' type='date' class='mw-input'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<Button android:text='Select Date Range'/>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { DatePicker(\"Start\", selection: $" + self._start_id + "); DatePicker(\"End\", selection: $" + self._end_id + ") }"
+
+
+pub class Dropdown:
+    def __init__(self, input_id: String, options_csv: String):
+        self._id = input_id
+        self._options = options_csv
+
+    pub def render_web(self) -> String:
+        return "<select id='" + self._id + "' class='mw-select' style='width:100%;padding:10px;border-radius:8px;background:var(--mw-surface,#1e293b);border:1px solid var(--mw-border,#334155);color:var(--mw-text,#f1f5f9);' data-options='" + self._options + "'></select>"
+
+    pub def render_android(self) -> String:
+        return "<Spinner android:id='@+id/" + self._id + "' android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "Picker(\"Select\", selection: $" + self._id + ") { Text(\"Option\") }"
+
+
+pub class MultiSelectDropdown:
+    def __init__(self, input_id: String, options_csv: String):
+        self._id = input_id
+        self._options = options_csv
+
+    pub def render_web(self) -> String:
+        return "<select id='" + self._id + "' class='mw-multiselect' multiple style='width:100%;padding:10px;' data-options='" + self._options + "'></select>"
+
+    pub def render_android(self) -> String:
+        return "<Button android:text='Select Multiple Items'/>"
+
+    pub def render_ios(self) -> String:
+        return "List { Text(\"Multiple Selection\") }"
+
+
+pub class Autocomplete:
+    def __init__(self, input_id: String, suggestions_csv: String):
+        self._id = input_id
+        self._suggestions = suggestions_csv
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-autocomplete'><input id='" + self._id + "' class='mw-input' data-suggestions='" + self._suggestions + "'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<AutoCompleteTextView android:id='@+id/" + self._id + "' android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "TextField(\"Type to search\", text: $" + self._id + ")"
+
+
+pub class Checkbox:
+    def __init__(self, input_id: String, is_checked: Bool):
+        self._id = input_id
+        self._checked = is_checked
+
+    pub def render_web(self) -> String:
+        mut chk = ""
+        if self._checked:
+            chk = " checked"
+        return "<input id='" + self._id + "' type='checkbox' class='mw-checkbox'" + chk + "/>"
+
+    pub def render_android(self) -> String:
+        return "<CheckBox android:id='@+id/" + self._id + "' android:checked='" + str(self._checked) + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Toggle(\"\", isOn: $" + self._id + ")"
+
+
+pub class CheckboxListTile:
+    def __init__(self, title: String, is_checked: Bool):
+        self._title = title
+        self._checked = is_checked
+
+    pub def render_web(self) -> String:
+        return "<label class='mw-checkbox-list-tile' style='display:flex;align-items:center;justify-content:space-between;padding:12px;cursor:pointer;'><span>" + self._title + "</span><input type='checkbox'/></label>"
+
+    pub def render_android(self) -> String:
+        return "<CheckBox android:layout_width='match_parent' android:layout_height='wrap_content' android:text='" + self._title + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Toggle(\"" + self._title + "\", isOn: .constant(" + str(self._checked) + "))"
+
+
+pub class Radio:
+    def __init__(self, name: String, value: String):
+        self._name = name
+        self._value = value
+
+    pub def render_web(self) -> String:
+        return "<input type='radio' name='" + self._name + "' value='" + self._value + "' class='mw-radio'/>"
+
+    pub def render_android(self) -> String:
+        return "<RadioButton android:text='" + self._value + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(action: {}) { Image(systemName: \"circle\") }"
+
+
+pub class RadioListTile:
+    def __init__(self, title: String, name: String, value: String):
+        self._title = title
+        self._name = name
+        self._value = value
+
+    pub def render_web(self) -> String:
+        return "<label class='mw-radio-list-tile' style='display:flex;align-items:center;justify-content:space-between;padding:12px;cursor:pointer;'><span>" + self._title + "</span><input type='radio' name='" + self._name + "' value='" + self._value + "'/></label>"
+
+    pub def render_android(self) -> String:
+        return "<RadioButton android:layout_width='match_parent' android:layout_height='wrap_content' android:text='" + self._title + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { Text(\"" + self._title + "\"); Spacer(); Image(systemName: \"circle\") }"
+
+
+pub class Switch:
+    def __init__(self, is_on: Bool):
+        self._is_on = is_on
+
+    pub def render_web(self) -> String:
+        return "<label class='mw-switch' style='position:relative;display:inline-block;width:44px;height:24px;'><input type='checkbox' style='opacity:0;width:0;height:0;'><span style='position:absolute;inset:0;background:#475569;border-radius:24px;cursor:pointer;'></span></label>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.switchmaterial.SwitchMaterial android:layout_width='wrap_content' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "Toggle(\"\", isOn: .constant(" + str(self._is_on) + "))"
+
+
+pub class Toggle:
+    def __init__(self, label: String, is_on: Bool):
+        self._label = label
+        self._is_on = is_on
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-toggle' style='display:flex;align-items:center;justify-content:space-between;'><span>" + self._label + "</span><input type='checkbox'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.appcompat.widget.SwitchCompat android:text='" + self._label + "' android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "Toggle(\"" + self._label + "\", isOn: .constant(" + str(self._is_on) + "))"
+
+
+pub class Slider:
+    def __init__(self, min_val: Int, max_val: Int, current_val: Int):
+        self._min = min_val
+        self._max = max_val
+        self._val = current_val
+
+    pub def render_web(self) -> String:
+        return "<input type='range' min='" + str(self._min) + "' max='" + str(self._max) + "' value='" + str(self._val) + "' class='mw-slider' style='width:100%;'/>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.slider.Slider android:valueFrom='" + str(self._min) + ".0' android:valueTo='" + str(self._max) + ".0' android:value='" + str(self._val) + ".0'/>"
+
+    pub def render_ios(self) -> String:
+        return "Slider(value: .constant(" + str(self._val) + ".0), in: " + str(self._min) + ".0..." + str(self._max) + ".0)"
+
+
+pub class RangeSlider:
+    def __init__(self, min_val: Int, max_val: Int):
+        self._min = min_val
+        self._max = max_val
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-range-slider'><input type='range' min='" + str(self._min) + "' max='" + str(self._max) + "' style='width:100%;'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.slider.RangeSlider android:valueFrom='" + str(self._min) + ".0' android:valueTo='" + str(self._max) + ".0'/>"
+
+    pub def render_ios(self) -> String:
+        return "Slider(value: .constant(0.5), in: 0...1)"
+
+
+pub class Form:
+    def __init__(self, form_id: String):
+        self._id = form_id
+        self._children = ""
+
+    pub def add(self, child: String):
+        self._children = self._children + child
+
+    pub def render_web(self) -> String:
+        return "<form id='" + self._id + "' class='mw-form' onsubmit='return false;'>" + self._children + "</form>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._children + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Form { " + self._children + " }"
+
+
+pub class FormField:
+    def __init__(self, label: String, input_component_html: String):
+        self._label = label
+        self._input = input_component_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-form-group' style='margin-bottom:16px;'><label style='display:block;margin-bottom:6px;font-size:13px;font-weight:600;'>" + self._label + "</label>" + self._input + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='wrap_content'><TextView android:text='" + self._label + "'/>" + self._input + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Section(header: Text(\"" + self._label + "\")) { " + self._input + " }"
+
+
+pub class FormValidator:
+    def __init__(self, field_id: String):
+        self._field_id = field_id
+        self._required = False
+
+    pub def set_required(self, req: Bool):
+        self._required = req
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-validator' data-field='" + self._field_id + "' data-required='" + str(self._required) + "'></div>"
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ""
+
+
+pub class FormController:
+    def __init__(self, form_id: String):
+        self._form_id = form_id
+
+    pub def render_web(self) -> String:
+        return "<script>window.MantraFormController && window.MantraFormController.init('" + self._form_id + "');</script>"
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ""

@@ -1,0 +1,21 @@
+# Mantra Widgets: Form Input Components
+
+pub class TextField:
+    def __init__(self, placeholder: String):
+        self.placeholder = placeholder
+        self.value = ""
+
+    pub def set_value(self, val: String):
+        self.value = val
+
+    pub def render(self) -> String:
+        return "<input class='mantra-input' type='text' placeholder='" + self.placeholder + "' value='" + self.value + "' style='width:100%;height:40px;padding:0 12px;border:1px solid var(--mantra-border,#cbd5e1);border-radius:8px;font-size:14px;box-sizing:border-box;'/>"
+
+pub class Switch:
+    def __init__(self, is_checked: Bool):
+        self.is_checked = is_checked
+
+    pub def render(self) -> String:
+        let bg = if self.is_checked: "#4f46e5" else: "#cbd5e1"
+        return "<div class='mantra-switch' style='width:40px;height:22px;background:" + bg + ";border-radius:9999px;'></div>"
+

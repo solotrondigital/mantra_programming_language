@@ -1,0 +1,76 @@
+# Mantra Widgets — Flex Layout: Column and Row
+# Use .add(widget.render_web()) to compose children.
+# The compiler injects the correct render_* call per build target.
+#
+# Column  → vertical stack  (web: flex-direction:column | android: LinearLayout vertical   | ios: VStack)
+# Row     → horizontal line (web: flex-direction:row    | android: LinearLayout horizontal | ios: HStack)
+
+pub class Column:
+    def __init__(self):
+        self._children = ""
+        self._gap = 16
+        self._align = "stretch"
+        self._padding = 0
+
+    # Add a pre-rendered child widget string
+    pub def add(self, child: String):
+        self._children = self._children + child
+
+    pub def set_gap(self, gap: Int):
+        self._gap = gap
+
+    # align: stretch | center | flex-start | flex-end
+    pub def set_align(self, align: String):
+        self._align = align
+
+    pub def set_padding(self, padding: Int):
+        self._padding = padding
+
+    pub def render_web(self) -> String:
+        mut pad_style = ""
+        if self._padding > 0:
+            pad_style = "padding:" + str(self._padding) + "px;"
+        return "<div class='mw-column' style='display:flex;flex-direction:column;gap:" + str(self._gap) + "px;align-items:" + self._align + ";width:100%;box-sizing:border-box;" + pad_style + "'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._children + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading, spacing: " + str(self._gap) + ") { " + self._children + " }"
+
+
+pub class Row:
+    def __init__(self):
+        self._children = ""
+        self._gap = 12
+        self._justify = "flex-start"
+        self._align = "center"
+        self._wrap = True
+
+    pub def add(self, child: String):
+        self._children = self._children + child
+
+    pub def set_gap(self, gap: Int):
+        self._gap = gap
+
+    # justify: flex-start | center | flex-end | space-between | space-around
+    pub def set_justify(self, justify: String):
+        self._justify = justify
+
+    pub def set_align(self, align: String):
+        self._align = align
+
+    pub def set_wrap(self, wrap: Bool):
+        self._wrap = wrap
+
+    pub def render_web(self) -> String:
+        mut wrap_style = "flex-wrap:wrap;"
+        if not self._wrap:
+            wrap_style = "flex-wrap:nowrap;"
+        return "<div class='mw-row' style='display:flex;flex-direction:row;gap:" + str(self._gap) + "px;justify-content:" + self._justify + ";align-items:" + self._align + ";" + wrap_style + "width:100%;box-sizing:border-box;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='horizontal' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._children + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "HStack(spacing: " + str(self._gap) + ") { " + self._children + " }"

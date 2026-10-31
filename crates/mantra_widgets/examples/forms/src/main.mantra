@@ -1,0 +1,23 @@
+# Mantra Forms and Validation Application
+
+class RegistrationForm:
+    def __init__(self):
+        self.form_title = "User Registration"
+
+    pub def render_form(self) -> String:
+        let title = "<h3>" + self.form_title + "</h3>"
+        let email_field = "<div style='margin-bottom:12px;'><label>Email Address</label><input type='email' placeholder='name@example.com' style='width:100%;height:38px;'/></div>"
+        let pass_field = "<div style='margin-bottom:16px;'><label>Password</label><input type='password' placeholder='••••••••' style='width:100%;height:38px;'/></div>"
+        let submit_btn = "<button style='width:100%;background:#4f46e5;color:#fff;border:none;padding:12px;border-radius:8px;font-weight:600;'>Create Account</button>"
+        return "<form style='max-width:360px;margin:40px auto;padding:24px;border:1px solid #e2e8f0;border-radius:12px;'>" + title + email_field + pass_field + submit_btn + "</form>"
+
+    pub def run(self) -> Int:
+        print("📝 Mounting " + self.form_title + "...")
+        let html = self.render_form()
+        print("✓ Form ready (" + str(len(html)) + " bytes)")
+        return 0
+
+def main() -> Int:
+    let form = RegistrationForm()
+    return form.run()
+

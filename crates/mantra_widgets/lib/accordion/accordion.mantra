@@ -1,0 +1,116 @@
+# Mantra Widgets — Accordion and Expandable Components Family
+# Complete Accordion suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class Accordion:
+    def __init__(self):
+        self._sections = ""
+
+    pub def add_section(self, title: String, content: String):
+        self._sections = self._sections + "<details class='mw-accordion-item' style='border:1px solid var(--mw-border,#334155);border-radius:8px;margin-bottom:8px;padding:12px;background:var(--mw-surface,#1e293b);cursor:pointer;'><summary style='font-weight:600;font-size:15px;'>" + title + "</summary><div style='padding-top:12px;color:var(--mw-muted,#94a3b8);font-size:14px;'>" + content + "</div></details>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-accordion' style='display:flex;flex-direction:column;width:100%;'>" + self._sections + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._sections + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._sections + " }"
+
+
+pub class ExpansionTile:
+    def __init__(self, title: String, content_html: String):
+        self._title = title
+        self._content = content_html
+
+    pub def render_web(self) -> String:
+        return "<details class='mw-expansion-tile' style='border-bottom:1px solid var(--mw-border,#334155);padding:14px 0;cursor:pointer;'><summary style='font-weight:600;display:flex;justify-content:space-between;align-items:center;'><span>" + self._title + "</span></summary><div style='padding-top:10px;'>" + self._content + "</div></details>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical'><TextView android:text='" + self._title + "'/>" + self._content + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "DisclosureGroup(\"" + self._title + "\") { " + self._content + " }"
+
+
+pub class ExpandablePanel:
+    def __init__(self, header: String, expanded_body: String):
+        self._header = header
+        self._body = expanded_body
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-expandable-panel' style='background:var(--mw-surface,#1e293b);border-radius:10px;padding:16px;border:1px solid var(--mw-border,#334155);'><div>" + self._header + "</div><div>" + self._body + "</div></div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.cardview.widget.CardView android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._header + "; " + self._body + " }"
+
+
+pub class ExpandableCard:
+    def __init__(self, title: String, content_html: String):
+        self._title = title
+        self._content = content_html
+
+    pub def render_web(self) -> String:
+        return "<details class='mw-card mw-expandable-card' style='background:var(--mw-surface,#1e293b);border-radius:12px;padding:16px;border:1px solid var(--mw-border,#334155);cursor:pointer;'><summary style='font-weight:600;'>" + self._title + "</summary><div style='margin-top:12px;'>" + self._content + "</div></details>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "DisclosureGroup(\"" + self._title + "\") { " + self._content + " }.padding().background(Color(.secondarySystemBackground)).cornerRadius(12)"
+
+
+pub class ExpandableList:
+    def __init__(self, title: String):
+        self._title = title
+        self._items = ""
+
+    pub def add_item(self, item_html: String):
+        self._items = self._items + "<div style='padding:6px 0;'>" + item_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<details style='cursor:pointer;'><summary style='font-weight:600;padding:8px 0;'>" + self._title + "</summary><div style='padding-left:16px;'>" + self._items + "</div></details>"
+
+    pub def render_android(self) -> String:
+        return "<ExpandableListView android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "DisclosureGroup(\"" + self._title + "\") { " + self._items + " }"
+
+
+pub class FAQAccordion:
+    def __init__(self):
+        self._faqs = ""
+
+    pub def add_faq(self, question: String, answer: String):
+        self._faqs = self._faqs + "<details style='margin-bottom:12px;border:1px solid var(--mw-border,#334155);border-radius:8px;padding:14px;background:var(--mw-surface,#1e293b);cursor:pointer;'><summary style='font-weight:600;font-size:15px;color:var(--mw-text,#f1f5f9);'>" + question + "</summary><p style='margin:10px 0 0 0;font-size:14px;color:var(--mw-muted,#94a3b8);line-height:1.5;'>" + answer + "</p></details>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-faq-accordion' style='display:flex;flex-direction:column;width:100%;'>" + self._faqs + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._faqs + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._faqs + " }"
+
+
+pub class MultiExpansionPanel:
+    def __init__(self):
+        self._panels = ""
+
+    pub def add_panel(self, title: String, content: String):
+        self._panels = self._panels + "<details style='padding:12px;border-bottom:1px solid var(--mw-border,#334155);cursor:pointer;'><summary style='font-weight:600;'>" + title + "</summary><div>" + content + "</div></details>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-multi-expansion-panel' style='background:var(--mw-surface,#1e293b);border-radius:10px;border:1px solid var(--mw-border,#334155);'>" + self._panels + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._panels + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._panels + " }"
+

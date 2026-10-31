@@ -1,0 +1,21 @@
+# Mantra Analytics Dashboard Application
+
+class DashboardApp:
+    def __init__(self, org_name: String):
+        self.org_name = org_name
+
+    pub def render_dashboard(self) -> String:
+        let top = "<header style='display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;'><h2 style='margin:0;'>" + self.org_name + " Executive Overview</h2></header>"
+        let cards = "<div style='display:grid;grid-template-columns:1fr 1fr;gap:16px;'><div style='background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;'>Monthly Recurring Revenue: $184,200</div><div style='background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;'>Churn Rate: 0.8%</div></div>"
+        return top + cards
+
+    pub def run(self) -> Int:
+        print("📊 Launching " + self.org_name + " Dashboard...")
+        let html = self.render_dashboard()
+        print("✓ Dashboard metrics ready (" + str(len(html)) + " bytes)")
+        return 0
+
+def main() -> Int:
+    let app = DashboardApp("OmniCloud Metrics")
+    return app.run()
+

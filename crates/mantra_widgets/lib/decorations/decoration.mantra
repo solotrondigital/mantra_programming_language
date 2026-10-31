@@ -1,0 +1,138 @@
+# Mantra Widgets — Borders and Decorations Components Family
+# Complete Borders & Decorations suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class Border:
+    def __init__(self, color: String, width: Int):
+        self._color = color
+        self._width = width
+
+    pub def render_web(self) -> String:
+        return "border:" + str(self._width) + "px solid " + self._color + ";"
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ".border(Color.accentColor, width: " + str(self._width) + ")"
+
+
+pub class DashedBorder:
+    def __init__(self, color: String, width: Int):
+        self._color = color
+        self._width = width
+
+    pub def render_web(self) -> String:
+        return "border:" + str(self._width) + "px dashed " + self._color + ";"
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ".overlay(RoundedRectangle(cornerRadius: 8).stroke(style: StrokeStyle(lineWidth: " + str(self._width) + ", dash: [5])))"
+
+
+pub class DottedBorder:
+    def __init__(self, color: String, width: Int):
+        self._color = color
+        self._width = width
+
+    pub def render_web(self) -> String:
+        return "border:" + str(self._width) + "px dotted " + self._color + ";"
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ".overlay(RoundedRectangle(cornerRadius: 8).stroke(style: StrokeStyle(lineWidth: " + str(self._width) + ", dash: [2])))"
+
+
+pub class GradientBorder:
+    def __init__(self, gradient: String, width: Int):
+        self._gradient = gradient
+        self._width = width
+
+    pub def render_web(self) -> String:
+        return "border:" + str(self._width) + "px solid transparent;border-image:" + self._gradient + " 1;"
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ".overlay(RoundedRectangle(cornerRadius: 8).stroke(LinearGradient(gradient: Gradient(colors: [.purple, .blue]), startPoint: .leading, endPoint: .trailing), lineWidth: " + str(self._width) + "))"
+
+
+pub class CircularBorder:
+    def __init__(self, color: String, width: Int):
+        self._color = color
+        self._width = width
+
+    pub def render_web(self) -> String:
+        return "border-radius:50%;border:" + str(self._width) + "px solid " + self._color + ";"
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ".clipShape(Circle()).overlay(Circle().stroke(Color.accentColor, lineWidth: " + str(self._width) + "))"
+
+
+pub class RoundedBorder:
+    def __init__(self, radius: Int, color: String, width: Int):
+        self._radius = radius
+        self._color = color
+        self._width = width
+
+    pub def render_web(self) -> String:
+        return "border-radius:" + str(self._radius) + "px;border:" + str(self._width) + "px solid " + self._color + ";"
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ".cornerRadius(" + str(self._radius) + ")"
+
+
+pub class Shadow:
+    def __init__(self, blur: Int, color: String):
+        self._blur = blur
+        self._color = color
+
+    pub def render_web(self) -> String:
+        return "box-shadow:0 " + str(self._blur) + "px " + str(self._blur * 2) + "px " + self._color + ";"
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ".shadow(radius: " + str(self._blur) + ")"
+
+
+pub class Gradient:
+    def __init__(self, from_color: String, to_color: String):
+        self._from = from_color
+        self._to = to_color
+
+    pub def render_web(self) -> String:
+        return "background:linear-gradient(135deg, " + self._from + ", " + self._to + ");"
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ".background(LinearGradient(gradient: Gradient(colors: [.indigo, .purple]), startPoint: .topLeading, endPoint: .bottomTrailing))"
+
+
+pub class ShapeDecoration:
+    def __init__(self, shape: String, bg_color: String):
+        self._shape = shape
+        self._bg = bg_color
+
+    pub def render_web(self) -> String:
+        return "background:" + self._bg + ";border-radius:12px;"
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ".background(Color(.secondarySystemBackground))"
+

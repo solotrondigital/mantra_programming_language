@@ -2,9 +2,11 @@ pub mod audit;
 pub mod bench;
 pub mod device_selector;
 pub mod docgen;
+pub mod doctor;
 pub mod env_loader;
 pub mod formatter;
 pub mod http_server;
+pub mod ide_installer;
 pub mod linter;
 pub mod manifest;
 pub mod mobile_builder;
@@ -16,7 +18,9 @@ use audit::Auditor;
 use bench::BenchRunner;
 use device_selector::DeviceSelector;
 use docgen::DocGenerator;
+use doctor::Doctor;
 use formatter::Formatter;
+use ide_installer::IdeInstaller;
 use linter::Linter;
 use manifest::{Lockfile, PackageManifest};
 use mobile_builder::MobileBuilder;
@@ -87,6 +91,8 @@ Developer Tools & Quality:
     lint [FILES...]        Run static diagnostics on source files
     doc [FILE]             Generate Markdown documentation for declarations
     lsp [OPTIONS]          Start Language Server Protocol (LSP) daemon
+    doctor [-v]            Run toolchain & environment diagnostic health check
+    ide <install|list>     Manage IDE integrations (vscode, intellij, neovim, sublime, emacs)
 
 Bootstrap & Toolchain:
     bootstrap              Run self-hosting bootstrap pipeline (stages 0→1→2 + verify)
@@ -657,6 +663,13 @@ fn main() {
                 eprintln!("Usage: mantra target list");
                 exit(1);
             }
+        }
+        "doctor" => {
+            let verbose = args.iter().any(|a| a == "-v" || a == "--verbose");
+            let _ = Doctor::run(verbose);
+        }
+        "ide" => {
+            IdeInstaller::handle_command(&args[2..]);
         }
         unknown => {
             eprintln!("Unknown command: '{}'", unknown);

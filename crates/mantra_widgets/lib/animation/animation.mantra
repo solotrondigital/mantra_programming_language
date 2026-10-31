@@ -1,0 +1,180 @@
+# Mantra Widgets — Animation Components Family
+# Complete Animation suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class FadeAnimation:
+    def __init__(self, duration_ms: Int, child_html: String):
+        self._duration = duration_ms
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-fade-in' style='animation:fadeIn " + str(self._duration) + "ms ease-in-out;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:animateLayoutChanges='true'>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }.animation(.easeInOut(duration: " + str(self._duration) + ".0 / 1000.0), value: true)"
+
+
+pub class ScaleAnimation:
+    def __init__(self, duration_ms: Int, child_html: String):
+        self._duration = duration_ms
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-scale-in' style='animation:scaleIn " + str(self._duration) + "ms ease-out;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }.scaleEffect(1.0)"
+
+
+pub class SlideAnimation:
+    def __init__(self, duration_ms: Int, child_html: String):
+        self._duration = duration_ms
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-slide-in' style='animation:slideUp " + str(self._duration) + "ms cubic-bezier(0.16, 1, 0.3, 1);'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }.transition(.slide)"
+
+
+pub class RotationAnimation:
+    def __init__(self, duration_ms: Int, child_html: String):
+        self._duration = duration_ms
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-rotate' style='animation:spin " + str(self._duration) + "ms linear infinite;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }.rotationEffect(.degrees(360))"
+
+
+pub class BounceAnimation:
+    def __init__(self, child_html: String):
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-bounce' style='animation:bounce 1s infinite;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }.animation(.interpolatingSpring(stiffness: 50, damping: 1))"
+
+
+pub class PulseAnimation:
+    def __init__(self, child_html: String):
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-pulse' style='animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }.scaleEffect(1.05)"
+
+
+pub class ShakeAnimation:
+    def __init__(self, child_html: String):
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-shake' style='animation:shake 0.5s cubic-bezier(.36,.07,.19,.97) both;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }"
+
+
+pub class ShimmerAnimation:
+    def __init__(self, child_html: String):
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-shimmer-anim' style='position:relative;overflow:hidden;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.facebook.shimmer.ShimmerFrameLayout>" + self._child + "</com.facebook.shimmer.ShimmerFrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }.redacted(reason: .placeholder)"
+
+
+pub class HeroAnimation:
+    def __init__(self, tag: String, child_html: String):
+        self._tag = tag
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-hero' data-hero-tag='" + self._tag + "'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:transitionName='" + self._tag + "'>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }.matchedGeometryEffect(id: \"" + self._tag + "\", in: namespace)"
+
+
+pub class AnimatedContainer:
+    def __init__(self, duration_ms: Int, child_html: String):
+        self._duration = duration_ms
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-animated-container' style='transition:all " + str(self._duration) + "ms ease;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:animateLayoutChanges='true'>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._child + " }.animation(.default, value: true)"
+
+
+pub class AnimatedSwitcher:
+    def __init__(self, duration_ms: Int, child_html: String):
+        self._duration = duration_ms
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-animated-switcher' style='transition:opacity " + str(self._duration) + "ms ease;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<ViewSwitcher android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "Group { " + self._child + " }.animation(.easeInOut, value: true)"
+
+
+pub class AnimatedList:
+    def __init__(self):
+        self._items = ""
+
+    pub def add_item(self, item_html: String):
+        self._items = self._items + "<div class='mw-animated-list-item'>" + item_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-animated-list'>" + self._items + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.recyclerview.widget.RecyclerView android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "List { " + self._items + " }"
+

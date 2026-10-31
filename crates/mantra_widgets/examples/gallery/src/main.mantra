@@ -1,0 +1,35 @@
+# Mantra Widgets Gallery — Interactive Showcase Application
+
+class GalleryApp:
+    def __init__(self):
+        self.app_name = "Mantra Widgets Gallery"
+
+    pub def build_ui(self) -> String:
+        # Build Navigation
+        let header = "<header style='background:#4f46e5;color:#fff;padding:16px 24px;border-radius:12px;margin-bottom:24px;'><h1 style='font-size:24px;margin:0;'>🎨 " + self.app_name + "</h1><p style='margin:4px 0 0 0;opacity:0.85;'>Official cross-platform UI component showcase for Mantra</p></header>"
+
+        # Buttons Section
+        let btn_primary = "<button style='background:#4f46e5;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;'>Primary Button</button>"
+        let btn_secondary = "<button style='background:#64748b;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;'>Secondary Button</button>"
+        let btn_success = "<button style='background:#10b981;color:#fff;border:none;padding:10px 20px;border-radius:8px;font-weight:600;cursor:pointer;'>Success Button</button>"
+        let buttons_row = "<div style='display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;'>" + btn_primary + btn_secondary + btn_success + "</div>"
+
+        # KPI Stats Section
+        let stat_1 = "<div style='flex:1;background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);'><div style='font-size:13px;color:#64748b;'>Active Users</div><div style='font-size:24px;font-weight:700;color:#0f172a;margin-top:4px;'>42,850</div></div>"
+        let stat_2 = "<div style='flex:1;background:#fff;padding:16px;border-radius:12px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);'><div style='font-size:13px;color:#64748b;'>Render Latency</div><div style='font-size:24px;font-weight:700;color:#10b981;margin-top:4px;'>0.42 ms</div></div>"
+        let stats_row = "<div style='display:flex;gap:16px;margin-bottom:24px;'>" + stat_1 + stat_2 + "</div>"
+
+        # Assemble Container
+        let main_view = "<main style='max-width:800px;margin:0 auto;padding:24px;font-family:-apple-system,BlinkMacSystemFont,sans-serif;'>" + header + stats_row + buttons_row + "</main>"
+        return main_view
+
+    pub def run(self) -> Int:
+        print("🎬 Starting " + self.app_name + "...")
+        let ui = self.build_ui()
+        print("✓ Mounted Gallery UI tree successfully (" + str(len(ui)) + " bytes)")
+        return 0
+
+def main() -> Int:
+    let gallery = GalleryApp()
+    return gallery.run()
+

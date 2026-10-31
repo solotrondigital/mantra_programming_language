@@ -1,0 +1,11 @@
+[package]
+name = "mantra_widgets_gallery"
+version = "0.5.0"
+edition = "2026"
+description = "Mantra Widgets Gallery — Official Interactive Showcase Application"
+license = "MIT"
+entry = "src/main.mantra"
+
+[dependencies]
+mantra_widgets = "0.5.0"
+

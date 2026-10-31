@@ -1,0 +1,253 @@
+# Mantra Widgets — Navigation Components Family
+# Complete Navigation suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class AppBar:
+    def __init__(self, title: String):
+        self._title = title
+        self._actions = ""
+        self._leading = ""
+
+    pub def set_leading(self, leading_html: String):
+        self._leading = leading_html
+
+    pub def add_action(self, action_html: String):
+        self._actions = self._actions + action_html
+
+    pub def render_web(self) -> String:
+        return "<header class='mw-app-bar' style='display:flex;align-items:center;justify-content:space-between;padding:14px 24px;background:var(--mw-surface,#1e293b);border-bottom:1px solid var(--mw-border,#334155);width:100%;box-sizing:border-box;'><div style='display:flex;align-items:center;gap:12px;'>" + self._leading + "<h1 style='font-size:18px;font-weight:700;margin:0;color:var(--mw-text,#f1f5f9);'>" + self._title + "</h1></div><div style='display:flex;align-items:center;gap:8px;'>" + self._actions + "</div></header>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.appbar.MaterialToolbar android:title='" + self._title + "' android:layout_width='match_parent' android:layout_height='?attr/actionBarSize'/>"
+
+    pub def render_ios(self) -> String:
+        return "NavigationView { Text(\"Content\").navigationTitle(\"" + self._title + "\") }"
+
+
+pub class BottomNavigationBar:
+    def __init__(self):
+        self._items = ""
+
+    pub def add_item(self, icon: String, label: String, is_active: Bool):
+        mut color = "var(--mw-muted,#94a3b8)"
+        if is_active:
+            color = "var(--mw-primary,#4f46e5)"
+        self._items = self._items + "<div class='mw-bottom-nav-item' style='display:flex;flex-direction:column;align-items:center;gap:4px;color:" + color + ";cursor:pointer;'><span style='font-size:20px;'>" + icon + "</span><span style='font-size:11px;font-weight:600;'>" + label + "</span></div>"
+
+    pub def render_web(self) -> String:
+        return "<nav class='mw-bottom-nav' style='position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;padding:10px 0;background:var(--mw-surface,#1e293b);border-top:1px solid var(--mw-border,#334155);z-index:100;'>" + self._items + "</nav>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.bottomnavigation.BottomNavigationView android:layout_width='match_parent' android:layout_height='wrap_content' android:layout_gravity='bottom'/>"
+
+    pub def render_ios(self) -> String:
+        return "TabView { Text(\"Home\").tabItem { Image(systemName: \"house\"); Text(\"Home\") } }"
+
+
+pub class NavigationRail:
+    def __init__(self):
+        self._items = ""
+
+    pub def add_item(self, icon: String, label: String):
+        self._items = self._items + "<div class='mw-rail-item' style='display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px;cursor:pointer;'><span style='font-size:20px;'>" + icon + "</span><span style='font-size:11px;'>" + label + "</span></div>"
+
+    pub def render_web(self) -> String:
+        return "<nav class='mw-nav-rail' style='width:72px;display:flex;flex-direction:column;gap:16px;padding:20px 0;background:var(--mw-surface,#1e293b);border-right:1px solid var(--mw-border,#334155);height:100vh;'>" + self._items + "</nav>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.navigationrail.NavigationRailView android:layout_width='wrap_content' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "NavigationSplitView { List { Text(\"Item\") } } detail: { Text(\"Detail\") }"
+
+
+pub class NavigationDrawer:
+    def __init__(self, header_html: String):
+        self._header = header_html
+        self._items = ""
+
+    pub def add_item(self, item_html: String):
+        self._items = self._items + item_html
+
+    pub def render_web(self) -> String:
+        return "<aside class='mw-nav-drawer' style='width:280px;height:100vh;background:var(--mw-surface,#1e293b);border-right:1px solid var(--mw-border,#334155);padding:16px;display:flex;flex-direction:column;gap:8px;'>" + self._header + self._items + "</aside>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.navigation.NavigationView android:layout_width='wrap_content' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "List { " + self._items + " }"
+
+
+pub class Drawer:
+    def __init__(self):
+        self._content = ""
+
+    pub def add(self, item_html: String):
+        self._content = self._content + item_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-drawer' style='position:fixed;top:0;left:0;bottom:0;width:300px;background:var(--mw-surface,#1e293b);z-index:200;box-shadow:4px 0 16px rgba(0,0,0,0.3);padding:24px;'>" + self._content + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.drawerlayout.widget.DrawerLayout android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._content + " }"
+
+
+pub class DrawerHeader:
+    def __init__(self, title: String, subtitle: String):
+        self._title = title
+        self._subtitle = subtitle
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-drawer-header' style='padding:16px 0;border-bottom:1px solid var(--mw-border,#334155);margin-bottom:12px;'><h3 style='margin:0;font-size:16px;'>" + self._title + "</h3><p style='margin:4px 0 0 0;font-size:12px;color:var(--mw-muted,#94a3b8);'>" + self._subtitle + "</p></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='160dp' android:gravity='bottom' android:padding='16dp'><TextView android:text='" + self._title + "' android:textStyle='bold'/><TextView android:text='" + self._subtitle + "'/></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading) { Text(\"" + self._title + "\").bold(); Text(\"" + self._subtitle + "\").font(.caption).foregroundColor(.secondary) }"
+
+
+pub class TabBar:
+    def __init__(self):
+        self._tabs = ""
+
+    pub def add_tab(self, label: String, is_active: Bool):
+        mut active_class = ""
+        mut border_style = "border-bottom:2px solid transparent;"
+        if is_active:
+            active_class = " mw-tab--active"
+            border_style = "border-bottom:2px solid var(--mw-primary,#4f46e5);color:var(--mw-primary,#4f46e5);"
+        self._tabs = self._tabs + "<div class='mw-tab" + active_class + "' style='padding:12px 18px;cursor:pointer;font-weight:600;font-size:14px;" + border_style + "'>" + label + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-tab-bar' style='display:flex;border-bottom:1px solid var(--mw-border,#334155);width:100%;'>" + self._tabs + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.tabs.TabLayout android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "Picker(\"Tabs\", selection: .constant(0)) { Text(\"Tab\") }.pickerStyle(.segmented)"
+
+
+pub class TabBarView:
+    def __init__(self):
+        self._views = ""
+
+    pub def add_view(self, content_html: String):
+        self._views = self._views + "<div class='mw-tab-content' style='padding:16px 0;'>" + content_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-tab-bar-view'>" + self._views + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.viewpager2.widget.ViewPager2 android:layout_width='match_parent' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "TabView { " + self._views + " }"
+
+
+pub class SegmentTabs:
+    def __init__(self, options_csv: String):
+        self._options = options_csv
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-segment-tabs' data-options='" + self._options + "' style='display:inline-flex;padding:4px;background:rgba(255,255,255,0.06);border-radius:10px;'></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButtonToggleGroup android:layout_width='wrap_content' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "Picker(\"Segments\", selection: .constant(0)) { Text(\"Segment\") }.pickerStyle(.segmented)"
+
+
+pub class Breadcrumb:
+    def __init__(self):
+        self._crumbs = ""
+
+    pub def add_crumb(self, label: String, url: String):
+        mut sep = ""
+        if len(self._crumbs) > 0:
+            sep = "<span style='margin:0 8px;color:var(--mw-muted,#94a3b8);'>/</span>"
+        self._crumbs = self._crumbs + sep + "<a href='" + url + "' style='color:var(--mw-text,#f1f5f9);text-decoration:none;font-size:13px;'>" + label + "</a>"
+
+    pub def render_web(self) -> String:
+        return "<nav class='mw-breadcrumb' style='display:flex;align-items:center;padding:8px 0;'>" + self._crumbs + "</nav>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='horizontal' android:layout_width='wrap_content' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { " + self._crumbs + " }"
+
+
+pub class NavigationMenu:
+    def __init__(self):
+        self._items = ""
+
+    pub def add_item(self, label: String, link: String):
+        self._items = self._items + "<a href='" + link + "' class='mw-nav-item' style='padding:8px 12px;border-radius:6px;color:var(--mw-text,#f1f5f9);text-decoration:none;display:block;'>" + label + "</a>"
+
+    pub def render_web(self) -> String:
+        return "<nav class='mw-navigation-menu' style='display:flex;flex-direction:column;gap:4px;'>" + self._items + "</nav>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "List { " + self._items + " }"
+
+
+pub class SideMenu:
+    def __init__(self):
+        self._items = ""
+
+    pub def add(self, item_html: String):
+        self._items = self._items + item_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-side-menu' style='width:240px;background:var(--mw-surface,#1e293b);padding:16px;border-right:1px solid var(--mw-border,#334155);height:100vh;'>" + self._items + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='240dp' android:layout_height='match_parent'/>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._items + " }.frame(width: 240)"
+
+
+pub class FloatingNavigationBar:
+    def __init__(self):
+        self._items = ""
+
+    pub def add_item(self, icon: String, label: String):
+        self._items = self._items + "<div style='cursor:pointer;'><span>" + icon + "</span></div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-floating-nav' style='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(30,41,59,0.85);backdrop-filter:blur(12px);border-radius:9999px;padding:12px 24px;display:flex;gap:24px;box-shadow:0 12px 24px rgba(0,0,0,0.3);z-index:90;'>" + self._items + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_gravity='bottom|center_horizontal' android:layout_width='wrap_content' android:layout_height='wrap_content' app:cardCornerRadius='24dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "HStack(spacing: 24) { " + self._items + " }.padding().background(.ultraThinMaterial).clipShape(Capsule())"
+
+
+pub class TopNavigationBar:
+    def __init__(self, brand: String):
+        self._brand = brand
+        self._links = ""
+
+    pub def add_link(self, label: String, url: String):
+        self._links = self._links + "<a href='" + url + "' style='color:var(--mw-text,#f1f5f9);text-decoration:none;font-weight:500;font-size:14px;'>" + label + "</a>"
+
+    pub def render_web(self) -> String:
+        return "<nav class='mw-top-nav' style='display:flex;align-items:center;justify-content:space-between;padding:16px 32px;background:var(--mw-surface,#1e293b);border-bottom:1px solid var(--mw-border,#334155);width:100%;box-sizing:border-box;'><div style='font-size:18px;font-weight:800;color:var(--mw-primary,#4f46e5);'>" + self._brand + "</div><div style='display:flex;align-items:center;gap:20px;'>" + self._links + "</div></nav>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.appbar.MaterialToolbar android:title='" + self._brand + "' android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { Text(\"" + self._brand + "\").bold(); Spacer(); " + self._links + " }.padding()"
+

@@ -1,0 +1,11 @@
+[package]
+name = "mantra_dashboard_showcase"
+version = "0.5.0"
+edition = "2026"
+description = "Mantra Analytics Dashboard Example Application"
+license = "MIT"
+entry = "src/main.mantra"
+
+[dependencies]
+mantra_widgets = "0.5.0"
+

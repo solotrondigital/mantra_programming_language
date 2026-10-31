@@ -1,0 +1,125 @@
+{
+  "name": "mantra-language-support",
+  "displayName": "Mantra Language Support",
+  "description": "Official IDE ecosystem for the Mantra Programming Language: Universal LSP, IntelliSense, rich syntax highlighting, and semantic navigation. Owned by Solotron Technologies (http://www.solotrontech.com).",
+  "version": "0.5.0",
+  "publisher": "mantra-lang",
+  "icon": "images/mantra_color_logo.png",
+  "homepage": "http://www.solotrontech.com",
+  "repository": {
+    "type": "git",
+    "url": "http://www.solotrontech.com"
+  },
+  "bugs": {
+    "url": "http://www.solotrontech.com"
+  },
+  "author": {
+    "name": "Solotron Technologies Private Limited",
+    "url": "http://www.solotrontech.com"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Formatters",
+    "Themes",
+    "Snippets"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onLanguage:mantra"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "mantra",
+        "aliases": [
+          "Mantra",
+          "mantra"
+        ],
+        "extensions": [
+          ".mantra"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "mantra",
+        "scopeName": "source.mantra",
+        "path": "./grammars/mantra.tmLanguage.json"
+      }
+    ],
+    "themes": [
+      {
+        "label": "Mantra Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/mantra-dark-theme.json"
+      },
+      {
+        "label": "Mantra Light",
+        "uiTheme": "vs",
+        "path": "./themes/mantra-light-theme.json"
+      }
+    ],
+    "configurationDefaults": {
+      "[mantra]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 4,
+        "editor.detectIndentation": false
+      }
+    },
+    "configuration": {
+      "title": "Mantra",
+      "properties": {
+        "mantra.languageServerPath": {
+          "type": "string",
+          "default": "mantra-lsp",
+          "description": "Path to the Mantra Language Server (mantra-lsp) executable."
+        },
+        "mantra.enableDiagnostics": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time compiler diagnostics and error checking."
+        },
+        "mantra.enableSemanticHighlighting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable compiler-backed semantic tokens highlighting."
+        },
+        "mantra.formatOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically format Mantra files on save (4 spaces indentation)."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "mantra.restartLanguageServer",
+        "title": "Mantra: Restart Language Server"
+      },
+      {
+        "command": "mantra.showOutput",
+        "title": "Mantra: Show Language Server Output"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}
+

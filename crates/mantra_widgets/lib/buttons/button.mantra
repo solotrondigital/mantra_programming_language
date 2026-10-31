@@ -1,0 +1,441 @@
+# Mantra Widgets — Button Components Family
+# Complete Button suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class Button:
+    def __init__(self, label: String):
+        self._label = label
+        self._id = ""
+        self._variant = "primary"
+        self._full_width = False
+        self._is_loading = False
+        self._is_disabled = False
+        self._on_click = ""
+        self._icon = ""
+
+    pub def set_elem_id(self, elem_id: String):
+        self._id = elem_id
+
+    pub def set_variant(self, variant: String):
+        self._variant = variant
+
+    pub def set_full_width(self, full_width: Bool):
+        self._full_width = full_width
+
+    pub def set_loading(self, loading: Bool):
+        self._is_loading = loading
+
+    pub def set_disabled(self, disabled: Bool):
+        self._is_disabled = disabled
+
+    pub def set_icon(self, icon: String):
+        self._icon = icon
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        mut id_attr = ""
+        if len(self._id) > 0:
+            id_attr = " id='" + self._id + "'"
+        mut click_attr = ""
+        if len(self._on_click) > 0:
+            click_attr = " onclick='" + self._on_click + "'"
+        mut width_style = ""
+        if self._full_width:
+            width_style = "width:100%;"
+        mut disabled_attr = ""
+        if self._is_disabled:
+            disabled_attr = " disabled"
+        mut spinner_html = ""
+        if self._is_loading:
+            spinner_html = "<span class='mw-spinner'></span>"
+            disabled_attr = " disabled"
+        mut icon_html = ""
+        if len(self._icon) > 0:
+            icon_html = "<span class='mw-btn-icon'>" + self._icon + "</span>"
+        return "<button" + id_attr + " class='mw-btn mw-btn-" + self._variant + "'" + click_attr + disabled_attr + " type='button' style='" + width_style + "'>" + spinner_html + icon_html + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButton android:id='@+id/" + self._id + "' android:layout_width='match_parent' android:layout_height='wrap_content' android:text='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }.buttonStyle(.borderedProminent)"
+
+
+pub class MantraButton:
+    def __init__(self, label: String):
+        self._label = label
+        self._id = ""
+        self._variant = "primary"
+        self._full_width = False
+        self._is_loading = False
+        self._is_disabled = False
+        self._on_click = ""
+        self._icon = ""
+
+    pub def set_elem_id(self, elem_id: String):
+        self._id = elem_id
+
+    pub def set_variant(self, variant: String):
+        self._variant = variant
+
+    pub def set_full_width(self, full_width: Bool):
+        self._full_width = full_width
+
+    pub def set_loading(self, loading: Bool):
+        self._is_loading = loading
+
+    pub def set_disabled(self, disabled: Bool):
+        self._is_disabled = disabled
+
+    pub def set_icon(self, icon: String):
+        self._icon = icon
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        mut id_attr = ""
+        if len(self._id) > 0:
+            id_attr = " id='" + self._id + "'"
+        mut click_attr = ""
+        if len(self._on_click) > 0:
+            click_attr = " onclick='" + self._on_click + "'"
+        mut width_style = ""
+        if self._full_width:
+            width_style = "width:100%;"
+        mut disabled_attr = ""
+        if self._is_disabled:
+            disabled_attr = " disabled"
+        mut spinner_html = ""
+        if self._is_loading:
+            spinner_html = "<span class='mw-spinner'></span>"
+            disabled_attr = " disabled"
+        mut icon_html = ""
+        if len(self._icon) > 0:
+            icon_html = "<span class='mw-btn-icon'>" + self._icon + "</span>"
+        return "<button" + id_attr + " class='mw-btn mw-btn-" + self._variant + "'" + click_attr + disabled_attr + " type='button' style='" + width_style + "'>" + spinner_html + icon_html + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButton android:id='@+id/" + self._id + "' android:layout_width='match_parent' android:layout_height='wrap_content' android:text='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }.buttonStyle(.borderedProminent)"
+
+
+pub class ElevatedButton:
+    def __init__(self, label: String):
+        self._label = label
+        self._on_click = ""
+        self._elevation = 4
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-btn mw-btn-elevated' onclick='" + self._on_click + "' style='box-shadow:0 4px 6px -1px rgba(0,0,0,0.15);'>" + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButton android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='" + self._label + "' app:elevation='4dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }.buttonStyle(.borderedProminent).shadow(radius: 4)"
+
+
+pub class FilledButton:
+    def __init__(self, label: String):
+        self._label = label
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-btn mw-btn-filled' onclick='" + self._on_click + "' style='background:var(--mw-primary,#4f46e5);color:#fff;border:none;'>" + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButton android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }.buttonStyle(.borderedProminent)"
+
+
+pub class OutlinedButton:
+    def __init__(self, label: String):
+        self._label = label
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-btn mw-btn-outline' onclick='" + self._on_click + "' style='background:transparent;border:1px solid currentColor;'>" + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButton style='@style/Widget.MaterialComponents.Button.OutlinedButton' android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }.buttonStyle(.bordered)"
+
+
+pub class TextButton:
+    def __init__(self, label: String):
+        self._label = label
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-btn mw-btn-text' onclick='" + self._on_click + "' style='background:transparent;border:none;color:var(--mw-primary,#4f46e5);'>" + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButton style='@style/Widget.MaterialComponents.Button.TextButton' android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }.buttonStyle(.plain)"
+
+
+pub class RoundedButton:
+    def __init__(self, label: String):
+        self._label = label
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-btn mw-btn-rounded' onclick='" + self._on_click + "' style='border-radius:9999px;padding:8px 20px;'>" + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButton app:cornerRadius='28dp' android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }.clipShape(Capsule())"
+
+
+pub class SquareButton:
+    def __init__(self, label: String):
+        self._label = label
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-btn mw-btn-square' onclick='" + self._on_click + "' style='border-radius:0px;'>" + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButton app:cornerRadius='0dp' android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }.clipShape(Rectangle())"
+
+
+pub class IconButton:
+    def __init__(self, icon: String):
+        self._icon = icon
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-btn-icon-only' onclick='" + self._on_click + "' style='width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:none;background:rgba(255,255,255,0.08);cursor:pointer;'>" + self._icon + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<ImageButton android:layout_width='48dp' android:layout_height='48dp' android:background='?attr/selectableItemBackgroundBorderless' android:src='@drawable/" + self._icon + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(action: { " + self._on_click + " }) { Image(systemName: \"" + self._icon + "\") }"
+
+
+pub class FloatingActionButton:
+    def __init__(self, icon: String):
+        self._icon = icon
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-fab' onclick='" + self._on_click + "' style='position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;background:var(--mw-primary,#4f46e5);color:#fff;border:none;box-shadow:0 10px 15px -3px rgba(0,0,0,0.3);font-size:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:99;'>" + self._icon + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.floatingactionbutton.FloatingActionButton android:layout_width='wrap_content' android:layout_height='wrap_content' android:src='@drawable/" + self._icon + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(action: { " + self._on_click + " }) { Image(systemName: \"" + self._icon + "\").font(.title).frame(width: 56, height: 56).background(Color.accentColor).foregroundColor(.white).clipShape(Circle()).shadow(radius: 6) }"
+
+
+pub class ButtonGroup:
+    def __init__(self):
+        self._children = ""
+
+    pub def add(self, btn_html: String):
+        self._children = self._children + btn_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-btn-group' style='display:inline-flex;border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.05);'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButtonToggleGroup android:layout_width='wrap_content' android:layout_height='wrap_content'>" + self._children + "</com.google.android.material.button.MaterialButtonToggleGroup>"
+
+    pub def render_ios(self) -> String:
+        return "HStack(spacing: 0) { " + self._children + " }.clipShape(RoundedRectangle(cornerRadius: 8))"
+
+
+pub class ButtonBar:
+    def __init__(self):
+        self._children = ""
+
+    pub def add(self, btn_html: String):
+        self._children = self._children + btn_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-button-bar' style='display:flex;gap:12px;justify-content:flex-end;width:100%;padding:8px 0;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout style='?android:attr/buttonBarStyle' android:layout_width='match_parent' android:layout_height='wrap_content' android:gravity='end'>" + self._children + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { Spacer(); " + self._children + " }"
+
+
+pub class LoadingButton:
+    def __init__(self, label: String, is_loading: Bool):
+        self._label = label
+        self._is_loading = is_loading
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        mut spinner = ""
+        mut disabled_attr = ""
+        if self._is_loading:
+            spinner = "<span class='mw-spinner' style='width:14px;height:14px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;display:inline-block;animation:spin 0.6s linear infinite;margin-right:8px;'></span>"
+            disabled_attr = " disabled"
+        return "<button class='mw-btn' onclick='" + self._on_click + "'" + disabled_attr + ">" + spinner + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButton android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }"
+
+
+pub class GradientButton:
+    def __init__(self, label: String):
+        self._label = label
+        self._on_click = ""
+        self._gradient = "linear-gradient(135deg, #6366f1 0%, #ec4899 100%)"
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def set_gradient(self, grad: String):
+        self._gradient = grad
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-btn mw-btn-gradient' onclick='" + self._on_click + "' style='background:" + self._gradient + ";color:#fff;border:none;border-radius:8px;padding:10px 22px;font-weight:600;cursor:pointer;'>" + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButton android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='" + self._label + "' android:background='@drawable/gradient_button_bg'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }.padding().background(LinearGradient(gradient: Gradient(colors: [.indigo, .pink]), startPoint: .topLeading, endPoint: .bottomTrailing)).foregroundColor(.white).cornerRadius(8)"
+
+
+pub class ToggleButton:
+    def __init__(self, label: String, is_active: Bool):
+        self._label = label
+        self._is_active = is_active
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        mut active_class = ""
+        if self._is_active:
+            active_class = " mw-toggle--active"
+        return "<button class='mw-btn mw-toggle-btn" + active_class + "' onclick='" + self._on_click + "'>" + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<ToggleButton android:layout_width='wrap_content' android:layout_height='wrap_content' android:textOn='" + self._label + "' android:textOff='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Toggle(\"" + self._label + "\", isOn: .constant(" + str(self._is_active) + ")).toggleStyle(.button)"
+
+
+pub class SegmentedButton:
+    def __init__(self, options_csv: String, selected_idx: Int):
+        self._options = options_csv
+        self._selected = selected_idx
+        self._on_select = ""
+
+    pub def on_select(self, handler: String):
+        self._on_select = handler
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-segmented-btn' data-options='" + self._options + "' data-selected='" + str(self._selected) + "'></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.button.MaterialButtonToggleGroup android:layout_width='wrap_content' android:layout_height='wrap_content' app:singleSelection='true'/>"
+
+    pub def render_ios(self) -> String:
+        return "Picker(\"Segment\", selection: .constant(" + str(self._selected) + ")) { Text(\"Option\") }.pickerStyle(.segmented)"
+
+
+pub class CloseButton:
+    def __init__(self):
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-close-btn' onclick='" + self._on_click + "' aria-label='Close' style='background:transparent;border:none;font-size:20px;cursor:pointer;color:currentColor;'>✕</button>"
+
+    pub def render_android(self) -> String:
+        return "<ImageButton android:layout_width='40dp' android:layout_height='40dp' android:src='@drawable/ic_close' android:background='?attr/selectableItemBackgroundBorderless'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(action: { " + self._on_click + " }) { Image(systemName: \"xmark\") }"
+
+
+pub class BackButton:
+    def __init__(self):
+        self._on_click = "history.back()"
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-back-btn' onclick='" + self._on_click + "' aria-label='Back' style='background:transparent;border:none;font-size:18px;cursor:pointer;color:currentColor;display:inline-flex;align-items:center;gap:4px;'>‹ Back</button>"
+
+    pub def render_android(self) -> String:
+        return "<ImageButton android:layout_width='40dp' android:layout_height='40dp' android:src='@drawable/ic_arrow_back' android:background='?attr/selectableItemBackgroundBorderless'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(action: { " + self._on_click + " }) { Image(systemName: \"chevron.backward\") }"
+
+
+pub class ChipButton:
+    def __init__(self, label: String):
+        self._label = label
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-chip-btn' onclick='" + self._on_click + "' style='border-radius:9999px;padding:6px 14px;border:1px solid var(--mw-border,#334155);background:transparent;cursor:pointer;font-size:13px;'>" + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.chip.Chip android:layout_width='wrap_content' android:layout_height='wrap_content' android:text='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }.buttonStyle(.bordered).clipShape(Capsule())"

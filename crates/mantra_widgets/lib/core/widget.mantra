@@ -1,0 +1,49 @@
+# Mantra Widgets — Core Widget Base
+# Every widget implements render_web(), render_android(), render_ios()
+# The Mantra compiler calls the correct render method per build target.
+# Developers never call render methods in screen code — the framework does.
+
+pub class Widget:
+    def __init__(self):
+        self._id = ""
+        self._key = ""
+
+    pub def set_elem_id(self, elem_id: String):
+        self._id = elem_id
+
+    pub def set_key(self, key: String):
+        self._key = key
+
+    pub def get_id(self) -> String:
+        return self._id
+
+    # Override in each widget subclass
+    pub def render_web(self) -> String:
+        return ""
+
+    pub def render_android(self) -> String:
+        return ""
+
+    pub def render_ios(self) -> String:
+        return ""
+
+
+pub class BuildContext:
+    def __init__(self, platform: String, is_dark: Bool):
+        self._platform = platform
+        self._is_dark = is_dark
+
+    pub def is_dark_mode(self) -> Bool:
+        return self._is_dark
+
+    pub def get_platform(self) -> String:
+        return self._platform
+
+    pub def is_web(self) -> Bool:
+        return self._platform == "web"
+
+    pub def is_android(self) -> Bool:
+        return self._platform == "android"
+
+    pub def is_ios(self) -> Bool:
+        return self._platform == "ios"

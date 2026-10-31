@@ -1,0 +1,218 @@
+# Mantra Widgets — Badges and Labels Components Family
+# Complete Badge & Label suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class Badge:
+    def __init__(self, label: String, color: String):
+        self._label = label
+        self._color = color
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-badge' style='background:" + self._color + ";color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:9999px;display:inline-flex;align-items:center;gap:4px;letter-spacing:0.02em;'>" + self._label + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._label + "' android:background='@drawable/badge_bg' android:textColor='@android:color/white' android:textSize='11sp' android:paddingHorizontal='8dp' android:paddingVertical='2dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._label + "\").font(.caption).fontWeight(.bold).foregroundColor(.white).padding(.horizontal, 10).padding(.vertical, 3).background(Color.accentColor).cornerRadius(9999)"
+
+
+pub class IconBadge:
+    def __init__(self, icon: String, badge_count: Int):
+        self._icon = icon
+        self._count = badge_count
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-icon-badge' style='position:relative;display:inline-block;'><span style='font-size:20px;'>" + self._icon + "</span><span style='position:absolute;top:-6px;right:-10px;background:#ef4444;color:#fff;border-radius:9999px;font-size:10px;font-weight:700;padding:1px 5px;min-width:14px;text-align:center;'>" + str(self._count) + "</span></div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:layout_width='wrap_content' android:layout_height='wrap_content'><ImageView android:src='@drawable/" + self._icon + "' android:layout_width='24dp' android:layout_height='24dp'/><TextView android:text='" + str(self._count) + "' android:layout_gravity='top|end'/></FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "ZStack(alignment: .topTrailing) { Image(systemName: \"" + self._icon + "\"); Text(\"" + str(self._count) + "\").font(.caption2).padding(3).background(Color.red).clipShape(Circle()) }"
+
+
+pub class ButtonBadge:
+    def __init__(self, btn_label: String, badge_text: String):
+        self._btn = btn_label
+        self._badge = badge_text
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-btn' style='display:inline-flex;align-items:center;gap:8px;padding:8px 16px;'><span>" + self._btn + "</span><span style='background:#ef4444;color:#fff;border-radius:9999px;font-size:11px;padding:2px 6px;'>" + self._badge + "</span></button>"
+
+    pub def render_android(self) -> String:
+        return "<Button android:text='" + self._btn + " (" + self._badge + ")' android:layout_width='wrap_content' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(action: {}) { HStack { Text(\"" + self._btn + "\"); Text(\"" + self._badge + "\").font(.caption).padding(4).background(Color.red).cornerRadius(9999) } }"
+
+
+pub class NotificationBadge:
+    def __init__(self, count: Int):
+        self._count = count
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-notification-badge' style='background:#ef4444;color:#fff;border-radius:9999px;font-size:11px;font-weight:700;padding:2px 7px;'>" + str(self._count) + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + str(self._count) + "' android:background='@drawable/badge_red' android:textColor='@android:color/white'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + str(self._count) + "\").font(.caption2).padding(4).background(Color.red).foregroundColor(.white).clipShape(Capsule())"
+
+
+pub class StatusBadge:
+    def __init__(self, status: String, color: String):
+        self._status = status
+        self._color = color
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-status-badge' style='background:" + self._color + "22;color:" + self._color + ";border:1px solid " + self._color + ";font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px;'>" + self._status + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._status + "' android:padding='4dp' android:textSize='12sp'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._status + "\").font(.caption).padding(4).background(Color.accentColor.opacity(0.1)).cornerRadius(6)"
+
+
+pub class DotBadge:
+    def __init__(self, color: String):
+        self._color = color
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-dot-badge' style='display:inline-block;width:8px;height:8px;border-radius:50%;background:" + self._color + ";'></span>"
+
+    pub def render_android(self) -> String:
+        return "<View android:layout_width='8dp' android:layout_height='8dp' android:background='@drawable/dot'/>"
+
+    pub def render_ios(self) -> String:
+        return "Circle().frame(width: 8, height: 8)"
+
+
+pub class CounterBadge:
+    def __init__(self, count: Int):
+        self._count = count
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-counter-badge' style='background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:12px;font-size:12px;font-weight:600;'>" + str(self._count) + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + str(self._count) + "' android:textSize='12sp'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + str(self._count) + "\").font(.caption).padding(4).background(Color.secondary.opacity(0.2)).cornerRadius(12)"
+
+
+pub class Label:
+    def __init__(self, text: String):
+        self._text = text
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-label' style='font-size:13px;font-weight:600;color:var(--mw-muted,#94a3b8);'>" + self._text + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._text + "' android:textStyle='bold' android:textSize='13sp'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._text + "\").font(.subheadline).foregroundColor(.secondary)"
+
+
+pub class Tag:
+    def __init__(self, tag_name: String):
+        self._tag = tag_name
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-tag' style='background:rgba(255,255,255,0.06);border:1px solid var(--mw-border,#334155);padding:3px 8px;border-radius:4px;font-size:12px;'>#" + self._tag + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='#" + self._tag + "' android:textSize='12sp'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"#" + self._tag + "\").font(.caption).padding(4).overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.secondary, lineWidth: 1))"
+
+
+pub class Chip:
+    def __init__(self, label: String, color: String):
+        self._label = label
+        self._color = color
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        mut click_attr = ""
+        if len(self._on_click) > 0:
+            click_attr = " onclick='" + self._on_click + "' style='cursor:pointer;'"
+        return "<span class='mw-chip'" + click_attr + " style='display:inline-flex;align-items:center;padding:5px 14px;border-radius:9999px;background:rgba(79,70,229,0.12);border:1px solid " + self._color + ";color:" + self._color + ";font-size:13px;font-weight:600;'>" + self._label + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.chip.Chip android:text='" + self._label + "' style='@style/Widget.MaterialComponents.Chip.Choice' android:layout_width='wrap_content' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._label + "\").font(.subheadline).fontWeight(.semibold).foregroundColor(.accentColor).padding(.horizontal, 14).padding(.vertical, 5).background(Color.accentColor.opacity(0.12)).cornerRadius(9999).overlay(RoundedRectangle(cornerRadius: 9999).stroke(Color.accentColor, lineWidth: 1))"
+
+
+pub class ChoiceChip:
+    def __init__(self, label: String, selected: Bool):
+        self._label = label
+        self._selected = selected
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        mut bg = "transparent"
+        mut text_color = "var(--mw-text,#f1f5f9)"
+        if self._selected:
+            bg = "var(--mw-primary,#4f46e5)"
+            text_color = "#fff"
+        return "<button class='mw-chip mw-choice-chip' onclick='" + self._on_click + "' style='border-radius:9999px;padding:6px 14px;background:" + bg + ";color:" + text_color + ";border:1px solid var(--mw-border,#334155);cursor:pointer;font-size:13px;font-weight:600;'>" + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.chip.Chip style='@style/Widget.MaterialComponents.Chip.Choice' android:text='" + self._label + "' android:checked='" + str(self._selected) + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._label + "\").padding(.horizontal, 12).padding(.vertical, 6).background(Color.accentColor).cornerRadius(9999)"
+
+
+pub class FilterChip:
+    def __init__(self, label: String, selected: Bool):
+        self._label = label
+        self._selected = selected
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        mut icon = ""
+        if self._selected:
+            icon = "✓ "
+        return "<button class='mw-chip mw-filter-chip' onclick='" + self._on_click + "' style='border-radius:9999px;padding:6px 14px;border:1px solid var(--mw-border,#334155);background:rgba(255,255,255,0.05);cursor:pointer;font-size:13px;'>" + icon + self._label + "</button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.chip.Chip style='@style/Widget.MaterialComponents.Chip.Filter' android:text='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(\"" + self._label + "\") { " + self._on_click + " }.buttonStyle(.bordered)"
+
+
+pub class ActionChip:
+    def __init__(self, label: String, icon: String):
+        self._label = label
+        self._icon = icon
+        self._on_click = ""
+
+    pub def on_click(self, handler: String):
+        self._on_click = handler
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-chip mw-action-chip' onclick='" + self._on_click + "' style='border-radius:9999px;padding:6px 14px;border:1px solid var(--mw-border,#334155);background:rgba(255,255,255,0.05);cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:13px;'><span>" + self._icon + "</span><span>" + self._label + "</span></button>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.chip.Chip style='@style/Widget.MaterialComponents.Chip.Action' android:text='" + self._label + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(action: { " + self._on_click + " }) { Label(\"" + self._label + "\", systemImage: \"" + self._icon + "\") }.buttonStyle(.bordered)"

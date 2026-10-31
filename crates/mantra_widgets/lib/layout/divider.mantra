@@ -1,0 +1,25 @@
+# Mantra Widgets — Divider
+# Visual separator between content sections, with optional label text.
+
+pub class Divider:
+    def __init__(self, label: String):
+        self._label = label
+        self._color = "var(--mw-border, #334155)"
+
+    pub def set_label(self, label: String):
+        self._label = label
+
+    pub def set_color(self, color: String):
+        self._color = color
+
+    pub def render_web(self) -> String:
+        mut label_html = ""
+        if len(self._label) > 0:
+            label_html = "<span class='mw-divider-label' style='font-size:12px;color:var(--mw-muted,#94a3b8);font-weight:500;padding:0 12px;white-space:nowrap;'>" + self._label + "</span>"
+        return "<div class='mw-divider' style='display:flex;align-items:center;gap:0;width:100%;margin:4px 0;'><div style='flex:1;height:1px;background:" + self._color + ";'></div>" + label_html + "<div style='flex:1;height:1px;background:" + self._color + ";'></div></div>"
+
+    pub def render_android(self) -> String:
+        return "<View android:layout_width='match_parent' android:layout_height='1dp' android:background='@color/divider' android:layout_marginVertical='8dp'/>"
+
+    pub def render_ios(self) -> String:
+        return "Divider()"

@@ -1,0 +1,213 @@
+{
+  "$schema": "vscode://schemas/color-theme",
+  "name": "Mantra Light",
+  "type": "light",
+  "colors": {
+    "editor.background": "#FAFAFA",
+    "editor.foreground": "#2E3440",
+    "activityBar.background": "#ECEFF4",
+    "activityBar.foreground": "#2E3440",
+    "sideBar.background": "#F0F3F8",
+    "sideBar.foreground": "#4C566A",
+    "statusBar.background": "#ECEFF4",
+    "statusBar.foreground": "#2E3440",
+    "editorLineNumber.foreground": "#9E9E9E",
+    "editorLineNumber.activeForeground": "#1976D2",
+    "editorCursor.foreground": "#7C4DFF",
+    "editor.selectionBackground": "#D8E6F8",
+    "editor.inactiveSelectionBackground": "#E5ECF5",
+    "editorGroupHeader.tabsBackground": "#F0F3F8",
+    "tab.activeBackground": "#FAFAFA",
+    "tab.activeForeground": "#1976D2",
+    "tab.inactiveBackground": "#F0F3F8",
+    "tab.inactiveForeground": "#757575"
+  },
+  "tokenColors": [
+    {
+      "name": "Mantra Comments",
+      "scope": [
+        "comment",
+        "comment.line.number-sign.mantra"
+      ],
+      "settings": {
+        "foreground": "#9E9E9E",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Mantra Documentation Comments",
+      "scope": [
+        "comment.block.documentation.mantra"
+      ],
+      "settings": {
+        "foreground": "#2E7D32",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Mantra Keywords & Modifiers",
+      "scope": [
+        "keyword",
+        "keyword.control",
+        "keyword.control.mantra",
+        "keyword.other",
+        "keyword.other.mantra",
+        "keyword.other.class.mantra",
+        "keyword.other.interface.mantra",
+        "keyword.other.def.mantra",
+        "keyword.other.oop.mantra",
+        "storage.modifier",
+        "storage.modifier.mantra"
+      ],
+      "settings": {
+        "foreground": "#7C4DFF"
+      }
+    },
+    {
+      "name": "Mantra Classes",
+      "scope": [
+        "entity.name.class",
+        "entity.name.class.mantra",
+        "entity.name.type.class"
+      ],
+      "settings": {
+        "foreground": "#1976D2",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Mantra Interfaces",
+      "scope": [
+        "entity.name.type.interface",
+        "entity.name.type.interface.mantra"
+      ],
+      "settings": {
+        "foreground": "#00796B"
+      }
+    },
+    {
+      "name": "Mantra Functions and Methods",
+      "scope": [
+        "entity.name.function",
+        "entity.name.function.mantra",
+        "support.function",
+        "support.function.decorator.mantra"
+      ],
+      "settings": {
+        "foreground": "#E65100"
+      }
+    },
+    {
+      "name": "Mantra Built-in Types",
+      "scope": [
+        "support.type",
+        "support.type.builtin.mantra",
+        "entity.name.type"
+      ],
+      "settings": {
+        "foreground": "#00796B"
+      }
+    },
+    {
+      "name": "Mantra Variables and Parameters",
+      "scope": [
+        "variable",
+        "variable.parameter",
+        "variable.other"
+      ],
+      "settings": {
+        "foreground": "#B71C1C"
+      }
+    },
+    {
+      "name": "Mantra Self and Super",
+      "scope": [
+        "variable.language.self.mantra"
+      ],
+      "settings": {
+        "foreground": "#C2185B",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "name": "Mantra Constants & Booleans",
+      "scope": [
+        "constant.language",
+        "constant.language.mantra"
+      ],
+      "settings": {
+        "foreground": "#E65100",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "Mantra Numbers",
+      "scope": [
+        "constant.numeric",
+        "constant.numeric.integer.mantra",
+        "constant.numeric.float.mantra",
+        "constant.numeric.hex.mantra"
+      ],
+      "settings": {
+        "foreground": "#F57C00"
+      }
+    },
+    {
+      "name": "Mantra Strings",
+      "scope": [
+        "string",
+        "string.quoted.double.mantra",
+        "string.quoted.single.mantra"
+      ],
+      "settings": {
+        "foreground": "#388E3C"
+      }
+    },
+    {
+      "name": "Mantra String Escapes",
+      "scope": [
+        "constant.character.escape.mantra"
+      ],
+      "settings": {
+        "foreground": "#0288D1"
+      }
+    },
+    {
+      "name": "Mantra Operators",
+      "scope": [
+        "keyword.operator",
+        "keyword.operator.mantra",
+        "keyword.operator.arrow.mantra",
+        "keyword.operator.comparison.mantra",
+        "keyword.operator.assignment.mantra",
+        "keyword.operator.assignment.augmented.mantra",
+        "keyword.operator.arithmetic.mantra",
+        "keyword.operator.logical.mantra"
+      ],
+      "settings": {
+        "foreground": "#546E7A"
+      }
+    },
+    {
+      "name": "Mantra Annotations and Decorators",
+      "scope": [
+        "meta.decorator.mantra",
+        "entity.name.tag.decorator.mantra"
+      ],
+      "settings": {
+        "foreground": "#7C4DFF"
+      }
+    },
+    {
+      "name": "Mantra Illegal Tab Indentation",
+      "scope": [
+        "invalid.illegal.tab-indentation.mantra"
+      ],
+      "settings": {
+        "foreground": "#FFFFFF",
+        "background": "#D32F2F"
+      }
+    }
+  ]
+}
+

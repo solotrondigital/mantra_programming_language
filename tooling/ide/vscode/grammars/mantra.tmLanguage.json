@@ -1,0 +1,209 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Mantra",
+  "scopeName": "source.mantra",
+  "fileTypes": ["mantra"],
+  "patterns": [
+    { "include": "#doc-comments" },
+    { "include": "#comments" },
+    { "include": "#strings-double" },
+    { "include": "#strings-single" },
+    { "include": "#decorators" },
+    { "include": "#class-definition" },
+    { "include": "#interface-definition" },
+    { "include": "#function-definition" },
+    { "include": "#keywords-control" },
+    { "include": "#keywords-declaration" },
+    { "include": "#keywords-modifiers" },
+    { "include": "#keywords-oop" },
+    { "include": "#keywords-logical" },
+    { "include": "#constants-language" },
+    { "include": "#constants-numeric" },
+    { "include": "#support-types" },
+    { "include": "#self-super" },
+    { "include": "#operators" },
+    { "include": "#punctuation" },
+    { "include": "#invalid-tab" }
+  ],
+  "repository": {
+    "doc-comments": {
+      "name": "comment.block.documentation.mantra",
+      "match": "##.*$"
+    },
+    "comments": {
+      "name": "comment.line.number-sign.mantra",
+      "match": "#[^#].*$|#$"
+    },
+    "strings-double": {
+      "name": "string.quoted.double.mantra",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.mantra",
+          "match": "\\\\[ntr\"'\\\\]"
+        }
+      ]
+    },
+    "strings-single": {
+      "name": "string.quoted.single.mantra",
+      "begin": "'",
+      "end": "'",
+      "patterns": [
+        {
+          "name": "constant.character.escape.mantra",
+          "match": "\\\\[ntr\"'\\\\]"
+        }
+      ]
+    },
+    "decorators": {
+      "name": "meta.decorator.mantra",
+      "match": "@([a-zA-Z_][a-zA-Z0-9_]*)",
+      "captures": {
+        "0": { "name": "entity.name.tag.decorator.mantra" },
+        "1": { "name": "support.function.decorator.mantra" }
+      }
+    },
+    "class-definition": {
+      "name": "meta.class.mantra",
+      "match": "\\b(class)\\s+([A-Z][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.other.class.mantra" },
+        "2": { "name": "entity.name.class.mantra" }
+      }
+    },
+    "interface-definition": {
+      "name": "meta.interface.mantra",
+      "match": "\\b(interface)\\s+([A-Z][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.other.interface.mantra" },
+        "2": { "name": "entity.name.type.interface.mantra" }
+      }
+    },
+    "function-definition": {
+      "name": "meta.function.mantra",
+      "match": "\\b(def)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+      "captures": {
+        "1": { "name": "keyword.other.def.mantra" },
+        "2": { "name": "entity.name.function.mantra" }
+      }
+    },
+    "keywords-control": {
+      "name": "keyword.control.mantra",
+      "match": "\\b(if|elif|else|for|while|break|continue|return|in)\\b"
+    },
+    "keywords-declaration": {
+      "name": "keyword.other.mantra",
+      "match": "\\b(def|class|interface|module|import|from|as|let|mut)\\b"
+    },
+    "keywords-modifiers": {
+      "name": "storage.modifier.mantra",
+      "match": "\\b(pub|private|protected|static|abstract|override|async|await)\\b"
+    },
+    "keywords-oop": {
+      "name": "keyword.other.oop.mantra",
+      "match": "\\b(extends|implements)\\b"
+    },
+    "keywords-logical": {
+      "name": "keyword.operator.logical.mantra",
+      "match": "\\b(and|or|not)\\b"
+    },
+    "constants-language": {
+      "name": "constant.language.mantra",
+      "match": "\\b(True|False|None)\\b"
+    },
+    "constants-numeric": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.mantra",
+          "match": "\\b[0-9]+\\.[0-9]+([eE][+-]?[0-9]+)?\\b"
+        },
+        {
+          "name": "constant.numeric.hex.mantra",
+          "match": "\\b0[xX][0-9a-fA-F]+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.mantra",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "support-types": {
+      "name": "support.type.builtin.mantra",
+      "match": "\\b(Int|Float|Bool|String|Byte|Unit|Any|Option|Result|List|Map|Task)\\b"
+    },
+    "self-super": {
+      "name": "variable.language.self.mantra",
+      "match": "\\b(self|super)\\b"
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arrow.mantra",
+          "match": "->"
+        },
+        {
+          "name": "keyword.operator.comparison.mantra",
+          "match": "==|!=|<=|>=|<|>"
+        },
+        {
+          "name": "keyword.operator.assignment.augmented.mantra",
+          "match": "\\+=|-=|\\*=|/="
+        },
+        {
+          "name": "keyword.operator.assignment.mantra",
+          "match": "(?<![=!<>])=(?!=)"
+        },
+        {
+          "name": "keyword.operator.arithmetic.mantra",
+          "match": "\\+|-|\\*|/|%"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.definition.parameters.begin.mantra",
+          "match": "\\("
+        },
+        {
+          "name": "punctuation.definition.parameters.end.mantra",
+          "match": "\\)"
+        },
+        {
+          "name": "punctuation.definition.list.begin.mantra",
+          "match": "\\["
+        },
+        {
+          "name": "punctuation.definition.list.end.mantra",
+          "match": "\\]"
+        },
+        {
+          "name": "punctuation.definition.block.begin.mantra",
+          "match": "\\{"
+        },
+        {
+          "name": "punctuation.definition.block.end.mantra",
+          "match": "\\}"
+        },
+        {
+          "name": "punctuation.separator.comma.mantra",
+          "match": ","
+        },
+        {
+          "name": "punctuation.separator.colon.mantra",
+          "match": ":"
+        },
+        {
+          "name": "punctuation.accessor.dot.mantra",
+          "match": "\\."
+        }
+      ]
+    },
+    "invalid-tab": {
+      "name": "invalid.illegal.tab-indentation.mantra",
+      "match": "^\\t+"
+    }
+  }
+}
+

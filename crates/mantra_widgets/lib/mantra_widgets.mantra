@@ -1,0 +1,43 @@
+# mantra_widgets — Official UI Component Library for Mantra
+# Version: 0.5.0
+# Layer 1: Core Engine | Layer 2: Design System | Layer 3: Widget Catalog (223 Components)
+
+import core.widget
+import theme.colors
+import theme.theme
+import buttons.button
+import buttons.social_button
+import cards.card
+import avatars.avatar
+import badges.badge
+import images.image
+import carousel.carousel
+import navigation.navigation
+import navigation.app_bar
+import forms.fields
+import layout.layout
+import layout.flex
+import layout.divider
+import layout.container
+import dialogs.dialog
+import loaders.loader
+import accordion.accordion
+import typography.text
+import feedback.feedback
+import decorations.decoration
+import animation.animation
+import advanced.advanced
+import responsive.responsive
+
+pub class MantraApp:
+    def __init__(self, title: String, theme: MantraTheme, root_html: String):
+        self.title = title
+        self.theme = theme
+        self.root_html = root_html
+
+    pub def render_document(self) -> String:
+        return "<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>" + self.title + "</title><style>" + self.theme.to_css() + "</style></head><body><div id='mantra-root'>" + self.root_html + "</div></body></html>"
+
+    pub def start(self) -> Int:
+        print("⚡ Mantra UI Application Mounted: " + self.title)
+        return 0

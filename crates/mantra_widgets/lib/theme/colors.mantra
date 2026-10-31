@@ -1,0 +1,17 @@
+# Mantra Widgets: Color Tokens
+
+pub class MantraColors:
+    def __init__(self):
+        self.primary = "#4f46e5"
+        self.secondary = "#64748b"
+        self.success = "#10b981"
+        self.warning = "#f59e0b"
+        self.danger = "#ef4444"
+        self.info = "#0ea5e9"
+        self.background_light = "#f8fafc"
+        self.background_dark = "#0f172a"
+        self.surface_light = "#ffffff"
+        self.surface_dark = "#1e293b"
+        self.text_light = "#0f172a"
+        self.text_dark = "#f8fafc"
+

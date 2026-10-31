@@ -1,0 +1,9 @@
+# Mantra Widgets: Navigation Components
+
+pub class AppBar:
+    def __init__(self, title: String):
+        self.title = title
+
+    pub def render(self) -> String:
+        return "<header class='mantra-appbar' style='height:56px;padding:0 16px;display:flex;align-items:center;background:var(--mantra-surface,#fff);border-bottom:1px solid var(--mantra-border,#e2e8f0);font-size:18px;font-weight:700;color:var(--mantra-text,#0f172a);'>" + self.title + "</header>"
+

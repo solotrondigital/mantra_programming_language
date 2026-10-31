@@ -1,0 +1,145 @@
+name: Publish Mantra IDE Extensions
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tooling/ide/**'
+      - 'tooling/grammars/**'
+      - 'tooling/themes/**'
+      - '.github/workflows/publish-extensions.yml'
+  workflow_dispatch:
+    inputs:
+      force_publish:
+        description: 'Force publish even if version has not changed'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  check-and-publish:
+    name: Check Version & Publish to Extension Registries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check for Version Changes
+        id: version_check
+        shell: bash
+        run: |
+          FORCE="${{ github.event.inputs.force_publish }}"
+
+          LANG_VER=$(jq -r '.version' tooling/ide/vscode/package.json)
+          CLI_VER=$(jq -r '.version' tooling/ide/vscode-cli/package.json)
+          echo "Current Language Support Version: $LANG_VER"
+          echo "Current CLI Extension Version: $CLI_VER"
+
+          PUBLISH_LANG="false"
+          PUBLISH_CLI="false"
+
+          if [ "$FORCE" = "true" ]; then
+            echo "Force publish requested."
+            PUBLISH_LANG="true"
+            PUBLISH_CLI="true"
+          elif git rev-parse HEAD~1 >/dev/null 2>&1; then
+            PREV_LANG_VER=$(git show HEAD~1:tooling/ide/vscode/package.json 2>/dev/null | jq -r '.version // empty')
+            PREV_CLI_VER=$(git show HEAD~1:tooling/ide/vscode-cli/package.json 2>/dev/null | jq -r '.version // empty')
+
+            echo "Previous Language Support Version: $PREV_LANG_VER"
+            echo "Previous CLI Extension Version: $PREV_CLI_VER"
+
+            if [ "$LANG_VER" != "$PREV_LANG_VER" ] && [ -n "$LANG_VER" ]; then
+              echo ">> Detected version change in Mantra Language Support ($PREV_LANG_VER -> $LANG_VER)"
+              PUBLISH_LANG="true"
+            fi
+
+            if [ "$CLI_VER" != "$PREV_CLI_VER" ] && [ -n "$CLI_VER" ]; then
+              echo ">> Detected version change in Mantra CLI Extension ($PREV_CLI_VER -> $CLI_VER)"
+              PUBLISH_CLI="true"
+            fi
+          else
+            echo "Initial commit or no parent commit found; enabling publish."
+            PUBLISH_LANG="true"
+            PUBLISH_CLI="true"
+          fi
+
+          echo "publish_lang=$PUBLISH_LANG" >> $GITHUB_OUTPUT
+          echo "publish_cli=$PUBLISH_CLI" >> $GITHUB_OUTPUT
+          echo "lang_version=$LANG_VER" >> $GITHUB_OUTPUT
+          echo "cli_version=$CLI_VER" >> $GITHUB_OUTPUT
+
+      # ─── Build & Package: Mantra Language Support ──────────────────────────
+      - name: Build & Package Mantra Language Support
+        if: steps.version_check.outputs.publish_lang == 'true'
+        shell: bash
+        run: |
+          cd tooling/ide/vscode
+          npm ci || npm install
+          npm run compile
+          npx vsce package --allow-missing-repository --baseImagesUrl https://www.solotrontech.com --baseContentUrl https://www.solotrontech.com --out ../../../mantra-language-support-${{ steps.version_check.outputs.lang_version }}.vsix
+
+      # ─── Build & Package: Mantra CLI Extension ─────────────────────────────
+      - name: Build & Package Mantra CLI Extension
+        if: steps.version_check.outputs.publish_cli == 'true'
+        shell: bash
+        run: |
+          cd tooling/ide/vscode-cli
+          npm ci || npm install
+          npm run compile
+          npx vsce package --allow-missing-repository --baseImagesUrl https://www.solotrontech.com --baseContentUrl https://www.solotrontech.com --out ../../../mantra-cli-${{ steps.version_check.outputs.cli_version }}.vsix
+
+      # ─── Upload Built VSIX Artifacts ───────────────────────────────────────
+      - name: Upload Extension VSIX Artifacts
+        if: steps.version_check.outputs.publish_lang == 'true' || steps.version_check.outputs.publish_cli == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: mantra-vscode-extensions
+          path: ./*.vsix
+
+      # ─── Publish to Visual Studio Marketplace ──────────────────────────────
+      - name: Publish Language Support to VS Code Marketplace
+        if: steps.version_check.outputs.publish_lang == 'true' && env.VS_MARKETPLACE_TOKEN != ''
+        env:
+          VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+        shell: bash
+        run: |
+          npx vsce publish --packagePath mantra-language-support-${{ steps.version_check.outputs.lang_version }}.vsix -p "$VS_MARKETPLACE_TOKEN"
+
+      - name: Publish CLI Extension to VS Code Marketplace
+        if: steps.version_check.outputs.publish_cli == 'true' && env.VS_MARKETPLACE_TOKEN != ''
+        env:
+          VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+        shell: bash
+        run: |
+          npx vsce publish --packagePath mantra-cli-${{ steps.version_check.outputs.cli_version }}.vsix -p "$VS_MARKETPLACE_TOKEN"
+
+      # ─── Publish to Open VSX Registry (Eclipse Open VSX) ───────────────────
+      - name: Publish Language Support to Open VSX Registry
+        if: steps.version_check.outputs.publish_lang == 'true' && env.OPEN_VSX_TOKEN != ''
+        env:
+          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+        shell: bash
+        run: |
+          npx ovsx publish mantra-language-support-${{ steps.version_check.outputs.lang_version }}.vsix -p "$OPEN_VSX_TOKEN"
+
+      - name: Publish CLI Extension to Open VSX Registry
+        if: steps.version_check.outputs.publish_cli == 'true' && env.OPEN_VSX_TOKEN != ''
+        env:
+          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+        shell: bash
+        run: |
+          npx ovsx publish mantra-cli-${{ steps.version_check.outputs.cli_version }}.vsix -p "$OPEN_VSX_TOKEN"
+

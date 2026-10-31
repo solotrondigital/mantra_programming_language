@@ -1,0 +1,273 @@
+# Mantra Widgets — Advanced Components Family
+# Complete Advanced suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class IntroScreen:
+    def __init__(self, title: String, description: String, get_started_url: String):
+        self._title = title
+        self._desc = description
+        self._action = get_started_url
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-intro-screen' style='display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;text-align:center;padding:24px;'><h1 style='font-size:36px;font-weight:800;margin-bottom:12px;'>" + self._title + "</h1><p style='color:var(--mw-muted,#94a3b8);max-width:500px;margin-bottom:28px;'>" + self._desc + "</p><a href='" + self._action + "' class='mw-btn' style='padding:12px 28px;font-size:16px;'>Get Started</a></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:gravity='center' android:orientation='vertical' android:layout_width='match_parent' android:layout_height='match_parent'><TextView android:text='" + self._title + "' android:textSize='28sp' android:textStyle='bold'/><TextView android:text='" + self._desc + "'/><Button android:text='Get Started'/></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(spacing: 20) { Spacer(); Text(\"" + self._title + "\").font(.largeTitle).bold(); Text(\"" + self._desc + "\").foregroundColor(.secondary); Button(\"Get Started\") {}; Spacer() }"
+
+
+pub class OnboardingScreen:
+    def __init__(self, step_title: String, step_content: String):
+        self._title = step_title
+        self._content = step_content
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-onboarding' style='padding:32px;display:flex;flex-direction:column;height:100vh;justify-content:space-between;'><div style='text-align:center;margin-top:60px;'><h2>" + self._title + "</h2><p>" + self._content + "</p></div><div style='display:flex;justify-content:space-between;'><button>Skip</button><button>Next</button></div></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='match_parent'><TextView android:text='" + self._title + "'/><TextView android:text='" + self._content + "'/></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { Text(\"" + self._title + "\").font(.title); Text(\"" + self._content + "\") }"
+
+
+pub class EmptyState:
+    def __init__(self, icon: String, title: String, message: String):
+        self._icon = icon
+        self._title = title
+        self._message = message
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-empty-state' style='display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 16px;text-align:center;'><div style='font-size:48px;margin-bottom:16px;'>" + self._icon + "</div><h3 style='margin:0 0 8px 0;font-size:18px;'>" + self._title + "</h3><p style='color:var(--mw-muted,#94a3b8);font-size:14px;max-width:360px;margin:0;'>" + self._message + "</p></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:gravity='center' android:orientation='vertical' android:layout_width='match_parent' android:layout_height='wrap_content' android:padding='32dp'><TextView android:text='" + self._title + "' android:textStyle='bold'/><TextView android:text='" + self._message + "'/></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "ContentUnavailableView(\"" + self._title + "\", systemImage: \"" + self._icon + "\", description: Text(\"" + self._message + "\"))"
+
+
+pub class ErrorState:
+    def __init__(self, title: String, error_msg: String):
+        self._title = title
+        self._error = error_msg
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-error-state' style='padding:32px;text-align:center;border:1px dashed #ef4444;border-radius:12px;'><div style='font-size:36px;color:#ef4444;'>⚠️</div><h3 style='color:#ef4444;margin:8px 0;'>" + self._title + "</h3><p style='color:var(--mw-muted,#94a3b8);font-size:13px;'>" + self._error + "</p></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:gravity='center'><TextView android:text='" + self._title + "' android:textColor='@color/error'/><TextView android:text='" + self._error + "'/></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { Image(systemName: \"exclamationmark.triangle\").foregroundColor(.red); Text(\"" + self._title + "\").bold(); Text(\"" + self._error + "\").font(.caption) }"
+
+
+pub class SuccessState:
+    def __init__(self, title: String, message: String):
+        self._title = title
+        self._message = message
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-success-state' style='padding:32px;text-align:center;'><div style='font-size:40px;color:#10b981;margin-bottom:12px;'>✓</div><h3 style='margin:0 0 8px 0;'>" + self._title + "</h3><p style='color:var(--mw-muted,#94a3b8);margin:0;'>" + self._message + "</p></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:gravity='center' android:orientation='vertical'><TextView android:text='" + self._title + "' android:textColor='@color/success'/><TextView android:text='" + self._message + "'/></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { Image(systemName: \"checkmark.circle\").foregroundColor(.green).font(.largeTitle); Text(\"" + self._title + "\").bold(); Text(\"" + self._message + "\").font(.caption) }"
+
+
+pub class Timeline:
+    def __init__(self):
+        self._events = ""
+
+    pub def add_event(self, time_label: String, title: String, desc: String):
+        self._events = self._events + "<div style='display:flex;gap:16px;margin-bottom:20px;'><div style='width:70px;font-size:12px;color:var(--mw-muted,#94a3b8);text-align:right;'>" + time_label + "</div><div style='position:relative;border-left:2px solid var(--mw-primary,#4f46e5);padding-left:16px;'><div style='position:absolute;left:-6px;top:0;width:10px;height:10px;border-radius:50%;background:var(--mw-primary,#4f46e5);'></div><strong style='display:block;font-size:14px;'>" + title + "</strong><p style='margin:4px 0 0 0;font-size:13px;color:var(--mw-muted,#94a3b8);'>" + desc + "</p></div></div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-timeline' style='padding:16px 0;'>" + self._events + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.recyclerview.widget.RecyclerView android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading) { " + self._events + " }"
+
+
+pub class Stepper:
+    def __init__(self, current_step: Int, total_steps: Int):
+        self._current = current_step
+        self._total = total_steps
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-stepper' style='display:flex;justify-content:center;gap:12px;margin:16px 0;'><span style='font-size:13px;font-weight:600;'>Step " + str(self._current) + " of " + str(self._total) + "</span></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.progressindicator.LinearProgressIndicator android:progress='" + str(self._current) + "' android:max='" + str(self._total) + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "ProgressView(value: Double(" + str(self._current) + "), total: Double(" + str(self._total) + "))"
+
+
+pub class Calendar:
+    def __init__(self, month_year: String):
+        self._month_year = month_year
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-calendar' style='background:var(--mw-surface,#1e293b);padding:16px;border-radius:12px;border:1px solid var(--mw-border,#334155);width:280px;'><div style='text-align:center;font-weight:700;margin-bottom:12px;'>" + self._month_year + "</div><div style='display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;font-size:12px;'><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div></div>"
+
+    pub def render_android(self) -> String:
+        return "<CalendarView android:layout_width='wrap_content' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "DatePicker(\"\", selection: .constant(Date()), displayedComponents: .date).datePickerStyle(.graphical)"
+
+
+pub class ChatBubble:
+    def __init__(self, message: String, is_me: Bool):
+        self._msg = message
+        self._is_me = is_me
+
+    pub def render_web(self) -> String:
+        mut align = "flex-start"
+        mut bg = "var(--mw-surface,#1e293b)"
+        mut color = "var(--mw-text,#f1f5f9)"
+        if self._is_me:
+            align = "flex-end"
+            bg = "var(--mw-primary,#4f46e5)"
+            color = "#fff"
+        return "<div style='display:flex;justify-content:" + align + ";margin-bottom:8px;'><div class='mw-chat-bubble' style='background:" + bg + ";color:" + color + ";padding:10px 16px;border-radius:16px;max-width:70%;font-size:14px;line-height:1.4;'>" + self._msg + "</div></div>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._msg + "' android:padding='12dp' android:background='@drawable/chat_bubble'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._msg + "\").padding(10).background(Color.accentColor).foregroundColor(.white).cornerRadius(16)"
+
+
+pub class ChatMessage:
+    def __init__(self, sender: String, text: String, time_str: String):
+        self._sender = sender
+        self._text = text
+        self._time = time_str
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-chat-message' style='margin-bottom:12px;'><div style='display:flex;gap:8px;align-items:baseline;margin-bottom:2px;'><strong style='font-size:13px;'>" + self._sender + "</strong><span style='font-size:11px;color:var(--mw-muted,#94a3b8);'>" + self._time + "</span></div><p style='margin:0;font-size:14px;'>" + self._text + "</p></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical'><TextView android:text='" + self._sender + "' android:textStyle='bold'/><TextView android:text='" + self._text + "'/></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading) { HStack { Text(\"" + self._sender + "\").bold(); Text(\"" + self._time + "\").font(.caption) }; Text(\"" + self._text + "\") }"
+
+
+pub class NotificationCenter:
+    def __init__(self):
+        self._items = ""
+
+    pub def add_item(self, item_html: String):
+        self._items = self._items + item_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-notification-center' style='width:320px;background:var(--mw-surface,#1e293b);border-radius:12px;border:1px solid var(--mw-border,#334155);padding:16px;box-shadow:0 12px 32px rgba(0,0,0,0.3);'><h4 style='margin:0 0 12px 0;'>Notifications</h4>" + self._items + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<androidx.recyclerview.widget.RecyclerView android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "List { Text(\"Notifications\") }"
+
+
+pub class SearchBar:
+    def __init__(self, placeholder: String):
+        self._placeholder = placeholder
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-search-bar' style='display:flex;align-items:center;background:var(--mw-surface,#1e293b);border:1px solid var(--mw-border,#334155);border-radius:9999px;padding:8px 16px;gap:8px;'><span style='color:var(--mw-muted,#94a3b8);'>🔍</span><input type='search' placeholder='" + self._placeholder + "' style='background:transparent;border:none;outline:none;color:var(--mw-text,#f1f5f9);width:100%;font-size:14px;'/></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.search.SearchBar android:hint='" + self._placeholder + "' android:layout_width='match_parent' android:layout_height='wrap_content'/>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { Image(systemName: \"magnifyingglass\"); TextField(\"" + self._placeholder + "\", text: .constant(\"\")) }.padding(8).background(Color(.secondarySystemBackground)).clipShape(Capsule())"
+
+
+pub class FloatingWidget:
+    def __init__(self, child_html: String):
+        self._child = child_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-floating-widget' style='position:fixed;bottom:24px;right:24px;z-index:90;'>" + self._child + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<FrameLayout android:layout_gravity='bottom|end'>" + self._child + "</FrameLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { Spacer(); HStack { Spacer(); " + self._child + " } }"
+
+
+pub class DashboardWidget:
+    def __init__(self, title: String, content_html: String):
+        self._title = title
+        self._content = content_html
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-card mw-dashboard-widget' style='background:var(--mw-surface,#1e293b);padding:20px;border-radius:12px;border:1px solid var(--mw-border,#334155);'><h4 style='margin:0 0 16px 0;font-size:15px;color:var(--mw-muted,#94a3b8);'>" + self._title + "</h4>" + self._content + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView><LinearLayout android:orientation='vertical' android:padding='16dp'><TextView android:text='" + self._title + "'/>" + self._content + "</LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading) { Text(\"" + self._title + "\").font(.caption).foregroundColor(.secondary); " + self._content + " }.padding().background(Color(.secondarySystemBackground)).cornerRadius(12)"
+
+
+pub class StatisticsWidget:
+    def __init__(self, label: String, count: String, growth: String):
+        self._label = label
+        self._count = count
+        self._growth = growth
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-statistics-widget' style='background:var(--mw-surface,#1e293b);padding:18px;border-radius:12px;border:1px solid var(--mw-border,#334155);'><div style='font-size:13px;color:var(--mw-muted,#94a3b8);'>" + self._label + "</div><div style='font-size:24px;font-weight:700;margin:4px 0;'>" + self._count + "</div><div style='font-size:12px;color:#10b981;font-weight:600;'>" + self._growth + "</div></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView><LinearLayout android:orientation='vertical' android:padding='16dp'><TextView android:text='" + self._label + "'/><TextView android:text='" + self._count + "' android:textSize='22sp' android:textStyle='bold'/><TextView android:text='" + self._growth + "'/></LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading) { Text(\"" + self._label + "\").font(.caption); Text(\"" + self._count + "\").font(.title).bold(); Text(\"" + self._growth + "\").font(.caption).foregroundColor(.green) }.padding().background(Color(.secondarySystemBackground)).cornerRadius(12)"
+
+
+pub class PricingTable:
+    def __init__(self):
+        self._cards = ""
+
+    pub def add_plan(self, card_html: String):
+        self._cards = self._cards + "<div style='flex:1;min-width:240px;'>" + card_html + "</div>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-pricing-table' style='display:flex;gap:20px;flex-wrap:wrap;justify-content:center;width:100%;'>" + self._cards + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='horizontal' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._cards + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "HStack(spacing: 20) { " + self._cards + " }"
+
+
+pub class SocialLoginPanel:
+    def __init__(self):
+        self._buttons = ""
+
+    pub def add_provider(self, provider: String, on_click: String):
+        self._buttons = self._buttons + "<button onclick='" + on_click + "' class='mw-btn' style='width:100%;margin-bottom:8px;background:rgba(255,255,255,0.06);border:1px solid var(--mw-border,#334155);padding:10px;border-radius:8px;cursor:pointer;'>Continue with " + provider + "</button>"
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-social-login-panel' style='width:100%;display:flex;flex-direction:column;gap:8px;'>" + self._buttons + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:layout_width='match_parent' android:layout_height='wrap_content'>" + self._buttons + "</LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(spacing: 8) { " + self._buttons + " }"
+

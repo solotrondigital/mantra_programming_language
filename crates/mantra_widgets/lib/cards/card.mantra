@@ -1,0 +1,292 @@
+# Mantra Widgets — Card Components Family
+# Complete Card suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class Card:
+    def __init__(self):
+        self._children = ""
+        self._elevation = 2
+        self._radius = 12
+        self._padding = 24
+        self._extra_class = ""
+
+    pub def add(self, child: String):
+        self._children = self._children + child
+
+    pub def set_elevation(self, elevation: Int):
+        self._elevation = elevation
+
+    pub def set_radius(self, radius: Int):
+        self._radius = radius
+
+    pub def set_padding(self, padding: Int):
+        self._padding = padding
+
+    pub def set_extra_class(self, class_name: String):
+        self._extra_class = class_name
+
+    pub def render_web(self) -> String:
+        let blur = str(self._elevation * 6)
+        return "<div class='mw-card' style='background:var(--mw-surface,#1e293b);border-radius:" + str(self._radius) + "px;padding:" + str(self._padding) + "px;border:1px solid var(--mw-border,#334155);box-shadow:0 " + blur + "px " + blur + "px rgba(0,0,0,0.15);width:100%;box-sizing:border-box;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content' app:cardCornerRadius='" + str(self._radius) + "dp' app:cardElevation='" + str(self._elevation * 2) + "dp'><LinearLayout android:layout_width='match_parent' android:layout_height='wrap_content' android:orientation='vertical' android:padding='" + str(self._padding) + "dp'>" + self._children + "</LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._children + " }.padding(" + str(self._padding) + ").background(Color(.secondarySystemBackground)).cornerRadius(" + str(self._radius) + ").shadow(radius: " + str(self._elevation * 2) + ")"
+
+
+pub class MantraCard:
+    def __init__(self):
+        self._children = ""
+        self._elevation = 2
+        self._radius = 12
+        self._padding = 24
+
+    pub def add(self, child: String):
+        self._children = self._children + child
+
+    pub def set_elevation(self, elevation: Int):
+        self._elevation = elevation
+
+    pub def set_radius(self, radius: Int):
+        self._radius = radius
+
+    pub def set_padding(self, padding: Int):
+        self._padding = padding
+
+    pub def render_web(self) -> String:
+        let blur = str(self._elevation * 6)
+        return "<div class='mw-card' style='background:var(--mw-surface,#1e293b);border-radius:" + str(self._radius) + "px;padding:" + str(self._padding) + "px;border:1px solid var(--mw-border,#334155);box-shadow:0 " + blur + "px " + blur + "px rgba(0,0,0,0.15);width:100%;box-sizing:border-box;'>" + self._children + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content' app:cardCornerRadius='" + str(self._radius) + "dp' app:cardElevation='" + str(self._elevation * 2) + "dp'><LinearLayout android:layout_width='match_parent' android:layout_height='wrap_content' android:orientation='vertical' android:padding='" + str(self._padding) + "dp'>" + self._children + "</LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._children + " }.padding(" + str(self._padding) + ").background(Color(.secondarySystemBackground)).cornerRadius(" + str(self._radius) + ").shadow(radius: " + str(self._elevation * 2) + ")"
+
+
+pub class BasicCard:
+    def __init__(self, title: String, content: String):
+        self._title = title
+        self._content = content
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-card mw-basic-card' style='background:var(--mw-surface,#1e293b);border-radius:10px;padding:20px;border:1px solid var(--mw-border,#334155);'><h3 style='margin:0 0 10px 0;font-size:18px;'>" + self._title + "</h3><p style='margin:0;color:var(--mw-muted,#94a3b8);'>" + self._content + "</p></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='vertical' android:padding='16dp'><TextView android:text='" + self._title + "' android:textSize='18sp' android:textStyle='bold'/><TextView android:text='" + self._content + "'/></LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading, spacing: 8) { Text(\"" + self._title + "\").font(.headline); Text(\"" + self._content + "\").foregroundColor(.secondary) }.padding().background(Color(.secondarySystemBackground)).cornerRadius(10)"
+
+
+pub class ProfileCard:
+    def __init__(self, name: String, role: String, avatar_url: String):
+        self._name = name
+        self._role = role
+        self._avatar_url = avatar_url
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-profile-card' style='background:var(--mw-surface,#1e293b);border-radius:14px;padding:24px;border:1px solid var(--mw-border,#334155);display:flex;align-items:center;gap:16px;'><img src='" + self._avatar_url + "' style='width:56px;height:56px;border-radius:50%;object-fit:cover;'/><div><h4 style='margin:0;font-size:17px;font-weight:600;'>" + self._name + "</h4><p style='margin:4px 0 0 0;font-size:13px;color:var(--mw-muted,#94a3b8);'>" + self._role + "</p></div></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='horizontal' android:padding='16dp'><ImageView android:layout_width='48dp' android:layout_height='48dp'/><LinearLayout android:orientation='vertical'><TextView android:text='" + self._name + "'/><TextView android:text='" + self._role + "'/></LinearLayout></LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "HStack(spacing: 12) { AsyncImage(url: URL(string: \"" + self._avatar_url + "\")).frame(width: 50, height: 50).clipShape(Circle()); VStack(alignment: .leading) { Text(\"" + self._name + "\").bold(); Text(\"" + self._role + "\").font(.subheadline).foregroundColor(.secondary) } }.padding().background(Color(.secondarySystemBackground)).cornerRadius(14)"
+
+
+pub class ProductCard:
+    def __init__(self, title: String, price: String, image_url: String):
+        self._title = title
+        self._price = price
+        self._image_url = image_url
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-product-card' style='background:var(--mw-surface,#1e293b);border-radius:14px;overflow:hidden;border:1px solid var(--mw-border,#334155);max-width:320px;'><img src='" + self._image_url + "' style='width:100%;height:180px;object-fit:cover;'/><div style='padding:16px;'><h4 style='margin:0;font-size:16px;'>" + self._title + "</h4><div style='display:flex;justify-content:space-between;align-items:center;margin-top:12px;'><span style='font-size:18px;font-weight:700;color:var(--mw-primary,#4f46e5);'>" + self._price + "</span><button class='mw-btn' style='padding:6px 14px;border-radius:6px;background:var(--mw-primary,#4f46e5);color:#fff;border:none;'>Buy</button></div></div></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='vertical'><ImageView android:layout_width='match_parent' android:layout_height='180dp'/><TextView android:text='" + self._title + "'/><TextView android:text='" + self._price + "'/></LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading) { AsyncImage(url: URL(string: \"" + self._image_url + "\")).frame(height: 160); Text(\"" + self._title + "\").bold(); Text(\"" + self._price + "\").foregroundColor(.accentColor) }.background(Color(.secondarySystemBackground)).cornerRadius(14)"
+
+
+pub class ImageCard:
+    def __init__(self, image_url: String, caption: String):
+        self._image_url = image_url
+        self._caption = caption
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-image-card' style='border-radius:12px;overflow:hidden;background:var(--mw-surface,#1e293b);border:1px solid var(--mw-border,#334155);'><img src='" + self._image_url + "' style='width:100%;display:block;'/><div style='padding:12px;font-size:14px;color:var(--mw-muted,#94a3b8);'>" + self._caption + "</div></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='vertical'><ImageView android:layout_width='match_parent' android:layout_height='wrap_content'/><TextView android:text='" + self._caption + "'/></LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { AsyncImage(url: URL(string: \"" + self._image_url + "\")); Text(\"" + self._caption + "\").font(.caption) }.cornerRadius(12)"
+
+
+pub class HorizontalCard:
+    def __init__(self, leading_content: String, body_content: String):
+        self._leading = leading_content
+        self._body = body_content
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-card mw-horizontal-card' style='display:flex;flex-direction:row;align-items:center;gap:16px;padding:16px;background:var(--mw-surface,#1e293b);border-radius:12px;border:1px solid var(--mw-border,#334155);'><div>" + self._leading + "</div><div style='flex:1;'>" + self._body + "</div></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='horizontal' android:padding='16dp'>" + self._leading + self._body + "</LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { " + self._leading + "; " + self._body + " }.padding().background(Color(.secondarySystemBackground)).cornerRadius(12)"
+
+
+pub class VerticalCard:
+    def __init__(self, header_content: String, body_content: String):
+        self._header = header_content
+        self._body = body_content
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-card mw-vertical-card' style='display:flex;flex-direction:column;gap:12px;padding:20px;background:var(--mw-surface,#1e293b);border-radius:12px;border:1px solid var(--mw-border,#334155);'><div>" + self._header + "</div><div>" + self._body + "</div></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='vertical' android:padding='16dp'>" + self._header + self._body + "</LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading, spacing: 12) { " + self._header + "; " + self._body + " }.padding().background(Color(.secondarySystemBackground)).cornerRadius(12)"
+
+
+pub class ExpandableCard:
+    def __init__(self, title: String, content: String):
+        self._title = title
+        self._content = content
+
+    pub def render_web(self) -> String:
+        return "<details class='mw-expandable-card' style='background:var(--mw-surface,#1e293b);border-radius:12px;padding:16px;border:1px solid var(--mw-border,#334155);cursor:pointer;'><summary style='font-weight:600;'>" + self._title + "</summary><div style='margin-top:12px;color:var(--mw-muted,#94a3b8);'>" + self._content + "</div></details>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='vertical' android:padding='16dp'><TextView android:text='" + self._title + "' android:textStyle='bold'/><TextView android:text='" + self._content + "'/></LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "DisclosureGroup(\"" + self._title + "\") { Text(\"" + self._content + "\") }.padding().background(Color(.secondarySystemBackground)).cornerRadius(12)"
+
+
+pub class InteractiveCard:
+    def __init__(self, title: String, on_click: String):
+        self._title = title
+        self._on_click = on_click
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-card mw-card-interactive' onclick='" + self._on_click + "' style='background:var(--mw-surface,#1e293b);border-radius:12px;padding:20px;border:1px solid var(--mw-border,#334155);cursor:pointer;transition:transform 0.15s ease;' onmouseover='this.style.transform=\"scale(1.02)\"' onmouseout='this.style.transform=\"scale(1)\"'>" + self._title + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content' android:clickable='true' android:focusable='true'><TextView android:text='" + self._title + "' android:padding='16dp'/></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "Button(action: { " + self._on_click + " }) { Text(\"" + self._title + "\") }.buttonStyle(.plain).padding().background(Color(.secondarySystemBackground)).cornerRadius(12)"
+
+
+pub class GradientCard:
+    def __init__(self, gradient: String, content: String):
+        self._gradient = gradient
+        self._content = content
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-card mw-gradient-card' style='background:" + self._gradient + ";color:#fff;border-radius:14px;padding:24px;border:none;box-shadow:0 8px 16px rgba(0,0,0,0.2);'>" + self._content + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content' android:background='@drawable/gradient_card_bg'><LinearLayout android:padding='16dp'>" + self._content + "</LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._content + " }.padding().background(LinearGradient(gradient: Gradient(colors: [.indigo, .purple]), startPoint: .topLeading, endPoint: .bottomTrailing)).cornerRadius(14)"
+
+
+pub class ElevatedCard:
+    def __init__(self, content: String):
+        self._content = content
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-card mw-elevated-card' style='background:var(--mw-surface,#1e293b);border-radius:14px;padding:24px;box-shadow:0 12px 24px -4px rgba(0,0,0,0.3);border:none;'>" + self._content + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content' app:cardElevation='8dp'><LinearLayout android:padding='16dp'>" + self._content + "</LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._content + " }.padding().background(Color(.secondarySystemBackground)).cornerRadius(14).shadow(radius: 8)"
+
+
+pub class OutlinedCard:
+    def __init__(self, content: String):
+        self._content = content
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-card mw-outlined-card' style='background:transparent;border:2px solid var(--mw-border,#334155);border-radius:12px;padding:20px;'>" + self._content + "</div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView style='@style/Widget.MaterialComponents.CardView.Outlined' android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:padding='16dp'>" + self._content + "</LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { " + self._content + " }.padding().overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.secondary, lineWidth: 1.5))"
+
+
+pub class StatisticsCard:
+    def __init__(self, title: String, value: String):
+        self._title = title
+        self._value = value
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-stat-card' style='background:var(--mw-surface,#1e293b);padding:20px;border-radius:12px;border:1px solid var(--mw-border,#334155);'><div style='font-size:13px;color:var(--mw-muted,#94a3b8);font-weight:500;'>" + self._title + "</div><div style='font-size:26px;font-weight:700;color:var(--mw-text,#f1f5f9);margin-top:6px;'>" + self._value + "</div></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='vertical' android:padding='16dp'><TextView android:text='" + self._title + "'/><TextView android:text='" + self._value + "' android:textSize='24sp' android:textStyle='bold'/></LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading) { Text(\"" + self._title + "\").font(.caption); Text(\"" + self._value + "\").font(.title).bold() }.padding().background(Color(.secondarySystemBackground)).cornerRadius(12)"
+
+
+pub class InformationCard:
+    def __init__(self, title: String, message: String):
+        self._title = title
+        self._message = message
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-card mw-info-card' style='background:rgba(59,130,246,0.1);border-left:4px solid #3b82f6;border-radius:8px;padding:16px;'><strong style='color:#3b82f6;display:block;margin-bottom:4px;'>" + self._title + "</strong><p style='margin:0;font-size:14px;color:var(--mw-text,#f1f5f9);'>" + self._message + "</p></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='vertical' android:padding='16dp'><TextView android:text='" + self._title + "' android:textColor='@color/primary'/><TextView android:text='" + self._message + "'/></LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading) { Text(\"" + self._title + "\").foregroundColor(.blue).bold(); Text(\"" + self._message + "\") }.padding().background(Color.blue.opacity(0.1)).cornerRadius(8)"
+
+
+pub class PricingCard:
+    def __init__(self, plan_name: String, price: String, features_csv: String):
+        self._plan_name = plan_name
+        self._price = price
+        self._features = features_csv
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-pricing-card' style='background:var(--mw-surface,#1e293b);border-radius:14px;padding:28px;border:1px solid var(--mw-border,#334155);text-align:center;'><h3 style='font-size:18px;margin:0 0 12px 0;'>" + self._plan_name + "</h3><div style='font-size:32px;font-weight:800;color:var(--mw-primary,#4f46e5);margin-bottom:16px;'>" + self._price + "</div><p style='color:var(--mw-muted,#94a3b8);font-size:14px;margin-bottom:20px;'>" + self._features + "</p><button class='mw-btn' style='width:100%;padding:10px;border-radius:8px;background:var(--mw-primary,#4f46e5);color:#fff;border:none;font-weight:600;'>Choose Plan</button></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='vertical' android:gravity='center' android:padding='24dp'><TextView android:text='" + self._plan_name + "' android:textSize='20sp'/><TextView android:text='" + self._price + "' android:textSize='30sp' android:textStyle='bold'/><TextView android:text='" + self._features + "'/><Button android:text='Choose Plan'/></LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(spacing: 12) { Text(\"" + self._plan_name + "\").font(.headline); Text(\"" + self._price + "\").font(.largeTitle).bold(); Text(\"" + self._features + "\").foregroundColor(.secondary); Button(\"Choose Plan\") {}.buttonStyle(.borderedProminent) }.padding().background(Color(.secondarySystemBackground)).cornerRadius(14)"
+
+
+pub class NotificationCard:
+    def __init__(self, title: String, time_ago: String, body: String):
+        self._title = title
+        self._time_ago = time_ago
+        self._body = body
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-notification-card' style='background:var(--mw-surface,#1e293b);border-radius:10px;padding:16px;border:1px solid var(--mw-border,#334155);display:flex;flex-direction:column;gap:6px;'><div style='display:flex;justify-content:space-between;'><span style='font-weight:600;font-size:14px;'>" + self._title + "</span><span style='font-size:12px;color:var(--mw-muted,#94a3b8);'>" + self._time_ago + "</span></div><p style='margin:0;font-size:13px;color:var(--mw-muted,#94a3b8);'>" + self._body + "</p></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView android:layout_width='match_parent' android:layout_height='wrap_content'><LinearLayout android:orientation='vertical' android:padding='12dp'><TextView android:text='" + self._title + "' android:textStyle='bold'/><TextView android:text='" + self._time_ago + "'/><TextView android:text='" + self._body + "'/></LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading, spacing: 4) { HStack { Text(\"" + self._title + "\").bold(); Spacer(); Text(\"" + self._time_ago + "\").font(.caption).foregroundColor(.secondary) }; Text(\"" + self._body + "\").font(.subheadline) }.padding().background(Color(.secondarySystemBackground)).cornerRadius(10)"

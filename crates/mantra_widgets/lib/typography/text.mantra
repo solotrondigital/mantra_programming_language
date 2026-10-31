@@ -1,0 +1,177 @@
+# Mantra Widgets — Typography Components Family
+# Complete Typography suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class Text:
+    def __init__(self, content: String):
+        self._content = content
+        self._font_size = 15
+        self._color = "var(--mw-text, #f1f5f9)"
+        self._bold = False
+
+    pub def set_font_size(self, size: Int):
+        self._font_size = size
+
+    pub def set_color(self, color: String):
+        self._color = color
+
+    pub def set_bold(self, bold: Bool):
+        self._bold = bold
+
+    pub def render_web(self) -> String:
+        mut weight = "400"
+        if self._bold:
+            weight = "700"
+        return "<span class='mw-text' style='font-size:" + str(self._font_size) + "px;color:" + self._color + ";font-weight:" + weight + ";'>" + self._content + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._content + "' android:textSize='" + str(self._font_size) + "sp'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._content + "\")"
+
+
+pub class Heading:
+    def __init__(self, text: String, level: Int):
+        self._text = text
+        self._level = level
+
+    pub def render_web(self) -> String:
+        let tag = "h" + str(self._level)
+        return "<" + tag + " class='mw-heading' style='margin:0 0 8px 0;font-weight:700;'>" + self._text + "</" + tag + ">"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._text + "' android:textStyle='bold' android:textSize='22sp'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._text + "\").font(.title).bold()"
+
+
+pub class DisplayText:
+    def __init__(self, text: String):
+        self._text = text
+
+    pub def render_web(self) -> String:
+        return "<h1 class='mw-display-text' style='font-size:48px;font-weight:800;letter-spacing:-0.03em;margin:0 0 16px 0;line-height:1.1;'>" + self._text + "</h1>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._text + "' android:textSize='44sp' android:textStyle='bold'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._text + "\").font(.system(size: 48, weight: .black))"
+
+
+pub class Paragraph:
+    def __init__(self, text: String):
+        self._text = text
+
+    pub def render_web(self) -> String:
+        return "<p class='mw-paragraph' style='margin:0 0 16px 0;line-height:1.6;color:var(--mw-muted,#94a3b8);font-size:15px;'>" + self._text + "</p>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._text + "' android:lineSpacingMultiplier='1.2'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._text + "\").font(.body).lineSpacing(4)"
+
+
+pub class Caption:
+    def __init__(self, text: String):
+        self._text = text
+
+    pub def render_web(self) -> String:
+        return "<small class='mw-caption' style='font-size:12px;color:var(--mw-muted,#94a3b8);'>" + self._text + "</small>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._text + "' android:textSize='12sp' android:textColor='?android:attr/textColorSecondary'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._text + "\").font(.caption).foregroundColor(.secondary)"
+
+
+pub class Label:
+    def __init__(self, text: String):
+        self._text = text
+
+    pub def render_web(self) -> String:
+        return "<label class='mw-label' style='font-size:13px;font-weight:600;color:var(--mw-muted,#94a3b8);display:block;margin-bottom:4px;'>" + self._text + "</label>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._text + "' android:textStyle='bold'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._text + "\").font(.subheadline).bold()"
+
+
+pub class RichText:
+    def __init__(self, html_spans: String):
+        self._spans = html_spans
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-rich-text'>" + self._spans + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='Rich formatted text'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._spans + "\")"
+
+
+pub class StyledText:
+    def __init__(self, text: String, font_family: String, font_size: Int):
+        self._text = text
+        self._font = font_family
+        self._size = font_size
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-styled-text' style='font-family:" + self._font + ";font-size:" + str(self._size) + "px;'>" + self._text + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._text + "' android:textSize='" + str(self._size) + "sp'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._text + "\").font(.custom(\"" + self._font + "\", size: " + str(self._size) + "))"
+
+
+pub class GradientText:
+    def __init__(self, text: String, gradient: String):
+        self._text = text
+        self._gradient = gradient
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-gradient-text' style='background:" + self._gradient + ";-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;'>" + self._text + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._text + "' android:textStyle='bold'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._text + "\").overlay(LinearGradient(gradient: Gradient(colors: [.indigo, .pink]), startPoint: .leading, endPoint: .trailing).mask(Text(\"" + self._text + "\")))"
+
+
+pub class LinkText:
+    def __init__(self, text: String, url: String):
+        self._text = text
+        self._url = url
+
+    pub def render_web(self) -> String:
+        return "<a href='" + self._url + "' class='mw-link' style='color:var(--mw-primary,#4f46e5);text-decoration:underline;'>" + self._text + "</a>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._text + "' android:textColor='?attr/colorPrimary' android:autoLink='web'/>"
+
+    pub def render_ios(self) -> String:
+        return "Link(\"" + self._text + "\", destination: URL(string: \"" + self._url + "\")!)"
+
+
+pub class TruncatedText:
+    def __init__(self, text: String, max_lines: Int):
+        self._text = text
+        self._lines = max_lines
+
+    pub def render_web(self) -> String:
+        return "<span class='mw-truncated-text' style='display:-webkit-box;-webkit-line-clamp:" + str(self._lines) + ";-webkit-box-orient:vertical;overflow:hidden;text-overflow:ellipsis;'>" + self._text + "</span>"
+
+    pub def render_android(self) -> String:
+        return "<TextView android:text='" + self._text + "' android:maxLines='" + str(self._lines) + "' android:ellipsize='end'/>"
+
+    pub def render_ios(self) -> String:
+        return "Text(\"" + self._text + "\").lineLimit(" + str(self._lines) + ")"

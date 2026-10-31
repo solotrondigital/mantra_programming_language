@@ -1,0 +1,21 @@
+# Mantra E-Commerce Storefront Application
+
+class ECommerceApp:
+    def __init__(self, store_name: String):
+        self.store_name = store_name
+
+    pub def render_store(self) -> String:
+        let banner = "<div style='background:#1e293b;color:#fff;padding:24px;border-radius:12px;margin-bottom:20px;'><h1 style='margin:0;'>" + self.store_name + "</h1><p style='margin:4px 0 0 0;color:#94a3b8;'>Premium gear built with Mantra UI</p></div>"
+        let p1 = "<div style='border:1px solid #e2e8f0;border-radius:12px;padding:16px;background:#fff;'><h3 style='margin:0;'>Wireless Noise-Canceling Headphones</h3><p style='color:#4f46e5;font-weight:700;font-size:18px;'>$299.00</p></div>"
+        return banner + p1
+
+    pub def run(self) -> Int:
+        print("🛒 Starting " + self.store_name + "...")
+        let html = self.render_store()
+        print("✓ Storefront ready (" + str(len(html)) + " bytes)")
+        return 0
+
+def main() -> Int:
+    let app = ECommerceApp("CineSound Audio Store")
+    return app.run()
+

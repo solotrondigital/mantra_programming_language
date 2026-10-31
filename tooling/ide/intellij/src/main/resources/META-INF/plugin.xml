@@ -1,0 +1,35 @@
+<idea-plugin>
+    <id>dev.mantra.ide.intellij</id>
+    <name>Mantra Language Support</name>
+    <vendor email="support@mantra-lang.dev" url="https://mantra-lang.dev">Mantra Language Team</vendor>
+
+    <description><![CDATA[
+    Official IntelliJ IDEA, Android Studio, CLion, and RustRover plugin for the Mantra Programming Language.
+    Features:
+    <ul>
+        <li>File type recognition (*.mantra)</li>
+        <li>LSP-powered syntax highlighting and semantic token coloring</li>
+        <li>IntelliSense, Auto-complete and Signature Help</li>
+        <li>Go to Declaration, Implementation, and Find Usages</li>
+        <li>Compiler-backed Diagnostics and Quick Fixes</li>
+        <li>Code formatting matching 4-space Mantra indentation standard</li>
+    </ul>
+    ]]></description>
+
+    <depends>com.intellij.modules.platform</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <fileType
+            name="Mantra File"
+            implementationClass="dev.mantra.ide.MantraFileType"
+            fieldName="INSTANCE"
+            language="Mantra"
+            extensions="mantra"/>
+        <lang.parserDefinition
+            language="Mantra"
+            implementationClass="dev.mantra.ide.MantraParserDefinition"/>
+        <platform.lsp.serverSupportProvider
+            implementation="dev.mantra.ide.MantraLspServerSupportProvider"/>
+    </extensions>
+</idea-plugin>
+

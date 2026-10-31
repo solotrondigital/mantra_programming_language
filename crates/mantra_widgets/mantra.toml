@@ -1,0 +1,10 @@
+[package]
+name = "mantra_widgets"
+version = "0.5.0"
+edition = "2026"
+description = "Official comprehensive UI component library, design system, and responsive rendering engine for the Mantra Programming Language"
+license = "MIT OR GPL-3.0-or-later"
+entry = "lib/mantra_widgets.mantra"
+
+[dependencies]
+

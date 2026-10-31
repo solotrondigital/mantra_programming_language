@@ -1,0 +1,136 @@
+# Mantra Widgets — Rating and Feedback Components Family
+# Complete Rating & Feedback suite supporting Web (HTML/CSS), Android (Material), and iOS (SwiftUI)
+
+pub class Rating:
+    def __init__(self, value: Int, max_rating: Int):
+        self._value = value
+        self._max = max_rating
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-rating' style='display:inline-flex;gap:4px;font-size:18px;color:#f59e0b;'><span>★ " + str(self._value) + "/" + str(self._max) + "</span></div>"
+
+    pub def render_android(self) -> String:
+        return "<RatingBar android:rating='" + str(self._value) + "' android:numStars='" + str(self._max) + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { ForEach(0..<" + str(self._value) + ", id: \\.self) { _ in Image(systemName: \"star.fill\").foregroundColor(.yellow) } }"
+
+
+pub class StarRating:
+    def __init__(self, stars: Int):
+        self._stars = stars
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-star-rating' style='color:#f59e0b;font-size:16px;'>★★★★★</div>"
+
+    pub def render_android(self) -> String:
+        return "<RatingBar android:rating='" + str(self._stars) + "' android:numStars='5'/>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { ForEach(0..<" + str(self._stars) + ", id: \\.self) { _ in Image(systemName: \"star.fill\").foregroundColor(.yellow) } }"
+
+
+pub class HeartRating:
+    def __init__(self, hearts: Int):
+        self._hearts = hearts
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-heart-rating' style='color:#ef4444;font-size:16px;'>❤️❤️❤️</div>"
+
+    pub def render_android(self) -> String:
+        return "<RatingBar android:rating='" + str(self._hearts) + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { ForEach(0..<" + str(self._hearts) + ", id: \\.self) { _ in Image(systemName: \"heart.fill\").foregroundColor(.red) } }"
+
+
+pub class EmojiRating:
+    def __init__(self, selected_emoji: String):
+        self._emoji = selected_emoji
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-emoji-rating' style='display:flex;gap:8px;font-size:24px;cursor:pointer;'><span>😡</span><span>🙁</span><span>😐</span><span>🙂</span><span>😍</span></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='horizontal'/>"
+
+    pub def render_ios(self) -> String:
+        return "HStack { Text(\"😀\") }"
+
+
+pub class ReviewCard:
+    def __init__(self, author: String, rating: Int, review_text: String):
+        self._author = author
+        self._rating = rating
+        self._text = review_text
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-card mw-review-card' style='background:var(--mw-surface,#1e293b);padding:16px;border-radius:12px;border:1px solid var(--mw-border,#334155);'><div style='display:flex;justify-content:space-between;margin-bottom:8px;'><strong style='font-size:14px;'>" + self._author + "</strong><span style='color:#f59e0b;font-size:13px;'>★ " + str(self._rating) + ".0</span></div><p style='margin:0;font-size:13px;color:var(--mw-muted,#94a3b8);'>" + self._text + "</p></div>"
+
+    pub def render_android(self) -> String:
+        return "<com.google.android.material.card.MaterialCardView><LinearLayout android:orientation='vertical' android:padding='16dp'><TextView android:text='" + self._author + "'/><TextView android:text='" + self._text + "'/></LinearLayout></com.google.android.material.card.MaterialCardView>"
+
+    pub def render_ios(self) -> String:
+        return "VStack(alignment: .leading, spacing: 6) { Text(\"" + self._author + "\").bold(); Text(\"" + self._text + "\").font(.caption) }.padding().background(Color(.secondarySystemBackground)).cornerRadius(12)"
+
+
+pub class FeedbackForm:
+    def __init__(self, prompt: String):
+        self._prompt = prompt
+
+    pub def render_web(self) -> String:
+        return "<div class='mw-feedback-form' style='background:var(--mw-surface,#1e293b);padding:20px;border-radius:12px;border:1px solid var(--mw-border,#334155);'><h4 style='margin:0 0 12px 0;'>" + self._prompt + "</h4><textarea class='mw-textarea' rows='3' placeholder='Tell us your thoughts...' style='width:100%;margin-bottom:12px;'></textarea><button class='mw-btn' style='width:100%;'>Submit Feedback</button></div>"
+
+    pub def render_android(self) -> String:
+        return "<LinearLayout android:orientation='vertical' android:padding='16dp'><TextView android:text='" + self._prompt + "'/><EditText android:hint='Tell us your thoughts...'/><Button android:text='Submit Feedback'/></LinearLayout>"
+
+    pub def render_ios(self) -> String:
+        return "VStack { Text(\"" + self._prompt + "\"); Button(\"Submit Feedback\") {} }"
+
+
+pub class ReactionButton:
+    def __init__(self, emoji: String, count: Int):
+        self._emoji = emoji
+        self._count = count
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-reaction-btn' style='border:1px solid var(--mw-border,#334155);border-radius:9999px;padding:4px 10px;background:rgba(255,255,255,0.05);cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px;'><span>" + self._emoji + "</span><span>" + str(self._count) + "</span></button>"
+
+    pub def render_android(self) -> String:
+        return "<Button android:text='" + self._emoji + " " + str(self._count) + "'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(action: {}) { Text(\"" + self._emoji + " " + str(self._count) + "\") }.buttonStyle(.bordered)"
+
+
+pub class LikeButton:
+    def __init__(self, likes: Int, is_liked: Bool):
+        self._likes = likes
+        self._liked = is_liked
+
+    pub def render_web(self) -> String:
+        mut icon = "🤍"
+        if self._liked:
+            icon = "❤️"
+        return "<button class='mw-like-btn' style='border:none;background:transparent;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;gap:6px;'><span>" + icon + "</span><span>" + str(self._likes) + "</span></button>"
+
+    pub def render_android(self) -> String:
+        return "<ImageButton android:src='@drawable/ic_heart'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(action: {}) { Label(\"" + str(self._likes) + "\", systemImage: \"heart\") }"
+
+
+pub class DislikeButton:
+    def __init__(self, dislikes: Int):
+        self._dislikes = dislikes
+
+    pub def render_web(self) -> String:
+        return "<button class='mw-dislike-btn' style='border:none;background:transparent;cursor:pointer;font-size:14px;display:inline-flex;align-items:center;gap:6px;'><span>👎</span><span>" + str(self._dislikes) + "</span></button>"
+
+    pub def render_android(self) -> String:
+        return "<ImageButton android:src='@drawable/ic_thumb_down'/>"
+
+    pub def render_ios(self) -> String:
+        return "Button(action: {}) { Label(\"" + str(self._dislikes) + "\", systemImage: \"hand.thumbsdown\") }"
+
