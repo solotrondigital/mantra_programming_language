@@ -5,9 +5,9 @@
 $ErrorActionPreference = 'Stop'
 
 $packageName = 'mantra'
-$version     = '0.4.0'
-$url64       = "https://github.com/solotrondigital/mantra_programming_language/releases/download/v$version/mantra-$version-x86_64-pc-windows-msvc.zip"
-$checksum64  = 'e57ed68903e9d80ebc40a10564f9e3121efd0bf71e121918b06a4488f230f7c6'
+$version     = '0.5.0'
+$url64       = "https://github.com/solotrondigital/mantra_programming_language/releases/download/v$version/mantra-$version-windows.zip"
+$checksum64  = '9100b2d721bdb9af2427f865efe7c28b5011bb0591573b3afca5a0a843b83db0'
 $checksumType = 'sha256'
 
 $toolsDir    = "$(Split-Path -Parent $MyInvocation.MyCommand.Definition)"

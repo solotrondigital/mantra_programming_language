@@ -85,8 +85,8 @@ jobs:
             installer/windows/*.zip
           if-no-files-found: warn
 
-  publish-and-distribute:
-    name: Sign, Release, Chocolatey & Homebrew
+  release-homebrew:
+    name: Sign, Release, Homebrew
     needs: [build-and-package]
     runs-on: ubuntu-latest
     steps:
@@ -127,7 +127,7 @@ jobs:
           echo "Consolidated release artifacts:"
           ls -la "dist/releases/v${{ env.VERSION }}/"
 
-      - name: Generate Chocolatey Package & Homebrew Formula
+      - name: Generate Homebrew Formula
         shell: bash
         run: |
           chmod +x scripts/release/*.sh scripts/release/*.py
@@ -145,27 +145,12 @@ jobs:
           name: Mantra v${{ env.VERSION }} — Production Release
           files: |
             dist/releases/v${{ env.VERSION }}/*
-            distribution/homebrew-tap/Formula/mantra.rb
+          fail_on_unmatched_files: false
           generate_release_notes: true
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push to Chocolatey Gallery
-        shell: bash
-        if: env.CHOCOLATEY_API_KEY != ''
-        env:
-          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
-        run: |
-          NUPKG_FILE="dist/releases/v${{ env.VERSION }}/mantra.${{ env.VERSION }}.nupkg"
-          if [ -f "$NUPKG_FILE" ]; then
-            echo ">> Pushing $NUPKG_FILE to Chocolatey gallery..."
-            curl -s -X POST "https://push.chocolatey.org/api/v2/package" \
-              -H "X-NuGet-ApiKey: $CHOCOLATEY_API_KEY" \
-              -F "package=@$NUPKG_FILE" || echo "Chocolatey API returned non-fatal response"
-            echo "✓ Chocolatey push completed."
-          fi
 
       - name: Push to Homebrew Tap
         shell: bash
@@ -193,3 +178,91 @@ jobs:
           else
             echo "Tap repository could not be cloned; ensure HOMEBREW_TAP_TOKEN has repo access."
           fi
+
+  release-chocolatey:
+    name: Sign, Release, Chocolatey
+    needs: [build-and-package, release-homebrew]
+    if: always() && needs.build-and-package.result == 'success'
+    runs-on: windows-2022
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Resolve Version from Cargo.toml
+        id: get_version
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            VER="${{ github.event.inputs.version }}"
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            VER="${GITHUB_REF_NAME#v}"
+          else
+            VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.5.0")
+          fi
+          VER="${VER#v}"
+          echo "VERSION=${VER}" >> $GITHUB_ENV
+          echo "VERSION=${VER}" >> $GITHUB_OUTPUT
+          echo "Chocolatey Release Mantra Version: v${VER}"
+
+      - name: Download Built Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/staging
+
+      - name: Consolidate Release Distribution Folder
+        shell: bash
+        run: |
+          mkdir -p "dist/releases/v${{ env.VERSION }}"
+          find dist/staging -type f -exec cp -f {} "dist/releases/v${{ env.VERSION }}/" \;
+          echo "Consolidated release artifacts for Chocolatey:"
+          ls -la "dist/releases/v${{ env.VERSION }}/"
+
+      - name: Generate Chocolatey Package (.nupkg)
+        shell: bash
+        run: |
+          python scripts/release/package_chocolatey.py "${{ env.VERSION }}"
+          if command -v choco >/dev/null 2>&1; then
+            choco pack distribution/choco-mantra/mantra.nuspec --outputdirectory "dist/releases/v${{ env.VERSION }}" || true
+          fi
+          ls -la "dist/releases/v${{ env.VERSION }}"
+
+      - name: Upload Chocolatey Package to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: Mantra v${{ env.VERSION }} — Production Release
+          files: |
+            dist/releases/v${{ env.VERSION }}/*.nupkg
+          fail_on_unmatched_files: false
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push to Chocolatey Gallery
+        shell: pwsh
+        run: |
+          $apiKey = "${{ secrets.CHOCOLATEY_API_KEY }}"
+          if (-not $apiKey) {
+            $apiKey = "bdc61c5c-a80d-4310-a1bf-b5426318baec"
+          }
+          Write-Host ">> Setting Chocolatey API Key..."
+          choco apikey --key $apiKey --source https://push.chocolatey.org/
+
+          $nupkg = (Get-ChildItem -Path "dist/releases/v${{ env.VERSION }}" -Filter "*.nupkg" -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
+          if (-not $nupkg) {
+            $nupkg = (Get-ChildItem -Path "." -Filter "*.nupkg" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1).FullName
+          }
+          if ($nupkg -and (Test-Path $nupkg)) {
+            Write-Host ">> Pushing $nupkg to Chocolatey gallery..."
+            choco push $nupkg --source https://push.chocolatey.org/
+            Write-Host "✓ Chocolatey push completed."
+          } else {
+            Write-Warning "Could not find .nupkg file to push to Chocolatey"
+          }

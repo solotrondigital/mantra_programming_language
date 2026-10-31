@@ -45,6 +45,42 @@ def update_nuspec(version):
     print(f"✓ Updated mantra.nuspec to version {version}")
     return nuspec_path
 
+def update_install_ps1(version):
+    ps1_path = os.path.join(REPO_ROOT, "distribution/choco-mantra/tools/chocolateyInstall.ps1")
+    if not os.path.exists(ps1_path):
+        return None
+
+    with open(ps1_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
+    import re, hashlib
+    # Find zip file in dist or installer
+    zip_paths = [
+        os.path.join(REPO_ROOT, f"dist/releases/v{version}/mantra-{version}-windows.zip"),
+        os.path.join(REPO_ROOT, f"installer/windows/mantra-{version}-windows.zip"),
+    ]
+    checksum = ""
+    for zp in zip_paths:
+        if os.path.exists(zp):
+            with open(zp, "rb") as zf:
+                checksum = hashlib.sha256(zf.read()).hexdigest()
+            break
+
+    content = re.sub(r"\$version\s*=\s*'[^']+'", f"$version     = '{version}'", content)
+    content = re.sub(
+        r"\$url64\s*=\s*\"[^\"]+\"",
+        f'$url64       = "https://github.com/solotrondigital/mantra_programming_language/releases/download/v$version/mantra-$version-windows.zip"',
+        content
+    )
+    if checksum:
+        content = re.sub(r"\$checksum64\s*=\s*'[^']+'", f"$checksum64  = '{checksum}'", content)
+
+    with open(ps1_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
+    print(f"✓ Updated chocolateyInstall.ps1 to version {version}")
+    return ps1_path
+
 def create_nupkg(version):
     dist_dir = os.path.join(REPO_ROOT, f"dist/releases/v{version}")
     os.makedirs(dist_dir, exist_ok=True)
@@ -87,6 +123,7 @@ def create_nupkg(version):
 def main():
     version = get_version()
     update_nuspec(version)
+    update_install_ps1(version)
     create_nupkg(version)
 
 if __name__ == "__main__":
