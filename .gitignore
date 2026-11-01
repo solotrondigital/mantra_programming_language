@@ -21,3 +21,11 @@ Thumbs.db
 # IDE configurations
 .idea/
 .vscode/
+
+# Ignore all markdown files in root and subdirectories
+*.md
+**/*.md
+# Allow only README.md to be tracked
+!README.md
+!**/README.md
+components_docs/*.md
