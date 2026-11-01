@@ -28,4 +28,4 @@ Thumbs.db
 # Allow only README.md to be tracked
 !README.md
 !**/README.md
-components_dev_docs/*.md
+components_docs/*.md

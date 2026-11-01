@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE-MIT)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE-GPL)
-[![Version](https://img.shields.io/badge/version-0.5.0-cyan.svg)](#)
+[![Version](https://img.shields.io/badge/version-0.7.0-cyan.svg)](#)
 [![Maintained by Solotron](https://img.shields.io/badge/maintained%20by-Solotron%20Technologies-blueviolet.svg)](https://github.com/solotrondigital)
 
 [Website](https://solotrondigital.github.io/mantra_website/mantra_web/) · [Docs](https://solotrondigital.github.io/mantra_website/mantra_web/mantra_docs/) · [Examples](#examples) · [Download](#installation)
@@ -565,11 +565,11 @@ authors     = ["Your Name <you@example.com>"]
 edition     = "2026"
 
 [dependencies]
-mantra.io      = "0.5.0"
-mantra.lang    = "0.5.0"
-mantra.web     = "0.5.0"
-mantra.rest    = "0.5.0"
-mantra.graphql = "0.5.0"
+mantra.io      = "0.7.0"
+mantra.lang    = "0.7.0"
+mantra.web     = "0.7.0"
+mantra.rest    = "0.7.0"
+mantra.graphql = "0.7.0"
 
 [build]
 target  = "native"   # native | wasm | jit
