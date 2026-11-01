@@ -100,7 +100,7 @@ TEST_APP_DIR="${TEMP:-${TMPDIR:-/tmp}}/mantra_mdk_integration_test"
 PARENT_TMP="${TEMP:-${TMPDIR:-/tmp}}"
 rm -rf "$TEST_APP_DIR"
 
-run_test "MDK: mantra new test_app" "cd \"$PARENT_TMP\" && rm -rf mantra_mdk_integration_test && $MANTRA new mantra_mdk_integration_test"
+run_test "MDK: mantra create standalone" "cd \"$PARENT_TMP\" && rm -rf mantra_mdk_integration_test && $MANTRA create --type standalone --org com.test --project-name mantra_mdk_integration_test"
 run_test "MDK: mantra check" "cd $TEST_APP_DIR && $MANTRA check"
 run_test "MDK: mantra run" "cd $TEST_APP_DIR && echo 'q' | $MANTRA run"
 run_test "MDK: mantra test" "cd $TEST_APP_DIR && $MANTRA test"

@@ -5,6 +5,8 @@ use std::path::PathBuf;
 pub enum AppType {
     Frontend,
     Backend,
+    Standalone,
+    Ai,
 }
 
 /// Supported backend services.
@@ -52,12 +54,12 @@ pub struct ProjectOptionsValidator;
 impl ProjectOptionsValidator {
     /// Validates raw options against the strict conditional rules.
     pub fn validate(raw: RawProjectOptions) -> Result<ValidatedOptions, String> {
-        // 1. Validate --type (Required: frontend | backend)
+        // 1. Validate --type (Required: frontend | backend | standalone | ai)
         let app_type_raw = match raw.app_type {
             Some(t) if !t.trim().is_empty() => t.trim().to_lowercase(),
             _ => {
                 return Err(
-                    "Error: Missing required argument --type.\n\nAvailable types: frontend, backend."
+                    "Error: Missing required argument --type.\n\nAvailable types: frontend, backend, standalone, ai."
                         .to_string(),
                 );
             }
@@ -66,9 +68,11 @@ impl ProjectOptionsValidator {
         let app_type = match app_type_raw.as_str() {
             "frontend" => AppType::Frontend,
             "backend" => AppType::Backend,
+            "standalone" => AppType::Standalone,
+            "ai" => AppType::Ai,
             other => {
                 return Err(format!(
-                    "Error: Unknown application type '{}'.\n\nAvailable types: frontend, backend.",
+                    "Error: Unknown application type '{}'.\n\nAvailable types: frontend, backend, standalone, ai.",
                     other
                 ));
             }
@@ -171,6 +175,16 @@ impl ProjectOptionsValidator {
                 };
                 validated_service = Some(service);
             }
+            AppType::Standalone | AppType::Ai => {
+                // Reject --service on standalone/ai
+                if raw.service.is_some() {
+                    return Err("Error: --service is only supported for backend projects.".to_string());
+                }
+                // Reject --platforms on standalone/ai
+                if raw.platforms.is_some() {
+                    return Err("Error: --platforms is only supported for frontend projects.".to_string());
+                }
+            }
         }
 
         // 5. Target Directory & Overwrite Prevention
@@ -191,6 +205,8 @@ impl ProjectOptionsValidator {
                 BackendService::Rest => format!("Mantra REST API backend application: {}", project_name),
                 BackendService::Graphql => format!("Mantra GraphQL API backend application: {}", project_name),
             },
+            AppType::Standalone => format!("Mantra standalone application: {}", project_name),
+            AppType::Ai => format!("Mantra AI application: {}", project_name),
         });
 
         Ok(ValidatedOptions {

@@ -1,3 +1,4 @@
+use crate::ai_runner::AiRunner;
 use crate::manifest::PackageManifest;
 use mantrac_checker::TypeChecker;
 use mantrac_codegen::{CEmitter, NativeCompiler};
@@ -11,6 +12,54 @@ pub struct Runner;
 
 impl Runner {
     pub fn run_target(target_path: Option<&str>) -> Result<(), String> {
+        // ── AI project interception ───────────────────────────────────────
+        // When running from inside an --type ai project directory, or pointing
+        // to an AI project entry file, invoke the native mantra_ai engine.
+        let project_dir = if let Some(t) = target_path {
+            let tp = Path::new(t);
+            if tp.is_dir() {
+                tp.to_path_buf()
+            } else if tp.parent().map_or(false, |p| p.ends_with("src") || p.ends_with("lib") || p.ends_with("tests")) {
+                tp.parent().unwrap().parent().unwrap_or(Path::new(".")).to_path_buf()
+            } else if let Some(parent) = tp.parent() {
+                if parent.as_os_str().is_empty() {
+                    PathBuf::from(".")
+                } else {
+                    parent.to_path_buf()
+                }
+            } else {
+                PathBuf::from(".")
+            }
+        } else {
+            PathBuf::from(".")
+        };
+
+        let manifest = PackageManifest::load_from_dir(&project_dir).ok()
+            .or_else(|| PackageManifest::load_from_dir(Path::new(".")).ok());
+        let project_type = manifest.as_ref().and_then(|m| m.project_type.as_deref());
+        if project_type == Some("ai") {
+            // 1. First execute the Mantra program through the type checker & interpreter
+            // so that main.mantra's code, ENV.getKey(), classes, and prints run natively in Mantra.
+            if let Ok(file_path) = Self::resolve_entry_file(target_path) {
+                if let Ok((program, source)) = Self::load_and_merge_project(&file_path) {
+                    let mut checker = TypeChecker::new();
+                    if let Err(diags) = checker.check_program(&program) {
+                        for d in diags {
+                            eprintln!("{}", d.format_with_source(&file_path.to_string_lossy(), &source));
+                        }
+                        return Err("Type checking failed".to_string());
+                    }
+                    let mut interpreter = Interpreter::new();
+                    if let Err(e) = interpreter.execute_program(&program) {
+                        return Err(format!("Runtime error: {}", e.message));
+                    }
+                }
+            }
+
+            // 2. Next, dispatch live multi-provider HTTP calls and display token usage
+            return AiRunner::run(&project_dir);
+        }
+
         let file_path = Self::resolve_entry_file(target_path)?;
         let (program, source) = Self::load_and_merge_project(&file_path)?;
 

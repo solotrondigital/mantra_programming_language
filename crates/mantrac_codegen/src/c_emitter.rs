@@ -592,7 +592,7 @@ impl<'a> CEmitter<'a> {
             Expr::Ident(name, _) => self.var_types.get(name).cloned().unwrap_or_else(|| "void*".to_string()),
             Expr::Call { callee, .. } => {
                 if let Expr::Ident(ref name, _) = **callee {
-                    if name == "str" || name == "read_file" || name == "get_env" {
+                    if name == "str" || name == "read_file" || name == "get_env" || name == "read_toml_value" {
                         return "char*".to_string();
                     }
                     if name == "int" || name == "len" {
@@ -619,6 +619,13 @@ impl<'a> CEmitter<'a> {
             }
             Expr::MethodCall { receiver, method, .. } => {
                 if let Expr::Ident(ref cls_name, _) = **receiver {
+                    // ENV methods return String (char*)
+                    if cls_name == "ENV" && (method == "getKey" || method == "get" || method == "getOrDefault") {
+                        return "char*".to_string();
+                    }
+                    if cls_name == "ENV" && method == "has" {
+                        return "MantraBool".to_string();
+                    }
                     if let Some(cls) = self.symbols.classes.get(cls_name) {
                         if let Some(sm) = cls.static_methods.get(method) {
                             return self.type_to_c(&sm.return_type);
@@ -898,6 +905,9 @@ impl<'a> CEmitter<'a> {
                         let path_s = args.first().map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
                         return format!("mantra_read_file({})", path_s);
                     }
+                    if name == "read_toml_value" {
+                        return "\"\"".to_string();
+                    }
                     if name == "write_file" {
                         let path_s = args.get(0).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
                         let content_s = args.get(1).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
@@ -943,6 +953,17 @@ impl<'a> CEmitter<'a> {
             Expr::MethodCall { receiver, method, args, .. } => {
                 // Static method call check e.g. MathUtils.square(5)
                 if let Expr::Ident(ref cls_name, _) = **receiver {
+                    // ── Built-in static class: ENV (OS Environment Variables) ────────────
+                    if cls_name == "ENV" && !self.symbols.classes.contains_key("ENV") {
+                        let key_s = args.first().map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
+                        let def_s = args.get(1).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
+                        if method == "get" || method == "getKey" || method == "getOrDefault" {
+                            return format!("mantra_get_env({}, {})", key_s, def_s);
+                        } else if method == "has" {
+                            return format!("(strlen(mantra_get_env({}, \"\")) > 0)", key_s);
+                        }
+                    }
+                    // ─────────────────────────────────────────────────────────────────────
                     if self.symbols.classes.contains_key(cls_name) {
                         let arg_strs: Vec<String> = args.iter().map(|a| self.expr_to_c(a)).collect();
                         return format!("{}_{}({})", cls_name, method, arg_strs.join(", "));

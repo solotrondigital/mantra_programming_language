@@ -20,4 +20,5 @@ mantrac_vm = { path = "../mantrac_vm" }
 mantrac_codegen = { path = "../mantrac_codegen" }
 mantrac_ir = { path = "../mantrac_ir" }
 mantra_mobile = { path = "../mantra_mobile" }
+mantra_ai = { path = "../mantra_ai" }
 

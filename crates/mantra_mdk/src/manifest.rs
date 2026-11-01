@@ -10,6 +10,8 @@ pub struct PackageManifest {
     pub description: String,
     pub license: String,
     pub entry: String,
+    pub project_type: Option<String>,
+    pub service: Option<String>,
     pub dependencies: HashMap<String, String>,
 }
 
@@ -22,6 +24,8 @@ impl Default for PackageManifest {
             description: "Mantra Application".to_string(),
             license: "MIT".to_string(),
             entry: "src/main.mantra".to_string(),
+            project_type: None,
+            service: None,
             dependencies: HashMap::new(),
         }
     }
@@ -60,12 +64,15 @@ impl PackageManifest {
                 let v = val.trim().trim_matches('"');
 
                 match current_section {
-                    "package" => match k {
+                    "package" | "project" => match k {
                         "name" => manifest.name = v.to_string(),
                         "version" => manifest.version = v.to_string(),
                         "edition" => manifest.edition = v.to_string(),
                         "description" => manifest.description = v.to_string(),
                         "license" => manifest.license = v.to_string(),
+                        "entry" => manifest.entry = v.to_string(),
+                        "type" => manifest.project_type = Some(v.to_string()),
+                        "service" => manifest.service = Some(v.to_string()),
                         _ => {}
                     },
                     "build" => match k {

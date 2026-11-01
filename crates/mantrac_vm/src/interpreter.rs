@@ -43,7 +43,7 @@ impl Interpreter {
     }
 
     fn register_builtins(&mut self) {
-        let builtins = vec!["print", "len", "range", "str", "int", "float", "assert", "read_file", "write_file", "system_exec", "get_env"];
+        let builtins = vec!["print", "len", "range", "str", "int", "float", "assert", "read_file", "write_file", "system_exec", "get_env", "read_toml_value"];
         for b in builtins {
             self.globals.insert(b.to_string(), Value::BuiltinFunction(b.to_string()));
         }
@@ -368,6 +368,16 @@ impl Interpreter {
                         let mut fn_env = HashMap::new();
                         return self.call_function(&f, evaluated_args, &mut fn_env);
                     }
+                    if name == "PropertiesTOML" && !self.classes.contains_key("PropertiesTOML") {
+                        let mut evaluated_args = Vec::new();
+                        for arg in args {
+                            evaluated_args.push(self.eval_expr(arg, env)?);
+                        }
+                        let path = evaluated_args.first().map_or("mantra.toml".to_string(), |v| v.to_string_repr());
+                        let instance = Rc::new(RefCell::new(ObjectInstance::new("PropertiesTOML".to_string())));
+                        instance.borrow_mut().fields.insert("file_path".to_string(), Value::String(path));
+                        return Ok(Value::Object(instance));
+                    }
                 }
 
                 // Check static method call or regular function call
@@ -414,6 +424,39 @@ impl Interpreter {
                 }
             }
             Expr::MethodCall { receiver, method, args, span } => {
+                // ── Built-in static class: ENV (OS Environment Variables) ───────────────
+                // ENV.get("API_KEY") reads from OS environment variables (Windows/Mac/Linux).
+                // If a user declares `class ENV:`, that class takes precedence; otherwise
+                // this built-in handler retrieves from std::env::var.
+                if let Expr::Ident(ref cls_name, _) = **receiver {
+                    if cls_name == "ENV" && !self.classes.contains_key("ENV") {
+                        if method == "get" || method == "getKey" || method == "getOrDefault" {
+                            let mut evaluated_args = Vec::new();
+                            for arg in args {
+                                evaluated_args.push(self.eval_expr(arg, env)?);
+                            }
+                            let key = evaluated_args
+                                .first()
+                                .map(|v| v.to_string_repr())
+                                .unwrap_or_default();
+                            let default_val = evaluated_args.get(1).map_or("".to_string(), |v| v.to_string_repr());
+                            let val = std::env::var(&key).unwrap_or(default_val);
+                            return Ok(Value::String(val));
+                        } else if method == "has" {
+                            let mut evaluated_args = Vec::new();
+                            for arg in args {
+                                evaluated_args.push(self.eval_expr(arg, env)?);
+                            }
+                            let key = evaluated_args
+                                .first()
+                                .map(|v| v.to_string_repr())
+                                .unwrap_or_default();
+                            return Ok(Value::Bool(std::env::var(&key).is_ok()));
+                        }
+                    }
+                }
+                // ─────────────────────────────────────────────────────────────────────────
+
                 // Check if receiver is a class name for static method call
                 if let Expr::Ident(ref cls_name, _) = **receiver {
                     if let Some(cls) = self.classes.get(cls_name).cloned() {
@@ -917,6 +960,12 @@ impl Interpreter {
                     Err(_) => Ok(Value::String(default_val)),
                 }
             }
+            "read_toml_value" => {
+                let file_path = args.get(0).map_or("".to_string(), |v| v.to_string_repr());
+                let key_path = args.get(1).map_or("".to_string(), |v| v.to_string_repr());
+                let val = Self::get_toml_key_value(&file_path, &key_path);
+                Ok(Value::String(val))
+            }
             _ => Err(RuntimeError {
                 message: format!("Unknown builtin function '{}'", name),
                 span,
@@ -1047,5 +1096,50 @@ impl Interpreter {
             BinaryOp::And => Ok(Value::Bool(l.is_truthy() && r.is_truthy())),
             BinaryOp::Or => Ok(Value::Bool(l.is_truthy() || r.is_truthy())),
         }
+    }
+
+    pub fn get_toml_key_value(file_path: &str, key_path: &str) -> String {
+        let content = match std::fs::read_to_string(file_path) {
+            Ok(c) => c,
+            Err(_) => {
+                let alt = if file_path == "mantra.toml" { "project.toml" } else { "mantra.toml" };
+                match std::fs::read_to_string(alt) {
+                    Ok(c) => c,
+                    Err(_) => return String::new(),
+                }
+            }
+        };
+
+        let (target_section, target_key) = if let Some((sec, k)) = key_path.rsplit_once('.') {
+            (sec.trim(), k.trim())
+        } else {
+            ("", key_path.trim())
+        };
+
+        let mut current_sec = "";
+        for line in content.lines() {
+            let t = line.trim();
+            if t.is_empty() || t.starts_with('#') {
+                continue;
+            }
+            if t.starts_with('[') && t.ends_with(']') {
+                current_sec = t[1..t.len() - 1].trim();
+                continue;
+            }
+            if let Some((k, v)) = t.split_once('=') {
+                let k_trimmed = k.trim();
+                if k_trimmed == target_key {
+                    if target_section.is_empty() || current_sec == target_section {
+                        let raw_val = v.trim();
+                        return if raw_val.starts_with('"') && raw_val.ends_with('"') && raw_val.len() >= 2 {
+                            raw_val[1..raw_val.len() - 1].to_string()
+                        } else {
+                            raw_val.to_string()
+                        };
+                    }
+                }
+            }
+        }
+        String::new()
     }
 }

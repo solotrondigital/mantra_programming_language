@@ -1,0 +1,96 @@
+# mantra_ai — Official Native AI Integration Runtime for Mantra (MVP 1)
+# Package: mantra.ai
+
+pub class AuthCredential:
+    def __init__(self, kind: String, value: String):
+        self._kind = kind
+        self._value = value
+
+    pub def get_kind(self) -> String:
+        return self._kind
+
+    pub def get_value(self) -> String:
+        return self._value
+
+    pub def masked(self) -> String:
+        if self._value.len() <= 8:
+            return "***"
+        return self._value.substring(0, 4) + "..." + self._value.substring(self._value.len() - 4, self._value.len())
+
+pub def env(var_name: String) -> AuthCredential:
+    return AuthCredential("env", var_name)
+
+pub def api_key(key: String) -> AuthCredential:
+    return AuthCredential("key", key)
+
+pub class TokenUsage:
+    def __init__(self, prompt_tokens: Int, completion_tokens: Int):
+        self._prompt_tokens = prompt_tokens
+        self._completion_tokens = completion_tokens
+        self._total_tokens = prompt_tokens + completion_tokens
+        self._estimated_cost_usd = 0.0
+
+    pub def get_prompt_tokens(self) -> Int:
+        return self._prompt_tokens
+
+    pub def get_completion_tokens(self) -> Int:
+        return self._completion_tokens
+
+    pub def get_total_tokens(self) -> Int:
+        return self._total_tokens
+
+    pub def get_cost(self) -> Float:
+        return self._estimated_cost_usd
+
+pub class AIResponse:
+    def __init__(self, model: String, provider: String, text: String):
+        self._model = model
+        self._provider = provider
+        self._text = text
+        self._finish_reason = "stop"
+
+    pub def get_model(self) -> String:
+        return self._model
+
+    pub def get_provider(self) -> String:
+        return self._provider
+
+    pub def get_text(self) -> String:
+        return self._text
+
+    pub def get_finish_reason(self) -> String:
+        return self._finish_reason
+
+pub class StreamChunk:
+    def __init__(self, delta: String, is_final: Bool, finish_reason: String):
+        self._delta = delta
+        self._is_final = is_final
+        self._finish_reason = finish_reason
+
+    pub def get_delta(self) -> String:
+        return self._delta
+
+    pub def is_final(self) -> Bool:
+        return self._is_final
+
+    pub def get_finish_reason(self) -> String:
+        return self._finish_reason
+
+pub class ModelHandle:
+    def __init__(self, provider: String, name: String, auth: AuthCredential):
+        self._provider = provider
+        self._name = name
+        self._auth = auth
+        self._temperature = 0.7
+        self._max_tokens = 2048
+
+    pub def generate(self, prompt: String) -> AIResponse:
+        let resp_text = "[" + self._provider + ":" + self._name + "] Response: " + prompt
+        return AIResponse(self._name, self._provider, resp_text)
+
+pub class AI:
+    pub static def model(provider: String, name: String, api_key: AuthCredential) -> ModelHandle:
+        return ModelHandle(provider, name, api_key)
+
+    pub static def get(alias: String) -> ModelHandle:
+        return ModelHandle("openai", alias, env("OPENAI_API_KEY"))

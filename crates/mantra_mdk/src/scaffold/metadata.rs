@@ -8,6 +8,8 @@ impl ProjectMetadataGenerator {
         let type_str = match opts.app_type {
             AppType::Frontend => "frontend",
             AppType::Backend => "backend",
+            AppType::Standalone => "standalone",
+            AppType::Ai => "ai",
         };
 
         let mut manifest = format!(
@@ -40,9 +42,58 @@ type = "{app_type}"
         }
 
         manifest.push_str("[dependencies]\n");
-        manifest.push_str("\"mantra.web\" = \"0.5.0\"\n");
-        if let Some(BackendService::Rest) = opts.service {
-            manifest.push_str("\"mantra.rest\" = \"0.5.0\"\n");
+        match opts.app_type {
+            AppType::Frontend => {
+                manifest.push_str("\"mantra.web\" = \"0.7.0\"\n");
+                manifest.push_str("\"mantra.mobile\" = \"0.7.0\"\n");
+                manifest.push_str("\"mantra.widgets\" = \"0.7.0\"\n");
+            }
+            AppType::Backend => match opts.service {
+                Some(BackendService::Rest) => {
+                    manifest.push_str("\"mantra.rest\" = \"0.7.0\"\n");
+                    manifest.push_str("\"mantra.sql_orm\" = \"0.7.0\"\n");
+                }
+                Some(BackendService::Graphql) => {
+                    manifest.push_str("\"mantra.graphql\" = \"0.7.0\"\n");
+                    manifest.push_str("\"mantra.sql_orm\" = \"0.7.0\"\n");
+                }
+                None => {
+                    manifest.push_str("\"mantra.rest\" = \"0.7.0\"\n");
+                }
+            },
+            AppType::Standalone => {
+                manifest.push_str("\"mantra.core\" = \"0.7.0\"\n");
+            }
+            AppType::Ai => {
+                manifest.push_str("\"mantra.ai\" = \"0.7.0\"\n\n");
+                manifest.push_str(r#"[ai]
+default_provider = "openai"
+default_model = "assistant"
+timeout_ms = 30000
+max_retries = 3
+
+[ai.models.assistant]
+provider = "openai"
+name = "gpt-4o"
+env = "OPENAI_API_KEY"
+temperature = 0.7
+max_tokens = 2048
+
+[ai.models.analyst]
+provider = "gemini"
+name = "gemini-1.5-pro"
+env = "GEMINI_API_KEY"
+temperature = 0.2
+max_tokens = 4096
+
+[ai.models.coder]
+provider = "anthropic"
+name = "claude-3-5-sonnet"
+env = "ANTHROPIC_API_KEY"
+temperature = 0.1
+max_tokens = 8192
+"#);
+            }
         }
 
         manifest
@@ -260,6 +311,86 @@ mantra test
                     creation_reference = Self::creation_reference()
                 ),
             },
+            AppType::Standalone => format!(
+                r#"# {name}
+
+{description}
+
+A standalone application built with the **Mantra Programming Language**.
+
+## Architecture Overview
+```text
+{name}/
+├── mantra.toml
+├── README.md
+├── .gitignore
+├── src/
+│   └── main.mantra       # Application entry point
+└── tests/
+    └── app_test.mantra   # Test suite
+```
+
+## Getting Started
+
+### Running the Application
+```bash
+mantra run
+```
+
+### Running Tests
+```bash
+mantra test
+```
+
+{creation_reference}
+"#,
+                name = opts.project_name,
+                description = opts.description,
+                creation_reference = Self::creation_reference()
+            ),
+            AppType::Ai => format!(
+                r#"# {name}
+
+{description}
+
+A native AI application built with the **Mantra Programming Language** and `mantra.ai`.
+
+## Architecture Overview
+```text
+{name}/
+├── mantra.toml        # Project manifest with multi-provider AI model declarations
+├── README.md
+├── .gitignore
+├── src/
+│   └── main.mantra    # Application entry point & AI assistant workflow
+└── tests/
+    └── app_test.mantra # Test suite verifying model invocation & tokens
+```
+
+## Configured AI Providers
+Models are declared in `mantra.toml` and accessible via `AI.get("<alias>")` or `AI.model(...)`:
+- **Assistant**: OpenAI `gpt-4o`
+- **Analyst**: Google Gemini `gemini-1.5-pro`
+- **Coder**: Anthropic Claude `claude-3-5-sonnet`
+
+## Getting Started
+
+### Running the Application
+```bash
+mantra run
+```
+
+### Running Tests
+```bash
+mantra test
+```
+
+{creation_reference}
+"#,
+                name = opts.project_name,
+                description = opts.description,
+                creation_reference = Self::creation_reference()
+            ),
         }
     }
 
@@ -296,6 +427,24 @@ mantra create \
   --org com.testapp \
   --project-name testapp \
   --description "TestApp GraphQL backend"
+```
+
+### 4. Standalone Application
+```bash
+mantra create \
+  --type standalone \
+  --org com.raghav \
+  --project-name movie_standalone_proj \
+  --description "Standalone application"
+```
+
+### 5. Native AI Application
+```bash
+mantra create \
+  --type ai \
+  --org com.acme \
+  --project-name ai_assistant_app \
+  --description "Native AI assistant application"
 ```"#
     }
 }

@@ -74,7 +74,7 @@ jobs:
           mantra --version
           mantrac --version
           rm -rf /tmp/ci_test_app
-          mantra new /tmp/ci_test_app
+          mantra create --type standalone --org com.ci --project-name ci_test_app --directory /tmp/ci_test_app
           cd /tmp/ci_test_app
           mantra check
           mantra test

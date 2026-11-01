@@ -24,6 +24,8 @@ pub fn detect_service_and_port(target_path: Option<&str>) -> Option<(String, u16
             let mut port: Option<u16> = None;
             let mut host = "0.0.0.0".to_string();
             let mut is_web = false;
+            let mut is_backend = false;
+            let mut is_standalone = false;
 
             let mut section = String::new();
             for line in content.lines() {
@@ -35,15 +37,21 @@ pub fn detect_service_and_port(target_path: Option<&str>) -> Option<(String, u16
                 if let Some((k, v)) = trimmed.split_once('=') {
                     let key = k.trim();
                     let val = v.trim().trim_matches('"');
-                    if section == "project" {
+                    if section == "project" || section == "package" {
                         if key == "service" {
                             if val.eq_ignore_ascii_case("graphql") {
                                 service_type = "graphql".to_string();
                             } else if val.eq_ignore_ascii_case("rest") {
                                 service_type = "rest".to_string();
                             }
-                        } else if key == "type" && val == "frontend" {
-                            is_web = true;
+                        } else if key == "type" {
+                            if val.eq_ignore_ascii_case("frontend") {
+                                is_web = true;
+                            } else if val.eq_ignore_ascii_case("backend") {
+                                is_backend = true;
+                            } else if val.eq_ignore_ascii_case("standalone") || val.eq_ignore_ascii_case("ai") {
+                                is_standalone = true;
+                            }
                         }
                     } else if section == "server" {
                         if key == "port" {
@@ -64,12 +72,24 @@ pub fn detect_service_and_port(target_path: Option<&str>) -> Option<(String, u16
                 }
             }
 
+            if is_standalone {
+                return None;
+            }
+
             if is_web {
                 return Some((host, port.unwrap_or(1670), "web".to_string()));
             }
+
+            if is_backend {
+                let default_port = if service_type == "graphql" { 1672 } else { 1671 };
+                return Some((host, port.unwrap_or(default_port), service_type));
+            }
+
             if let Some(p) = port {
                 return Some((host, p, service_type));
             }
+
+            return None;
         }
     }
 

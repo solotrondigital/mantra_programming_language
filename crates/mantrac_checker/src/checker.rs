@@ -23,6 +23,198 @@ impl TypeChecker {
     }
 
     fn register_builtins(&mut self) {
+        // ── Built-in static class: ENV (OS Environment Variables) ────────────────────
+        // ENV is a runtime-native class (no .mantra definition required).
+        // Reads from OS environment variables (export KEY=... on macOS/Linux, set KEY=... on Windows).
+        {
+            let mut static_methods = std::collections::HashMap::new();
+            static_methods.insert(
+                "get".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "get".to_string(),
+                    params: vec![("key".to_string(), Type::String)],
+                    return_type: Type::String,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: true,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            static_methods.insert(
+                "getKey".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "getKey".to_string(),
+                    params: vec![("key".to_string(), Type::String)],
+                    return_type: Type::String,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: true,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            static_methods.insert(
+                "getOrDefault".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "getOrDefault".to_string(),
+                    params: vec![("key".to_string(), Type::String), ("default_val".to_string(), Type::String)],
+                    return_type: Type::String,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: true,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            static_methods.insert(
+                "has".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "has".to_string(),
+                    params: vec![("key".to_string(), Type::String)],
+                    return_type: Type::Bool,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: true,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            self.symbols.classes.insert(
+                "ENV".to_string(),
+                crate::symbols::ClassSymbol {
+                    name: "ENV".to_string(),
+                    base_class: None,
+                    interfaces: vec![],
+                    is_abstract: false,
+                    visibility: Visibility::Pub,
+                    fields: std::collections::HashMap::new(),
+                    methods: std::collections::HashMap::new(),
+                    static_fields: std::collections::HashMap::new(),
+                    static_methods,
+                    constructor: None,
+                    span: Span::default(),
+                },
+            );
+        }
+        // ─────────────────────────────────────────────────────────────────────────────
+
+        // ── Built-in class: PropertiesTOML (Java-style Properties for TOML) ───────────
+        // PropertiesTOML loads and reads configuration properties from .toml files.
+        // e.g.:
+        //   let props = PropertiesTOML("mantra.toml")
+        //   let name = props.getProperty("app.name")
+        {
+            let mut methods = std::collections::HashMap::new();
+            methods.insert(
+                "load".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "load".to_string(),
+                    params: vec![("file_path".to_string(), Type::String)],
+                    return_type: Type::Unit,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: false,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            methods.insert(
+                "getProperty".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "getProperty".to_string(),
+                    params: vec![("key_path".to_string(), Type::String)],
+                    return_type: Type::String,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: false,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            methods.insert(
+                "get".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "get".to_string(),
+                    params: vec![("key_path".to_string(), Type::String)],
+                    return_type: Type::String,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: false,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            methods.insert(
+                "getPropertyOrDefault".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "getPropertyOrDefault".to_string(),
+                    params: vec![("key_path".to_string(), Type::String), ("default_val".to_string(), Type::String)],
+                    return_type: Type::String,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: false,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+
+            let mut static_methods = std::collections::HashMap::new();
+            static_methods.insert(
+                "loadFile".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "loadFile".to_string(),
+                    params: vec![("file_path".to_string(), Type::String)],
+                    return_type: Type::Custom("PropertiesTOML".to_string(), vec![]),
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: true,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+
+            let mut fields = std::collections::HashMap::new();
+            fields.insert(
+                "file_path".to_string(),
+                crate::symbols::FieldSymbol {
+                    name: "file_path".to_string(),
+                    ty: Type::String,
+                    visibility: Visibility::Pub,
+                    span: Span::default(),
+                },
+            );
+
+            let constructor = Some(crate::symbols::MethodSymbol {
+                name: "__init__".to_string(),
+                params: vec![("file_path".to_string(), Type::String)],
+                return_type: Type::Unit,
+                visibility: Visibility::Pub,
+                is_override: false,
+                is_static: false,
+                is_abstract: false,
+                span: Span::default(),
+            });
+
+            self.symbols.classes.insert(
+                "PropertiesTOML".to_string(),
+                crate::symbols::ClassSymbol {
+                    name: "PropertiesTOML".to_string(),
+                    base_class: None,
+                    interfaces: vec![],
+                    is_abstract: false,
+                    visibility: Visibility::Pub,
+                    fields,
+                    methods,
+                    static_fields: std::collections::HashMap::new(),
+                    static_methods,
+                    constructor,
+                    span: Span::default(),
+                },
+            );
+        }
+        // ─────────────────────────────────────────────────────────────────────────────
+
         // Built-in functions
         self.symbols.functions.insert(
             "print".to_string(),
@@ -99,6 +291,19 @@ impl TypeChecker {
             FunctionSymbol {
                 name: "read_file".to_string(),
                 params: vec![("path".to_string(), Type::String)],
+                return_type: Type::String,
+                visibility: Visibility::Pub,
+                span: Span::default(),
+            },
+        );
+        self.symbols.functions.insert(
+            "read_toml_value".to_string(),
+            FunctionSymbol {
+                name: "read_toml_value".to_string(),
+                params: vec![
+                    ("file_path".to_string(), Type::String),
+                    ("key_path".to_string(), Type::String),
+                ],
                 return_type: Type::String,
                 visibility: Visibility::Pub,
                 span: Span::default(),
@@ -509,6 +714,9 @@ impl TypeChecker {
                 if let Some(m) = cls.methods.get(method_name) {
                     return Some(m.clone());
                 }
+                if let Some(sm) = cls.static_methods.get(method_name) {
+                    return Some(sm.clone());
+                }
                 curr = cls.base_class.clone();
             } else {
                 break;
@@ -823,6 +1031,8 @@ impl TypeChecker {
                     var.ty.clone()
                 } else if self.symbols.classes.contains_key(name) {
                     Type::Custom(name.clone(), Vec::new())
+                } else if self.symbols.functions.contains_key(name) {
+                    Type::Any
                 } else if self.symbols.imported_symbols.contains(name) {
                     Type::Any
                 } else {
@@ -885,11 +1095,17 @@ impl TypeChecker {
                                 *span,
                             ));
                         }
+                        for arg in args {
+                            let _ = self.infer_expr(arg, scopes);
+                        }
                         return Type::Custom(name.clone(), Vec::new());
                     }
 
                     // Check if function
                     if let Some(f) = self.symbols.functions.get(name).cloned() {
+                        for arg in args {
+                            let _ = self.infer_expr(arg, scopes);
+                        }
                         return f.return_type.clone();
                     }
                 }

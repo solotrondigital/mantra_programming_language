@@ -526,12 +526,16 @@ def main() -> Int:
 
 The `mantra` CLI is the all-in-one developer toolchain for standalone applications, cross-platform hybrid frontend apps, and backend services:
 
-### Standalone Application Workflow (`mantra new`)
+### Standalone Application Workflow (`mantra create`)
 
 ```bash
 # Create a new standalone application
-mantra new testapp
-cd testapp
+mantra create \
+  --type standalone \
+  --org com.raghav \
+  --project-name movie_standalone_proj
+
+cd movie_standalone_proj
 
 # Run the project (dev mode)
 mantra run

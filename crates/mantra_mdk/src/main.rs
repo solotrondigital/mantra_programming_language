@@ -1,3 +1,4 @@
+pub mod ai_runner;
 pub mod audit;
 pub mod bench;
 pub mod device_selector;
@@ -38,20 +39,24 @@ Usage:
     mantra <command> [arguments] [options]
 
 Project Management & Scaffolding:
-    create [OPTIONS]        Scaffold a new Mantra application (frontend or backend)
+    create [OPTIONS]        Scaffold a new Mantra application (frontend, backend, standalone, or ai)
                             Frontend hybrid:
                               mantra create --type frontend --project-name <NAME> [--platforms ios,android,web]
                             Backend REST:
                               mantra create --type backend --service REST --project-name <NAME>
                             Backend GraphQL:
                               mantra create --type backend --service GRAPHQL --project-name <NAME>
+                            Standalone:
+                              mantra create --type standalone --project-name <NAME>
+                            Native AI:
+                              mantra create --type ai --org <ORG> --project-name <NAME>
                             Options:
-                              --type <frontend|backend>  Application type (required)
-                              --service <REST|GRAPHQL>   Backend service (required for backend)
-                              --project-name <NAME>      Application and package name (required)
-                              --org <DOMAIN>             Organisation domain (default: com.example)
-                              --platforms <LIST>         Frontend platforms (ios,android,web)
-                              --description <DESC>       Project description in mantra.toml
+                              --type <frontend|backend|standalone|ai>  Application type (required)
+                              --service <REST|GRAPHQL>                 Backend service (required for backend)
+                              --project-name <NAME>                    Application and package name (required)
+                              --org <DOMAIN>                           Organisation domain (default: com.example)
+                              --platforms <LIST>                       Frontend platforms (ios,android,web)
+                              --description <DESC>                     Project description in mantra.toml
     new <NAME> [OPTIONS]    Create a new application or package
     run [OPTIONS]           Build and run development target
                             Flags:
@@ -252,13 +257,57 @@ fn main() {
                     exit(1);
                 }
             } else {
-                if let Err(e) = DeviceSelector::select_and_run(
-                    target.as_deref(),
-                    web_port,
-                    defines_file.as_deref(),
-                ) {
-                    eprintln!("Run error: {}", e);
-                    exit(1);
+                // Determine execution strategy based on project type and service
+                let manifest = PackageManifest::load_from_dir(Path::new(".")).ok();
+                let project_type = manifest.as_ref().and_then(|m| m.project_type.as_deref());
+
+                match project_type {
+                    Some("standalone") | Some("ai") => {
+                        // Standalone or AI project: directly run main.mantra
+                        if let Err(e) = Runner::run_target(target.as_deref()) {
+                            eprintln!("Run error: {}", e);
+                            exit(1);
+                        }
+                    }
+                    Some("backend") => {
+                        // Backend project: directly run backend service
+                        if let Err(e) = Runner::run_target(target.as_deref()) {
+                            eprintln!("Run error: {}", e);
+                            exit(1);
+                        }
+                    }
+                    Some("frontend") => {
+                        // Frontend project: interactive device selector / platform runner
+                        if let Err(e) = DeviceSelector::select_and_run(
+                            target.as_deref(),
+                            web_port,
+                            defines_file.as_deref(),
+                        ) {
+                            eprintln!("Run error: {}", e);
+                            exit(1);
+                        }
+                    }
+                    _ => {
+                        // If a standalone .mantra file is passed directly (e.g. mantra run main.mantra)
+                        if let Some(t) = target.as_deref() {
+                            if t.ends_with(".mantra") {
+                                if let Err(e) = Runner::run_target(Some(t)) {
+                                    eprintln!("Run error: {}", e);
+                                    exit(1);
+                                }
+                                return;
+                            }
+                        }
+                        // Default fallback to device selector
+                        if let Err(e) = DeviceSelector::select_and_run(
+                            target.as_deref(),
+                            web_port,
+                            defines_file.as_deref(),
+                        ) {
+                            eprintln!("Run error: {}", e);
+                            exit(1);
+                        }
+                    }
                 }
             }
         }

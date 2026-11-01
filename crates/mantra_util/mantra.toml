@@ -1,0 +1,10 @@
+[package]
+name = "mantra_util"
+version = "0.7.0"
+edition = "2026"
+description = "Core utility library for the Mantra programming language — PropertiesTOML, ENV, and configuration helpers."
+license = "MIT OR GPL-3.0-or-later"
+entry = "lib/mantra_util.mantra"
+
+[dependencies]
+

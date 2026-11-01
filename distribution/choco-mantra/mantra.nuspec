@@ -35,8 +35,8 @@ Mantra is a modern, statically typed, Python-approachable object-oriented progra
 ### Quick Start:
 ```powershell
 choco install mantra
-mantra new my_app
-cd my_app
+mantra create --type standalone --org com.raghav --project-name movie_standalone_proj
+cd movie_standalone_proj
 mantra run
 ```
 ]]></description>

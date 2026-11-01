@@ -1,3 +1,4 @@
+pub mod ai_runner;
 pub mod audit;
 pub mod bench;
 pub mod device_selector;

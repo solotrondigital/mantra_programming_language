@@ -63,6 +63,8 @@ impl ProjectScaffolder {
             description: format!("Mantra application: {}", name),
             license: "MIT".to_string(),
             entry: "src/main.mantra".to_string(),
+            project_type: Some("standalone".to_string()),
+            service: None,
             dependencies: std::collections::HashMap::new(),
         };
         manifest.save_to_dir(root)?;
@@ -167,6 +169,8 @@ mantra build --release
             description: format!("Mantra package library: {}", name),
             license: "MIT".to_string(),
             entry: "src/lib.mantra".to_string(),
+            project_type: None,
+            service: None,
             dependencies: std::collections::HashMap::new(),
         };
         manifest.save_to_dir(root)?;
@@ -228,6 +232,8 @@ def main() -> Int:
             description: format!("Mantra Web Application: {}", name),
             license: "MIT".to_string(),
             entry: "src/main.mantra".to_string(),
+            project_type: Some("frontend".to_string()),
+            service: None,
             dependencies: std::collections::HashMap::new(),
         };
         manifest.dependencies.insert("mantra.web".to_string(), "0.6.0".to_string());
@@ -394,6 +400,8 @@ def main() -> Int:
             description: format!("Mantra Hybrid Mobile Application: {}", name),
             license: "MIT".to_string(),
             entry: "src/main.mantra".to_string(),
+            project_type: Some("frontend".to_string()),
+            service: None,
             dependencies: std::collections::HashMap::new(),
         };
         manifest.dependencies.insert("mantra.mobile".to_string(), "0.6.0".to_string());
