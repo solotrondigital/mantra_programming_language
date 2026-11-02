@@ -60,7 +60,10 @@ impl NetworkProxy {
     /// Validates request URL against App Transport Security (ATS) rules.
     pub fn validate_url(&self, url: &str) -> Result<(), String> {
         if self.block_cleartext_traffic && url.starts_with("http://") {
-            return Err("Cleartext HTTP traffic is blocked by native security policy. Use HTTPS.".to_string());
+            return Err(
+                "Cleartext HTTP traffic is blocked by native security policy. Use HTTPS."
+                    .to_string(),
+            );
         }
         if !url.starts_with("https://") && !url.starts_with("http://") {
             return Err("Invalid protocol. Only HTTP and HTTPS are permitted.".to_string());
@@ -92,4 +95,3 @@ fn escape_json(s: &str) -> String {
         .replace('\r', "\\r")
         .replace('\t', "\\t")
 }
-

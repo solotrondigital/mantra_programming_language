@@ -98,9 +98,7 @@ impl LifecycleManager {
             LifecycleEvent::AndroidOnStop => {
                 self.transition_to(AppLifecycleState::BackgroundRunning)
             }
-            LifecycleEvent::AndroidOnDestroy => {
-                self.transition_to(AppLifecycleState::Destroyed)
-            }
+            LifecycleEvent::AndroidOnDestroy => self.transition_to(AppLifecycleState::Destroyed),
             _ => {}
         }
         self.current_state
@@ -122,9 +120,7 @@ impl LifecycleManager {
             LifecycleEvent::IosWillEnterForeground => {
                 self.transition_to(AppLifecycleState::ForegroundActive)
             }
-            LifecycleEvent::IosWillTerminate => {
-                self.transition_to(AppLifecycleState::Destroyed)
-            }
+            LifecycleEvent::IosWillTerminate => self.transition_to(AppLifecycleState::Destroyed),
             _ => {}
         }
         self.current_state
@@ -138,4 +134,3 @@ impl LifecycleManager {
         )
     }
 }
-

@@ -87,4 +87,3 @@ pub struct InlineFragment {
     pub directives: Vec<Directive>,
     pub selection_set: SelectionSet,
 }
-

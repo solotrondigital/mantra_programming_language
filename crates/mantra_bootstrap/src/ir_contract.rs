@@ -18,10 +18,10 @@
 // the new instruction or must fall back.
 
 use mantrac_ast::Program;
+use mantrac_checker::TypeChecker;
+use mantrac_codegen::{CEmitter, NativeCompiler};
 use mantrac_ir::{AstLowering, IrProgram, JitEngine, WasmEmitter};
 use mantrac_vm::Interpreter;
-use mantrac_codegen::{CEmitter, NativeCompiler};
-use mantrac_checker::TypeChecker;
 use std::path::PathBuf;
 
 /// The result type returned by all contract operations.
@@ -56,13 +56,13 @@ pub enum ContractPhase {
 impl std::fmt::Display for ContractPhase {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            Self::TypeCheck  => "type-check",
-            Self::IrLower    => "ir-lower",
+            Self::TypeCheck => "type-check",
+            Self::IrLower => "ir-lower",
             Self::JitCompile => "jit-compile",
             Self::JitExecute => "jit-execute",
-            Self::Interpret  => "interpret",
-            Self::WasmEmit   => "wasm-emit",
-            Self::CCodegen   => "c-codegen",
+            Self::Interpret => "interpret",
+            Self::WasmEmit => "wasm-emit",
+            Self::CCodegen => "c-codegen",
             Self::NativeLink => "native-link",
         };
         write!(f, "{}", s)
@@ -117,7 +117,7 @@ impl BackendCapabilities {
             supports_jit: false,
             supports_wasm: true,
             supports_native_c: false,
-            supports_async: false,   // WASI async is future work
+            supports_async: false, // WASI async is future work
             supports_dynamic_dispatch: false,
             supports_generics: false, // monomorphised before lowering
             ir_schema: crate::version::IR_SCHEMA_VERSION,
@@ -163,11 +163,14 @@ impl IrContract {
     /// Execute via tree-walking interpreter (always supports full language).
     pub fn execute_interpret(program: &Program) -> ContractResult<()> {
         let mut interp = Interpreter::new();
-        interp.execute_program(program).map(|_| ()).map_err(|e| ContractError {
-            phase: ContractPhase::Interpret,
-            message: format!("{:?}", e),
-            fallback_available: false,
-        })
+        interp
+            .execute_program(program)
+            .map(|_| ())
+            .map_err(|e| ContractError {
+                phase: ContractPhase::Interpret,
+                message: format!("{:?}", e),
+                fallback_available: false,
+            })
     }
 
     /// Emit a WebAssembly text module (WAT).
@@ -191,12 +194,11 @@ impl IrContract {
     ) -> ContractResult<PathBuf> {
         let mut emitter = CEmitter::new(&checker.symbols);
         let c_code = emitter.emit(program);
-        NativeCompiler::compile_c_to_binary(&c_code, output, release)
-            .map_err(|e| ContractError {
-                phase: ContractPhase::NativeLink,
-                message: e,
-                fallback_available: false,
-            })
+        NativeCompiler::compile_c_to_binary(&c_code, output, release).map_err(|e| ContractError {
+            phase: ContractPhase::NativeLink,
+            message: e,
+            fallback_available: false,
+        })
     }
 
     /// Run the full type-check + IR-lower pipeline in one call, returning
@@ -217,15 +219,17 @@ impl IrContract {
         })?;
 
         let mut checker = TypeChecker::new();
-        checker.check_program(&program).map_err(|diags| ContractError {
-            phase: ContractPhase::TypeCheck,
-            message: diags
-                .iter()
-                .map(|d| format!("[{}] {}", d.code, d.message))
-                .collect::<Vec<_>>()
-                .join("; "),
-            fallback_available: false,
-        })?;
+        checker
+            .check_program(&program)
+            .map_err(|diags| ContractError {
+                phase: ContractPhase::TypeCheck,
+                message: diags
+                    .iter()
+                    .map(|d| format!("[{}] {}", d.code, d.message))
+                    .collect::<Vec<_>>()
+                    .join("; "),
+                fallback_available: false,
+            })?;
 
         let ir = Self::lower(&program)?;
         Ok((program, ir))
@@ -247,22 +251,29 @@ mod tests {
     #[test]
     fn wasm_backend_does_not_claim_dynamic_dispatch() {
         let wasm = BackendCapabilities::wasm_emitter();
-        assert!(!wasm.supports_dynamic_dispatch,
-            "WASM emitter must not claim dynamic dispatch support");
+        assert!(
+            !wasm.supports_dynamic_dispatch,
+            "WASM emitter must not claim dynamic dispatch support"
+        );
     }
 
     #[test]
     fn jit_does_not_claim_native_c() {
         let jit = BackendCapabilities::jit_engine();
-        assert!(!jit.supports_native_c,
-            "JIT engine must not claim C99 backend support");
+        assert!(
+            !jit.supports_native_c,
+            "JIT engine must not claim C99 backend support"
+        );
     }
 
     #[test]
     fn ir_contract_hello_world() {
         let src = "def main() -> Int:\n    print(\"hello\")\n    return 0\n";
         let result = IrContract::typecheck_and_lower(src);
-        assert!(result.is_ok(), "hello world should lower without error: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "hello world should lower without error: {:?}",
+            result.err()
+        );
     }
 }
-

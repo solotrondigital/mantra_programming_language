@@ -69,7 +69,12 @@ impl WasmEmitter {
                         wat.push_str(&format!("    local.get ${}\n", src));
                         wat.push_str(&format!("    local.set ${}\n", dest));
                     }
-                    IrInstruction::Binary { op, dest, left, right } => {
+                    IrInstruction::Binary {
+                        op,
+                        dest,
+                        left,
+                        right,
+                    } => {
                         wat.push_str(&format!("    local.get ${}\n", left));
                         wat.push_str(&format!("    local.get ${}\n", right));
                         let op_str = match op {
@@ -106,7 +111,10 @@ impl WasmEmitter {
 
             wat.push_str("    i64.const 0\n");
             wat.push_str("  )\n");
-            wat.push_str(&format!("  (export \"{}\" (func ${}))\n", func.name, func.name));
+            wat.push_str(&format!(
+                "  (export \"{}\" (func ${}))\n",
+                func.name, func.name
+            ));
         }
 
         wat.push_str(")\n");
@@ -217,4 +225,3 @@ fn encode_i64(mut val: i64, out: &mut Vec<u8>) {
         out.push(byte);
     }
 }
-

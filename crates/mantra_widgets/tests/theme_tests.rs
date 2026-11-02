@@ -28,7 +28,10 @@ fn test_theme_css_variables() {
 #[test]
 fn test_elevation_shadows() {
     assert_eq!(Elevation::None.to_box_shadow(false), "none");
-    assert!(Elevation::Medium.to_box_shadow(false).contains("rgba(0, 0, 0, 0.1)"));
-    assert!(Elevation::Medium.to_box_shadow(true).contains("rgba(0, 0, 0, 0.4)"));
+    assert!(Elevation::Medium
+        .to_box_shadow(false)
+        .contains("rgba(0, 0, 0, 0.1)"));
+    assert!(Elevation::Medium
+        .to_box_shadow(true)
+        .contains("rgba(0, 0, 0, 0.4)"));
 }
-

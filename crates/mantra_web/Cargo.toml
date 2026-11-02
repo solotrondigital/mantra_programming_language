@@ -1,6 +1,6 @@
 [package]
 name = "mantra_web"
-version = "0.7.0"
+version.workspace = true
 edition = "2021"
 description = "Native web framework runtime for the Mantra programming language — HTTP server, router, middleware, and templates."
 license = "MIT"
@@ -8,3 +8,4 @@ license = "MIT"
 [dependencies]
 mantrac_vm = { path = "../mantrac_vm" }
 mantra_sql_orm = { path = "../mantra_sql_orm" }
+serde_json = "1"

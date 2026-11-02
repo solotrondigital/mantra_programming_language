@@ -1,0 +1,56 @@
+# ==============================================================================
+# mantra_util — Core Utility Library for the Mantra Programming Language
+# Provides PropertiesTOML, ENV, and configuration helpers.
+# ==============================================================================
+
+# ==============================================================================
+# PropertiesTOML: Inspired by Java's java.util.Properties
+# Loads configuration files and retrieves dotted key-value properties.
+#
+# Usage (like Java Properties):
+#   let properties = PropertiesTOML("mantra.toml")
+#   let app_name: String = properties.getProperty("project.name")
+#   let version: String  = properties.getProperty("project.version")
+# ==============================================================================
+class PropertiesTOML:
+    pub file_path: String
+
+    def __init__(self, file_path: String = "mantra.toml"):
+        self.file_path = file_path
+
+    pub def load(self, file_path: String):
+        self.file_path = file_path
+
+    pub def getProperty(self, key_path: String) -> String:
+        return read_toml_value(self.file_path, key_path)
+
+    pub def get(self, key_path: String) -> String:
+        return read_toml_value(self.file_path, key_path)
+
+    pub def getPropertyOrDefault(self, key_path: String, default_val: String) -> String:
+        let val: String = read_toml_value(self.file_path, key_path)
+        if len(val) == 0:
+            return default_val
+        return val
+
+    pub static def loadFile(file_path: String) -> PropertiesTOML:
+        return PropertiesTOML(file_path)
+
+# ==============================================================================
+# ENV: Access Operating System Environment Variables
+# Supports Windows OS (set VAR=val) and macOS/Linux (export VAR=val).
+# ==============================================================================
+class ENV:
+    pub static def get(key: String) -> String:
+        return get_env(key, "")
+
+    pub static def getKey(key: String) -> String:
+        return get_env(key, "")
+
+    pub static def getOrDefault(key: String, default_val: String) -> String:
+        return get_env(key, default_val)
+
+    pub static def has(key: String) -> Bool:
+        let val: String = get_env(key, "")
+        return len(val) > 0
+

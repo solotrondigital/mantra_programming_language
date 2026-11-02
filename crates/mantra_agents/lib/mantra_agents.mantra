@@ -1,0 +1,30 @@
+# mantra_agents — Native Agent API for Mantra
+#
+# The compiler VM implements these builtins. Tool functions are resolved by
+# their declared Mantra function name and invoked with JSON arguments.
+
+pub class Agent:
+    pub static def create(name: String, provider: String, model: String, api_key: String, instructions: String, persistent_memory_path: String, max_model_steps: Int, max_tool_calls: Int, timeout_seconds: Int) -> Any:
+        return agent_create(name, provider, model, api_key, instructions, persistent_memory_path, max_model_steps, max_tool_calls, timeout_seconds)
+
+    pub static def register_tool(agent: Any, tool_name: String, description: String, mantra_function_name: String, requires_approval: Bool) -> Unit:
+        return agent_register_tool(agent, tool_name, description, mantra_function_name, requires_approval)
+
+    pub static def run(agent: Any, session_id: String, task: String) -> Any:
+        return agent_run(agent, session_id, task)
+
+    pub static def resume(agent: Any, run_id: String, approved: Bool) -> Any:
+        return agent_resume(agent, run_id, approved)
+
+    pub static def set_memory(agent: Any, session_id: String, key: String, value: String) -> Unit:
+        return agent_set_memory(agent, session_id, key, value)
+
+    pub static def remember(agent: Any, note: String) -> Unit:
+        return agent_remember(agent, note)
+
+    pub static def conversation(agent: Any, session_id: String) -> String:
+        return agent_conversation(agent, session_id)
+
+    pub static def collaborate(agents: Any, session_id: String, task: String) -> Any:
+        return agent_collaborate(agents, session_id, task)
+

@@ -268,7 +268,7 @@ android {{
         minSdk = 24
         targetSdk = 34
         versionCode = 1
-        versionName = "0.5.0"
+        versionName = "{version}"
     }}
 
     buildTypes {{
@@ -285,7 +285,8 @@ dependencies {{
     implementation("com.google.android.material:material:1.11.0")
 }}
 "#,
-            package_name = package_name
+            package_name = package_name,
+            version = env!("CARGO_PKG_VERSION")
         )
     }
 }

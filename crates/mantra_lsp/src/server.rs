@@ -119,10 +119,21 @@ impl LspServer {
             "textDocument/codeAction" => Some(self.handle_code_action(id, params)),
             "textDocument/signatureHelp" => Some(self.handle_signature_help(id, params)),
 
+            // ── Mantra Intelligence (MVP 2) Custom LSP Endpoints ──────────
+            "mantra/aiCompletion" => Some(self.handle_ai_completion(id, params)),
+            "mantra/explainDiagnostic" => Some(self.handle_explain_diagnostic(id, params)),
+            "mantra/suggestFix" => Some(self.handle_suggest_fix(id, params)),
+            "mantra/generateCode" => Some(self.handle_generate_code(id, params)),
+            "mantra/generateTests" => Some(self.handle_generate_tests(id, params)),
+
             _ => {
                 // Unknown request: send method not found only if it has an id
                 if !id.is_null() {
-                    Some(error_response(id.as_i64().unwrap_or(0), -32601, "Method not found"))
+                    Some(error_response(
+                        id.as_i64().unwrap_or(0),
+                        -32601,
+                        "Method not found",
+                    ))
                 } else {
                     None
                 }
@@ -217,13 +228,17 @@ impl LspServer {
         }
 
         let token_types: Vec<String> = TOKEN_TYPES.iter().map(|s| format!("\"{}\"", s)).collect();
-        let token_mods: Vec<String> = TOKEN_MODIFIERS.iter().map(|s| format!("\"{}\"", s)).collect();
+        let token_mods: Vec<String> = TOKEN_MODIFIERS
+            .iter()
+            .map(|s| format!("\"{}\"", s))
+            .collect();
 
         let id_val = id.as_i64().unwrap_or(1);
         format!(
-            r#"{{"jsonrpc":"2.0","id":{id_val},"result":{{"capabilities":{{"textDocumentSync":{{"openClose":true,"change":1,"save":{{"includeText":true}}}},"completionProvider":{{"resolveProvider":false,"triggerCharacters":[".",":"," ","("]}},"hoverProvider":true,"definitionProvider":true,"declarationProvider":true,"implementationProvider":true,"referencesProvider":true,"documentSymbolProvider":true,"workspaceSymbolProvider":true,"documentFormattingProvider":true,"documentRangeFormattingProvider":true,"documentOnTypeFormattingProvider":{{"firstTriggerCharacter":"\n","moreTriggerCharacter":[":"]}},"semanticTokensProvider":{{"legend":{{"tokenTypes":[{}],"tokenModifiers":[{}]}},"full":true,"range":false}},"renameProvider":{{"prepareProvider":true}},"codeActionProvider":true,"signatureHelpProvider":{{"triggerCharacters":["(",","," "]}}}},"serverInfo":{{"name":"mantra-lsp","version":"0.7.0"}}}}}}"#,
+            r#"{{"jsonrpc":"2.0","id":{id_val},"result":{{"capabilities":{{"textDocumentSync":{{"openClose":true,"change":1,"save":{{"includeText":true}}}},"completionProvider":{{"resolveProvider":false,"triggerCharacters":[".",":"," ","("]}},"hoverProvider":true,"definitionProvider":true,"declarationProvider":true,"implementationProvider":true,"referencesProvider":true,"documentSymbolProvider":true,"workspaceSymbolProvider":true,"documentFormattingProvider":true,"documentRangeFormattingProvider":true,"documentOnTypeFormattingProvider":{{"firstTriggerCharacter":"\n","moreTriggerCharacter":[":"]}},"semanticTokensProvider":{{"legend":{{"tokenTypes":[{}],"tokenModifiers":[{}]}},"full":true,"range":false}},"renameProvider":{{"prepareProvider":true}},"codeActionProvider":true,"signatureHelpProvider":{{"triggerCharacters":["(",","," "]}}}},"serverInfo":{{"name":"mantra-lsp","version":"{version}"}}}}}}"#,
             token_types.join(","),
             token_mods.join(","),
+            version = env!("CARGO_PKG_VERSION"),
         )
     }
 
@@ -232,15 +247,24 @@ impl LspServer {
     }
 
     fn handle_did_open(&mut self, params: serde_json::Value) {
-        let uri = params["textDocument"]["uri"].as_str().unwrap_or("").to_string();
-        let text = params["textDocument"]["text"].as_str().unwrap_or("").to_string();
+        let uri = params["textDocument"]["uri"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
+        let text = params["textDocument"]["text"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
         let version = params["textDocument"]["version"].as_i64().unwrap_or(0);
         self.documents.open(uri.clone(), text, version);
         self.analyze_and_publish(&uri);
     }
 
     fn handle_did_change(&mut self, params: serde_json::Value) {
-        let uri = params["textDocument"]["uri"].as_str().unwrap_or("").to_string();
+        let uri = params["textDocument"]["uri"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
         let version = params["textDocument"]["version"].as_i64().unwrap_or(0);
         // We use full sync (TextDocumentSyncKind=1), so take first change
         if let Some(text) = params["contentChanges"][0]["text"].as_str() {
@@ -261,7 +285,10 @@ impl LspServer {
     }
 
     fn handle_did_save(&mut self, params: serde_json::Value) {
-        let uri = params["textDocument"]["uri"].as_str().unwrap_or("").to_string();
+        let uri = params["textDocument"]["uri"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
         if let Some(text) = params["text"].as_str() {
             self.documents.update(&uri, text.to_string(), 0);
         }
@@ -276,7 +303,11 @@ impl LspServer {
         let id_val = id.as_i64().unwrap_or(0);
 
         let items_json = if let Some(doc) = self.documents.get(uri) {
-            let analysis = self.analyses.get(uri).cloned().unwrap_or_else(|| analyze(&doc.text));
+            let analysis = self
+                .analyses
+                .get(uri)
+                .cloned()
+                .unwrap_or_else(|| analyze(&doc.text));
             let items = get_completions(doc, line, character, &analysis);
             completions_to_json(&items)
         } else {
@@ -293,7 +324,11 @@ impl LspServer {
         let id_val = id.as_i64().unwrap_or(0);
 
         if let Some(doc) = self.documents.get(uri) {
-            let analysis = self.analyses.get(uri).cloned().unwrap_or_else(|| analyze(&doc.text));
+            let analysis = self
+                .analyses
+                .get(uri)
+                .cloned()
+                .unwrap_or_else(|| analyze(&doc.text));
             if let Some(hover) = get_hover(doc, line, character, &analysis) {
                 return format!(
                     r#"{{"jsonrpc":"2.0","id":{id_val},"result":{}}}"#,
@@ -305,7 +340,10 @@ impl LspServer {
     }
 
     fn handle_definition(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
-        let uri = params["textDocument"]["uri"].as_str().unwrap_or("").to_string();
+        let uri = params["textDocument"]["uri"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
         let line = params["position"]["line"].as_u64().unwrap_or(0) as u32;
         let character = params["position"]["character"].as_u64().unwrap_or(0) as u32;
         let id_val = id.as_i64().unwrap_or(0);
@@ -313,7 +351,11 @@ impl LspServer {
         self.ensure_workspace_indexed(&uri);
 
         let result = if let Some(doc) = self.documents.get(&uri) {
-            let analysis = self.analyses.get(&uri).cloned().unwrap_or_else(|| analyze(&doc.text));
+            let analysis = self
+                .analyses
+                .get(&uri)
+                .cloned()
+                .unwrap_or_else(|| analyze(&doc.text));
             match go_to_definition(doc, line, character, &analysis, &self.analyses) {
                 Some(loc) => loc.to_json(),
                 None => "null".to_string(),
@@ -325,8 +367,15 @@ impl LspServer {
         format!(r#"{{"jsonrpc":"2.0","id":{id_val},"result":{result}}}"#)
     }
 
-    fn handle_implementation(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
-        let uri = params["textDocument"]["uri"].as_str().unwrap_or("").to_string();
+    fn handle_implementation(
+        &mut self,
+        id: serde_json::Value,
+        params: serde_json::Value,
+    ) -> String {
+        let uri = params["textDocument"]["uri"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
         let line = params["position"]["line"].as_u64().unwrap_or(0) as u32;
         let character = params["position"]["character"].as_u64().unwrap_or(0) as u32;
         let id_val = id.as_i64().unwrap_or(0);
@@ -334,7 +383,11 @@ impl LspServer {
         self.ensure_workspace_indexed(&uri);
 
         let result = if let Some(doc) = self.documents.get(&uri) {
-            let analysis = self.analyses.get(&uri).cloned().unwrap_or_else(|| analyze(&doc.text));
+            let analysis = self
+                .analyses
+                .get(&uri)
+                .cloned()
+                .unwrap_or_else(|| analyze(&doc.text));
             let locs = go_to_implementation(doc, line, character, &analysis, &self.analyses);
             locations_to_json(&locs)
         } else {
@@ -345,7 +398,10 @@ impl LspServer {
     }
 
     fn handle_references(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
-        let uri = params["textDocument"]["uri"].as_str().unwrap_or("").to_string();
+        let uri = params["textDocument"]["uri"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
         let line = params["position"]["line"].as_u64().unwrap_or(0) as u32;
         let character = params["position"]["character"].as_u64().unwrap_or(0) as u32;
         let id_val = id.as_i64().unwrap_or(0);
@@ -356,9 +412,7 @@ impl LspServer {
                 .documents
                 .all_uris()
                 .into_iter()
-                .filter_map(|u| {
-                    self.documents.get(&u).map(|d| (u, d.clone()))
-                })
+                .filter_map(|u| self.documents.get(&u).map(|d| (u, d.clone())))
                 .collect();
             let locs = find_references(doc, line, character, &all_docs, &self.analyses);
             locations_to_json(&locs)
@@ -369,14 +423,22 @@ impl LspServer {
         format!(r#"{{"jsonrpc":"2.0","id":{id_val},"result":{result}}}"#)
     }
 
-    fn handle_document_symbol(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+    fn handle_document_symbol(
+        &mut self,
+        id: serde_json::Value,
+        params: serde_json::Value,
+    ) -> String {
         let uri = params["textDocument"]["uri"].as_str().unwrap_or("");
         let id_val = id.as_i64().unwrap_or(0);
         let result = self.symbol_index.document_symbols_json(uri);
         format!(r#"{{"jsonrpc":"2.0","id":{id_val},"result":{result}}}"#)
     }
 
-    fn handle_workspace_symbol(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+    fn handle_workspace_symbol(
+        &mut self,
+        id: serde_json::Value,
+        params: serde_json::Value,
+    ) -> String {
         let query = params["query"].as_str().unwrap_or("");
         let id_val = id.as_i64().unwrap_or(0);
         let items = self.symbol_index.workspace_symbols_json(query);
@@ -398,7 +460,11 @@ impl LspServer {
         format!(r#"{{"jsonrpc":"2.0","id":{id_val},"result":{result}}}"#)
     }
 
-    fn handle_range_formatting(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+    fn handle_range_formatting(
+        &mut self,
+        id: serde_json::Value,
+        params: serde_json::Value,
+    ) -> String {
         let uri = params["textDocument"]["uri"].as_str().unwrap_or("");
         let id_val = id.as_i64().unwrap_or(0);
 
@@ -418,12 +484,20 @@ impl LspServer {
         format!(r#"{{"jsonrpc":"2.0","id":{id_val},"result":{result}}}"#)
     }
 
-    fn handle_semantic_tokens(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+    fn handle_semantic_tokens(
+        &mut self,
+        id: serde_json::Value,
+        params: serde_json::Value,
+    ) -> String {
         let uri = params["textDocument"]["uri"].as_str().unwrap_or("");
         let id_val = id.as_i64().unwrap_or(0);
 
         let result = if let Some(doc) = self.documents.get(uri) {
-            let analysis = self.analyses.get(uri).cloned().unwrap_or_else(|| analyze(&doc.text));
+            let analysis = self
+                .analyses
+                .get(uri)
+                .cloned()
+                .unwrap_or_else(|| analyze(&doc.text));
             get_semantic_tokens_json(doc, &analysis)
         } else {
             r#"{"data":[]}"#.to_string()
@@ -433,7 +507,10 @@ impl LspServer {
     }
 
     fn handle_rename(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
-        let uri = params["textDocument"]["uri"].as_str().unwrap_or("").to_string();
+        let uri = params["textDocument"]["uri"]
+            .as_str()
+            .unwrap_or("")
+            .to_string();
         let line = params["position"]["line"].as_u64().unwrap_or(0) as u32;
         let character = params["position"]["character"].as_u64().unwrap_or(0) as u32;
         let new_name = params["newName"].as_str().unwrap_or("_renamed");
@@ -454,14 +531,22 @@ impl LspServer {
         format!(r#"{{"jsonrpc":"2.0","id":{id_val},"result":{result}}}"#)
     }
 
-    fn handle_prepare_rename(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+    fn handle_prepare_rename(
+        &mut self,
+        id: serde_json::Value,
+        params: serde_json::Value,
+    ) -> String {
         let uri = params["textDocument"]["uri"].as_str().unwrap_or("");
         let line = params["position"]["line"].as_u64().unwrap_or(0) as u32;
         let character = params["position"]["character"].as_u64().unwrap_or(0) as u32;
         let id_val = id.as_i64().unwrap_or(0);
 
         let result = if let Some(doc) = self.documents.get(uri) {
-            let analysis = self.analyses.get(uri).cloned().unwrap_or_else(|| analyze(&doc.text));
+            let analysis = self
+                .analyses
+                .get(uri)
+                .cloned()
+                .unwrap_or_else(|| analyze(&doc.text));
             match prepare_rename(doc, line, character, &analysis) {
                 Some(r) => format!(
                     r#"{{"start":{{"line":{},"character":{}}},"end":{{"line":{},"character":{}}}}}"#,
@@ -485,13 +570,18 @@ impl LspServer {
         let id_val = id.as_i64().unwrap_or(0);
 
         let result = if let Some(doc) = self.documents.get(uri) {
-            let analysis = self.analyses.get(uri).cloned().unwrap_or_else(|| analyze(&doc.text));
+            let analysis = self
+                .analyses
+                .get(uri)
+                .cloned()
+                .unwrap_or_else(|| analyze(&doc.text));
             let range = LspRange::new(sl, sc, el, ec);
-            let diag_codes: Vec<String> = if let Some(arr) = params["context"]["diagnostics"].as_array() {
-                arr.iter().map(|d| d.to_string()).collect()
-            } else {
-                vec![]
-            };
+            let diag_codes: Vec<String> =
+                if let Some(arr) = params["context"]["diagnostics"].as_array() {
+                    arr.iter().map(|d| d.to_string()).collect()
+                } else {
+                    vec![]
+                };
             let actions = get_code_actions(doc, &range, &diag_codes, &analysis);
             code_actions_to_json(&actions)
         } else {
@@ -501,14 +591,22 @@ impl LspServer {
         format!(r#"{{"jsonrpc":"2.0","id":{id_val},"result":{result}}}"#)
     }
 
-    fn handle_signature_help(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+    fn handle_signature_help(
+        &mut self,
+        id: serde_json::Value,
+        params: serde_json::Value,
+    ) -> String {
         let uri = params["textDocument"]["uri"].as_str().unwrap_or("");
         let line = params["position"]["line"].as_u64().unwrap_or(0) as u32;
         let character = params["position"]["character"].as_u64().unwrap_or(0) as u32;
         let id_val = id.as_i64().unwrap_or(0);
 
         let result = if let Some(doc) = self.documents.get(uri) {
-            let analysis = self.analyses.get(uri).cloned().unwrap_or_else(|| analyze(&doc.text));
+            let analysis = self
+                .analyses
+                .get(uri)
+                .cloned()
+                .unwrap_or_else(|| analyze(&doc.text));
             get_signature_help_json(doc, line, character, &analysis)
                 .unwrap_or_else(|| "null".to_string())
         } else {
@@ -580,7 +678,11 @@ impl LspServer {
                 return default_keyword_completions();
             }
         };
-        let analysis = self.analyses.get(uri).cloned().unwrap_or_else(|| analyze(&doc.text));
+        let analysis = self
+            .analyses
+            .get(uri)
+            .cloned()
+            .unwrap_or_else(|| analyze(&doc.text));
         let items = get_completions(doc, pos.line, pos.character, &analysis);
         items
             .into_iter()
@@ -595,7 +697,11 @@ impl LspServer {
 
     pub fn get_hover(&self, uri: &str, pos: &LspPosition) -> Option<LspHover> {
         let doc = self.documents.get(uri)?;
-        let analysis = self.analyses.get(uri).cloned().unwrap_or_else(|| analyze(&doc.text));
+        let analysis = self
+            .analyses
+            .get(uri)
+            .cloned()
+            .unwrap_or_else(|| analyze(&doc.text));
         let h = get_hover(doc, pos.line, pos.character, &analysis)?;
         Some(LspHover {
             contents: h.markdown,
@@ -624,6 +730,109 @@ impl LspServer {
                 })
                 .collect(),
         )
+    }
+
+    // ─── Mantra Intelligence (MVP 2) Custom LSP Handlers ─────────────────────
+
+    fn handle_ai_completion(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+        let uri = params["textDocument"]["uri"].as_str().unwrap_or("");
+        let line = params["position"]["line"].as_u64().unwrap_or(0) as usize;
+        let character = params["position"]["character"].as_u64().unwrap_or(0) as usize;
+        let prefix = params["prefix"].as_str().unwrap_or("");
+        let id_val = id.as_i64().unwrap_or(0);
+
+        let result_json = if let Some(doc) = self.documents.get(uri) {
+            let suggestions = mantra_intelligence::MantraIntelligence::complete(
+                uri,
+                &doc.text,
+                line + 1,
+                character,
+                prefix,
+            );
+            serde_json::to_string(&suggestions).unwrap_or_else(|_| "[]".to_string())
+        } else {
+            "[]".to_string()
+        };
+
+        format!(
+            r#"{{"jsonrpc":"2.0","id":{},"result":{}}}"#,
+            id_val, result_json
+        )
+    }
+
+    fn handle_explain_diagnostic(
+        &mut self,
+        id: serde_json::Value,
+        params: serde_json::Value,
+    ) -> String {
+        let code = params["code"].as_str().unwrap_or("");
+        let message = params["message"].as_str().unwrap_or("");
+        let source_line = params["sourceLine"].as_str().unwrap_or("");
+        let id_val = id.as_i64().unwrap_or(0);
+
+        let exp = mantra_intelligence::MantraIntelligence::explain_error(
+            code,
+            message,
+            source_line,
+            None,
+        );
+        let result_json = serde_json::to_string(&exp).unwrap_or_else(|_| "{}".to_string());
+        format!(
+            r#"{{"jsonrpc":"2.0","id":{},"result":{}}}"#,
+            id_val, result_json
+        )
+    }
+
+    fn handle_suggest_fix(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+        let uri = params["textDocument"]["uri"].as_str().unwrap_or("");
+        let code = params["code"].as_str().unwrap_or("");
+        let message = params["message"].as_str().unwrap_or("");
+        let line = params["line"].as_u64().unwrap_or(1) as usize;
+        let col = params["character"].as_u64().unwrap_or(1) as usize;
+        let id_val = id.as_i64().unwrap_or(0);
+
+        let result_json = if let Some(doc) = self.documents.get(uri) {
+            let patches = mantra_intelligence::MantraIntelligence::suggest_fixes(
+                uri, &doc.text, code, message, line, col,
+            );
+            serde_json::to_string(&patches).unwrap_or_else(|_| "[]".to_string())
+        } else {
+            "[]".to_string()
+        };
+        format!(
+            r#"{{"jsonrpc":"2.0","id":{},"result":{}}}"#,
+            id_val, result_json
+        )
+    }
+
+    fn handle_generate_code(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+        let prompt = params["prompt"].as_str().unwrap_or("");
+        let id_val = id.as_i64().unwrap_or(0);
+
+        let result = match mantra_intelligence::MantraIntelligence::generate_class(prompt) {
+            Ok(code) => serde_json::json!({ "success": true, "code": code }),
+            Err(e) => serde_json::json!({ "success": false, "error": e }),
+        };
+        format!(r#"{{"jsonrpc":"2.0","id":{},"result":{}}}"#, id_val, result)
+    }
+
+    fn handle_generate_tests(
+        &mut self,
+        id: serde_json::Value,
+        params: serde_json::Value,
+    ) -> String {
+        let uri = params["textDocument"]["uri"].as_str().unwrap_or("");
+        let id_val = id.as_i64().unwrap_or(0);
+
+        let result = if let Some(doc) = self.documents.get(uri) {
+            match mantra_intelligence::MantraIntelligence::generate_tests(uri, &doc.text) {
+                Ok(test_code) => serde_json::json!({ "success": true, "testCode": test_code }),
+                Err(e) => serde_json::json!({ "success": false, "error": e }),
+            }
+        } else {
+            serde_json::json!({ "success": false, "error": "Document not found" })
+        };
+        format!(r#"{{"jsonrpc":"2.0","id":{},"result":{}}}"#, id_val, result)
     }
 }
 

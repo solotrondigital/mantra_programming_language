@@ -1,0 +1,10 @@
+[package]
+name = "mantra.email"
+version = "0.8.0"
+edition = "2026"
+description = "Generic email sending package for the Mantra Programming Language — SMTP client, RFC 5322 message builder, To/Cc/Bcc routing, and multi-server dispatch."
+license = "MIT OR GPL-3.0-or-later"
+entry = "lib/mantra_email.mantra"
+
+[dependencies]
+"mantra.util" = "0.8.0"

@@ -29,23 +29,33 @@ impl JitEngine {
         &self.diagnostics
     }
 
-    pub fn execute(&mut self, ir_program: &IrProgram, ast_fallback: &Program) -> Result<i64, String> {
+    pub fn execute(
+        &mut self,
+        ir_program: &IrProgram,
+        ast_fallback: &Program,
+    ) -> Result<i64, String> {
         let compile_start = Instant::now();
 
         // Check if program requires interpreter fallback (e.g. dynamic reflection, full OOP method tables)
-        let has_complex_classes = ast_fallback.declarations.iter().any(|d| matches!(d, mantrac_ast::Declaration::Class(_)));
+        let has_complex_classes = ast_fallback
+            .declarations
+            .iter()
+            .any(|d| matches!(d, mantrac_ast::Declaration::Class(_)));
         if ir_program.has_unsupported_features || has_complex_classes {
             self.diagnostics.used_fallback = true;
-            self.diagnostics.fallback_reason = Some(
-                ir_program.fallback_reason.clone().unwrap_or_else(|| {
-                    "Dynamic OOP class dispatch dispatched via v0.1.0 interpreter runtime".to_string()
-                }),
-            );
+            self.diagnostics.fallback_reason =
+                Some(ir_program.fallback_reason.clone().unwrap_or_else(|| {
+                    "Dynamic OOP class dispatch dispatched via v0.1.0 interpreter runtime"
+                        .to_string()
+                }));
             self.diagnostics.compile_duration_us = compile_start.elapsed().as_micros();
 
             let exec_start = Instant::now();
             let mut interp = Interpreter::new();
-            let res = interp.execute_program(ast_fallback).map(|_| 0).map_err(|e| format!("{:?}", e));
+            let res = interp
+                .execute_program(ast_fallback)
+                .map(|_| 0)
+                .map_err(|e| format!("{:?}", e));
             self.diagnostics.execution_duration_us = exec_start.elapsed().as_micros();
             return res;
         }
@@ -61,7 +71,9 @@ impl JitEngine {
             func_map.insert(func.name.clone(), func);
         }
 
-        let main_func = func_map.get("main").ok_or_else(|| "No 'main' function found in program".to_string())?;
+        let main_func = func_map
+            .get("main")
+            .ok_or_else(|| "No 'main' function found in program".to_string())?;
 
         let exit_code = self.execute_function(main_func, &func_map, &mut globals, Vec::new())?;
 
@@ -107,56 +119,79 @@ impl JitEngine {
                     locals.insert(dest.clone(), val);
                     ip += 1;
                 }
-                IrInstruction::Binary { op, dest, left, right } => {
+                IrInstruction::Binary {
+                    op,
+                    dest,
+                    left,
+                    right,
+                } => {
                     let l_val = locals.get(left).cloned().unwrap_or(IrValue::Null);
                     let r_val = locals.get(right).cloned().unwrap_or(IrValue::Null);
                     let res = self.eval_binary(*op, l_val, r_val)?;
                     locals.insert(dest.clone(), res);
                     ip += 1;
                 }
-                IrInstruction::Call { dest, func: callee, args } => {
+                IrInstruction::Call {
+                    dest,
+                    func: callee,
+                    args,
+                } => {
                     let arg_vals: Vec<IrValue> = args
                         .iter()
                         .map(|a| locals.get(a).cloned().unwrap_or(IrValue::Null))
                         .collect();
 
                     if callee == "str" {
-                        let res = arg_vals.first().map(|v| match v {
-                            IrValue::Int(i) => IrValue::String(i.to_string()),
-                            IrValue::Float(f) => IrValue::String(f.to_string()),
-                            IrValue::Bool(b) => IrValue::String(b.to_string()),
-                            IrValue::String(s) => IrValue::String(s.clone()),
-                            _ => IrValue::String("".to_string()),
-                        }).unwrap_or(IrValue::String("".to_string()));
+                        let res = arg_vals
+                            .first()
+                            .map(|v| match v {
+                                IrValue::Int(i) => IrValue::String(i.to_string()),
+                                IrValue::Float(f) => IrValue::String(f.to_string()),
+                                IrValue::Bool(b) => IrValue::String(b.to_string()),
+                                IrValue::String(s) => IrValue::String(s.clone()),
+                                _ => IrValue::String("".to_string()),
+                            })
+                            .unwrap_or(IrValue::String("".to_string()));
                         if let Some(d) = dest {
                             locals.insert(d.clone(), res);
                         }
                     } else if callee == "int" {
-                        let res = arg_vals.first().map(|v| match v {
-                            IrValue::Int(i) => IrValue::Int(*i),
-                            IrValue::Float(f) => IrValue::Int(*f as i64),
-                            IrValue::String(s) => IrValue::Int(s.parse::<i64>().unwrap_or(0)),
-                            _ => IrValue::Int(0),
-                        }).unwrap_or(IrValue::Int(0));
+                        let res = arg_vals
+                            .first()
+                            .map(|v| match v {
+                                IrValue::Int(i) => IrValue::Int(*i),
+                                IrValue::Float(f) => IrValue::Int(*f as i64),
+                                IrValue::String(s) => IrValue::Int(s.parse::<i64>().unwrap_or(0)),
+                                _ => IrValue::Int(0),
+                            })
+                            .unwrap_or(IrValue::Int(0));
                         if let Some(d) = dest {
                             locals.insert(d.clone(), res);
                         }
                     } else if callee == "float" {
-                        let res = arg_vals.first().map(|v| match v {
-                            IrValue::Float(f) => IrValue::Float(*f),
-                            IrValue::Int(i) => IrValue::Float(*i as f64),
-                            IrValue::String(s) => IrValue::Float(s.parse::<f64>().unwrap_or(0.0)),
-                            _ => IrValue::Float(0.0),
-                        }).unwrap_or(IrValue::Float(0.0));
+                        let res = arg_vals
+                            .first()
+                            .map(|v| match v {
+                                IrValue::Float(f) => IrValue::Float(*f),
+                                IrValue::Int(i) => IrValue::Float(*i as f64),
+                                IrValue::String(s) => {
+                                    IrValue::Float(s.parse::<f64>().unwrap_or(0.0))
+                                }
+                                _ => IrValue::Float(0.0),
+                            })
+                            .unwrap_or(IrValue::Float(0.0));
                         if let Some(d) = dest {
                             locals.insert(d.clone(), res);
                         }
                     } else if callee == "assert" {
-                        let cond = arg_vals.first().map(|v| match v {
-                            IrValue::Bool(b) => *b,
-                            IrValue::Int(i) => *i != 0,
-                            _ => true,
-                        }).unwrap_or(true);
+                        let cond = arg_vals
+                            .first()
+                            .map(|v| match v {
+                                IrValue::Bool(b) => *b,
+                                IrValue::Int(i) => *i != 0,
+                                _ => true,
+                            })
+                            .unwrap_or(true);
                         if !cond {
                             return Err("Assertion failed in JIT execution".to_string());
                         }
@@ -164,34 +199,49 @@ impl JitEngine {
                             locals.insert(d.clone(), IrValue::Bool(true));
                         }
                     } else if callee == "read_file" {
-                        let path = arg_vals.first().map(|v| match v {
-                            IrValue::String(s) => s.clone(),
-                            _ => "".to_string(),
-                        }).unwrap_or_else(|| "".to_string());
-                        let content = std::fs::read_to_string(&path).unwrap_or_else(|_| "".to_string());
+                        let path = arg_vals
+                            .first()
+                            .map(|v| match v {
+                                IrValue::String(s) => s.clone(),
+                                _ => "".to_string(),
+                            })
+                            .unwrap_or_else(|| "".to_string());
+                        let content =
+                            std::fs::read_to_string(&path).unwrap_or_else(|_| "".to_string());
                         if let Some(d) = dest {
                             locals.insert(d.clone(), IrValue::String(content));
                         }
                     } else if callee == "write_file" {
-                        let path = arg_vals.first().map(|v| match v {
-                            IrValue::String(s) => s.clone(),
-                            _ => "".to_string(),
-                        }).unwrap_or_else(|| "".to_string());
-                        let content = arg_vals.get(1).map(|v| match v {
-                            IrValue::String(s) => s.clone(),
-                            _ => "".to_string(),
-                        }).unwrap_or_else(|| "".to_string());
+                        let path = arg_vals
+                            .first()
+                            .map(|v| match v {
+                                IrValue::String(s) => s.clone(),
+                                _ => "".to_string(),
+                            })
+                            .unwrap_or_else(|| "".to_string());
+                        let content = arg_vals
+                            .get(1)
+                            .map(|v| match v {
+                                IrValue::String(s) => s.clone(),
+                                _ => "".to_string(),
+                            })
+                            .unwrap_or_else(|| "".to_string());
                         let ok = std::fs::write(&path, content).is_ok();
                         if let Some(d) = dest {
                             locals.insert(d.clone(), IrValue::Bool(ok));
                         }
                     } else if callee == "system_exec" {
-                        let cmd = arg_vals.first().map(|v| match v {
-                            IrValue::String(s) => s.clone(),
-                            _ => "".to_string(),
-                        }).unwrap_or_else(|| "".to_string());
+                        let cmd = arg_vals
+                            .first()
+                            .map(|v| match v {
+                                IrValue::String(s) => s.clone(),
+                                _ => "".to_string(),
+                            })
+                            .unwrap_or_else(|| "".to_string());
                         #[cfg(target_os = "windows")]
-                        let status = std::process::Command::new("cmd").args(["/C", &cmd]).status();
+                        let status = std::process::Command::new("cmd")
+                            .args(["/C", &cmd])
+                            .status();
                         #[cfg(not(target_os = "windows"))]
                         let status = std::process::Command::new("sh").args(["-c", &cmd]).status();
                         let code = match status {
@@ -207,11 +257,18 @@ impl JitEngine {
                             locals.insert(d.clone(), res);
                         }
                     } else {
-                        return Err(format!("Unknown function '{}' in JIT compilation unit", callee));
+                        return Err(format!(
+                            "Unknown function '{}' in JIT compilation unit",
+                            callee
+                        ));
                     }
                     ip += 1;
                 }
-                IrInstruction::CallAsync { dest, func: callee, args } => {
+                IrInstruction::CallAsync {
+                    dest,
+                    func: callee,
+                    args,
+                } => {
                     // Task-scheduled coroutine invocation
                     let arg_vals: Vec<IrValue> = args
                         .iter()
@@ -247,7 +304,11 @@ impl JitEngine {
                 IrInstruction::Jump { target } => {
                     ip = *target;
                 }
-                IrInstruction::Branch { cond, true_target, false_target } => {
+                IrInstruction::Branch {
+                    cond,
+                    true_target,
+                    false_target,
+                } => {
                     let c = locals.get(cond).cloned().unwrap_or(IrValue::Bool(false));
                     let is_true = match c {
                         IrValue::Bool(b) => b,
@@ -272,7 +333,12 @@ impl JitEngine {
         Ok(return_val)
     }
 
-    fn eval_binary(&self, op: IrBinaryOp, left: IrValue, right: IrValue) -> Result<IrValue, String> {
+    fn eval_binary(
+        &self,
+        op: IrBinaryOp,
+        left: IrValue,
+        right: IrValue,
+    ) -> Result<IrValue, String> {
         match (left, right) {
             (IrValue::Int(l), IrValue::Int(r)) => match op {
                 IrBinaryOp::Add => Ok(IrValue::Int(l + r)),

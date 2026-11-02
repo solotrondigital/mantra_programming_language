@@ -103,7 +103,10 @@ impl PermissionsManager {
     }
 
     pub fn check_permission(&self, permission: PermissionType) -> PermissionStatus {
-        self.registry.get(&permission).copied().unwrap_or(PermissionStatus::NotDetermined)
+        self.registry
+            .get(&permission)
+            .copied()
+            .unwrap_or(PermissionStatus::NotDetermined)
     }
 
     pub fn set_permission(&mut self, permission: PermissionType, status: PermissionStatus) {
@@ -129,4 +132,3 @@ impl PermissionsManager {
         )
     }
 }
-

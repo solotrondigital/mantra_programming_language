@@ -1,4 +1,6 @@
-use super::{AdapterKind, Cursor, CursorDirection, DatabaseAdapter, ProcedureParam, ProcedureResult};
+use super::{
+    AdapterKind, Cursor, CursorDirection, DatabaseAdapter, ProcedureParam, ProcedureResult,
+};
 use crate::model::{FieldValue, Row};
 use std::collections::HashMap;
 
@@ -57,7 +59,11 @@ impl DatabaseAdapter for MSSQLAdapter {
         self.connected
     }
 
-    fn execute_procedure(&self, name: &str, params: &[ProcedureParam]) -> Result<ProcedureResult, String> {
+    fn execute_procedure(
+        &self,
+        name: &str,
+        params: &[ProcedureParam],
+    ) -> Result<ProcedureResult, String> {
         if !self.connected {
             return Err("MSSQL adapter: Not connected to database".to_string());
         }
@@ -71,7 +77,10 @@ impl DatabaseAdapter for MSSQLAdapter {
                 }
                 super::ParamDirection::Out => {
                     tsql_args.push(format!("@{} OUTPUT", p.name));
-                    output_params.insert(p.name.clone(), FieldValue::Text("MSSQL_OUT_VAL".to_string()));
+                    output_params.insert(
+                        p.name.clone(),
+                        FieldValue::Text("MSSQL_OUT_VAL".to_string()),
+                    );
                 }
                 super::ParamDirection::InOut => {
                     tsql_args.push(format!("@{} = {} OUTPUT", p.name, p.value));
@@ -82,7 +91,10 @@ impl DatabaseAdapter for MSSQLAdapter {
 
         let mut row = Row::new();
         row.insert("PROCEDURE", FieldValue::Text(name.to_string()));
-        row.insert("TSQL", FieldValue::Text(format!("EXEC {} {}", name, tsql_args.join(", "))));
+        row.insert(
+            "TSQL",
+            FieldValue::Text(format!("EXEC {} {}", name, tsql_args.join(", "))),
+        );
 
         Ok(ProcedureResult {
             status: 0,
@@ -99,7 +111,12 @@ impl DatabaseAdapter for MSSQLAdapter {
         let mut row = Row::new();
         row.insert("CURSOR_NAME", FieldValue::Text(name.to_string()));
         row.insert("QUERY", FieldValue::Text(query.to_string()));
-        Ok(Cursor::new(name, query, vec![row], CursorDirection::Scrollable))
+        Ok(Cursor::new(
+            name,
+            query,
+            vec![row],
+            CursorDirection::Scrollable,
+        ))
     }
 
     fn close_cursor(&self, _name: &str) -> Result<(), String> {
@@ -142,11 +159,19 @@ impl DatabaseAdapter for MSSQLAdapter {
         Ok(format!("EXEC sp_refreshview '{}'", name))
     }
 
-    fn execute_scalar_function(&self, name: &str, args: &[FieldValue]) -> Result<FieldValue, String> {
+    fn execute_scalar_function(
+        &self,
+        name: &str,
+        args: &[FieldValue],
+    ) -> Result<FieldValue, String> {
         if !self.connected {
             return Err("MSSQL adapter: Not connected to database".to_string());
         }
-        let args_str = args.iter().map(|a| a.to_string()).collect::<Vec<_>>().join(", ");
+        let args_str = args
+            .iter()
+            .map(|a| a.to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
         Ok(FieldValue::Text(format!("dbo.{}({})", name, args_str)))
     }
 
@@ -160,4 +185,3 @@ impl DatabaseAdapter for MSSQLAdapter {
         Ok(vec![row])
     }
 }
-

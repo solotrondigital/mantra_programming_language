@@ -6,4 +6,3 @@ pub mod symbols;
 pub use checker::TypeChecker;
 pub use diagnostics::{Diagnostic, DiagnosticLevel};
 pub use symbols::*;
-

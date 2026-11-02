@@ -106,12 +106,9 @@ impl SecurityPolicy {
         if self.allowed_origins.contains("*") {
             return true;
         }
-        for allowed in &self.allowed_origins {
-            if origin.starts_with(allowed) {
-                return true;
-            }
-        }
-        false
+        // Origins are security principals, not URL prefixes. Prefix matching
+        // would allow e.g. https://localhost.attacker.example.
+        self.allowed_origins.contains(origin)
     }
 
     /// Checks if a capability is explicitly granted.
@@ -150,4 +147,3 @@ impl SecurityPolicy {
         r#"<meta http-equiv="Content-Security-Policy" content="default-src 'self' file: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; img-src 'self' data: https:;">"#.to_string()
     }
 }
-

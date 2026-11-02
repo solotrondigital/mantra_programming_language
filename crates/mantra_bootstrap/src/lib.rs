@@ -13,10 +13,9 @@
 //   6. RegressionSuite — wraps conformance and negative-diagnostic tests.
 // ==============================================================================
 
-pub mod version;
-pub mod ir_contract;
 pub mod bootstrap;
-pub mod reproducibility;
+pub mod ir_contract;
 pub mod plugin;
 pub mod regression;
-
+pub mod reproducibility;
+pub mod version;

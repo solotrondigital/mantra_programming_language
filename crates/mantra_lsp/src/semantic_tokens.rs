@@ -82,9 +82,15 @@ fn ast_tokens_decl(decl: &Declaration, out: &mut Vec<RawToken>) {
                             semantic_token_modifier::DECLARATION
                         } else {
                             let mut mods = semantic_token_modifier::DECLARATION;
-                            if m.is_static { mods |= semantic_token_modifier::STATIC; }
-                            if m.is_abstract { mods |= semantic_token_modifier::ABSTRACT; }
-                            if m.is_async { mods |= semantic_token_modifier::ASYNC; }
+                            if m.is_static {
+                                mods |= semantic_token_modifier::STATIC;
+                            }
+                            if m.is_abstract {
+                                mods |= semantic_token_modifier::ABSTRACT;
+                            }
+                            if m.is_async {
+                                mods |= semantic_token_modifier::ASYNC;
+                            }
                             mods
                         };
                         let tok_type = if m.name == "__init__" {
@@ -159,11 +165,21 @@ fn ast_tokens_decl(decl: &Declaration, out: &mut Vec<RawToken>) {
         }
         Declaration::Function(f) => {
             let mods = {
-                let mut m = semantic_token_modifier::DECLARATION | semantic_token_modifier::DEFINITION;
-                if f.is_async { m |= semantic_token_modifier::ASYNC; }
+                let mut m =
+                    semantic_token_modifier::DECLARATION | semantic_token_modifier::DEFINITION;
+                if f.is_async {
+                    m |= semantic_token_modifier::ASYNC;
+                }
                 m
             };
-            push_span(f.span, 0, f.name.len() as u32, semantic_token_type::FUNCTION, mods, out);
+            push_span(
+                f.span,
+                0,
+                f.name.len() as u32,
+                semantic_token_type::FUNCTION,
+                mods,
+                out,
+            );
             for param in &f.params {
                 push_span(
                     param.span,
@@ -176,7 +192,14 @@ fn ast_tokens_decl(decl: &Declaration, out: &mut Vec<RawToken>) {
             }
         }
         Declaration::Module(name, span) => {
-            push_span(*span, 0, name.len() as u32, semantic_token_type::NAMESPACE, 0, out);
+            push_span(
+                *span,
+                0,
+                name.len() as u32,
+                semantic_token_type::NAMESPACE,
+                0,
+                out,
+            );
         }
         _ => {}
     }
@@ -194,8 +217,18 @@ fn push_span(
         return;
     }
     let line = (span.line - 1) as u32;
-    let start = if span.col > 0 { (span.col - 1) as u32 } else { 0 };
-    out.push(RawToken { line, start, length, token_type, token_modifiers });
+    let start = if span.col > 0 {
+        (span.col - 1) as u32
+    } else {
+        0
+    };
+    out.push(RawToken {
+        line,
+        start,
+        length,
+        token_type,
+        token_modifiers,
+    });
 }
 
 // ─── Lexer-based token overlay ────────────────────────────────────────────────
@@ -213,7 +246,11 @@ fn lexer_tokens(document: &Document, out: &mut Vec<RawToken>) {
             continue;
         }
         let line = (span.line - 1) as u32;
-        let start = if span.col > 0 { (span.col - 1) as u32 } else { 0 };
+        let start = if span.col > 0 {
+            (span.col - 1) as u32
+        } else {
+            0
+        };
         let (tok_type, mods, len) = match &tok.kind {
             TokenKind::Integer(_) => {
                 let len = (span.end - span.start) as u32;
@@ -253,7 +290,11 @@ fn lexer_tokens(document: &Document, out: &mut Vec<RawToken>) {
             TokenKind::While => (semantic_token_type::KEYWORD, 0, 5),
             TokenKind::Break => (semantic_token_type::KEYWORD, 0, 5),
             TokenKind::Continue => (semantic_token_type::KEYWORD, 0, 8),
-            TokenKind::Async => (semantic_token_type::MODIFIER, semantic_token_modifier::ASYNC, 5),
+            TokenKind::Async => (
+                semantic_token_type::MODIFIER,
+                semantic_token_modifier::ASYNC,
+                5,
+            ),
             TokenKind::Await => (semantic_token_type::KEYWORD, 0, 5),
             TokenKind::True | TokenKind::False | TokenKind::None => {
                 let len = match &tok.kind {
@@ -275,10 +316,22 @@ fn lexer_tokens(document: &Document, out: &mut Vec<RawToken>) {
                 };
                 (semantic_token_type::KEYWORD, 0, len)
             }
-            TokenKind::Plus | TokenKind::Minus | TokenKind::Star | TokenKind::Slash
-            | TokenKind::Percent | TokenKind::Eq | TokenKind::EqEq | TokenKind::NotEq
-            | TokenKind::Lt | TokenKind::Gt | TokenKind::LtEq | TokenKind::GtEq
-            | TokenKind::PlusEq | TokenKind::MinusEq | TokenKind::StarEq | TokenKind::SlashEq
+            TokenKind::Plus
+            | TokenKind::Minus
+            | TokenKind::Star
+            | TokenKind::Slash
+            | TokenKind::Percent
+            | TokenKind::Eq
+            | TokenKind::EqEq
+            | TokenKind::NotEq
+            | TokenKind::Lt
+            | TokenKind::Gt
+            | TokenKind::LtEq
+            | TokenKind::GtEq
+            | TokenKind::PlusEq
+            | TokenKind::MinusEq
+            | TokenKind::StarEq
+            | TokenKind::SlashEq
             | TokenKind::Arrow => {
                 let len = (span.end - span.start).max(1) as u32;
                 (semantic_token_type::OPERATOR, 0u32, len)
@@ -287,8 +340,13 @@ fn lexer_tokens(document: &Document, out: &mut Vec<RawToken>) {
             _ => continue,
         };
         if len > 0 {
-            out.push(RawToken { line, start, length: len, token_type: tok_type, token_modifiers: mods });
+            out.push(RawToken {
+                line,
+                start,
+                length: len,
+                token_type: tok_type,
+                token_modifiers: mods,
+            });
         }
     }
 }
-

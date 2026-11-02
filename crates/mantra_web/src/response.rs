@@ -28,7 +28,9 @@ impl StatusCode {
             StatusCode::InternalServerError => "Internal Server Error",
         }
     }
-    pub fn code(&self) -> u16 { *self as u16 }
+    pub fn code(&self) -> u16 {
+        *self as u16
+    }
 }
 
 /// Content-Type helpers.
@@ -44,11 +46,11 @@ pub enum ContentType {
 impl ContentType {
     pub fn mime(&self) -> &str {
         match self {
-            ContentType::Json         => "application/json",
-            ContentType::Html         => "text/html; charset=utf-8",
-            ContentType::Text         => "text/plain",
-            ContentType::Xml          => "application/xml",
-            ContentType::OctetStream  => "application/octet-stream",
+            ContentType::Json => "application/json",
+            ContentType::Html => "text/html; charset=utf-8",
+            ContentType::Text => "text/plain",
+            ContentType::Xml => "application/xml",
+            ContentType::OctetStream => "application/octet-stream",
         }
     }
 }
@@ -64,22 +66,45 @@ pub struct Response {
 
 impl Response {
     pub fn ok(body: &str) -> Self {
-        Response { status: StatusCode::Ok, content_type: ContentType::Json, body: body.into(), headers: vec![] }
+        Response {
+            status: StatusCode::Ok,
+            content_type: ContentType::Json,
+            body: body.into(),
+            headers: vec![],
+        }
     }
     pub fn created(body: &str) -> Self {
-        Response { status: StatusCode::Created, content_type: ContentType::Json, body: body.into(), headers: vec![] }
+        Response {
+            status: StatusCode::Created,
+            content_type: ContentType::Json,
+            body: body.into(),
+            headers: vec![],
+        }
     }
     pub fn not_found(msg: &str) -> Self {
-        Response { status: StatusCode::NotFound, content_type: ContentType::Json,
-            body: format!("{{\"error\":\"{}\"}}", msg), headers: vec![] }
+        Response {
+            status: StatusCode::NotFound,
+            content_type: ContentType::Json,
+            body: serde_json::json!({"error": msg}).to_string(),
+            headers: vec![],
+        }
     }
     pub fn bad_request(msg: &str) -> Self {
-        Response { status: StatusCode::BadRequest, content_type: ContentType::Json,
-            body: format!("{{\"error\":\"{}\"}}", msg), headers: vec![] }
+        Response {
+            status: StatusCode::BadRequest,
+            content_type: ContentType::Json,
+            body: serde_json::json!({"error": msg}).to_string(),
+            headers: vec![],
+        }
     }
     pub fn to_http_string(&self) -> String {
-        format!("HTTP {} {} | Content-Type: {} | Body: {}",
-            self.status.code(), self.status.text(), self.content_type.mime(), self.body)
+        format!(
+            "HTTP {} {} | Content-Type: {} | Body: {}",
+            self.status.code(),
+            self.status.text(),
+            self.content_type.mime(),
+            self.body
+        )
     }
 }
 
@@ -93,16 +118,47 @@ pub struct ResponseBuilder {
 }
 
 impl ResponseBuilder {
-    pub fn new() -> Self { ResponseBuilder::default() }
-    pub fn status(mut self, s: StatusCode) -> Self { self.status = Some(s); self }
-    pub fn content_type(mut self, ct: ContentType) -> Self { self.content_type = Some(ct); self }
-    pub fn body(mut self, body: &str) -> Self { self.body = body.into(); self }
-    pub fn header(mut self, k: &str, v: &str) -> Self { self.headers.push((k.into(), v.into())); self }
+    pub fn new() -> Self {
+        ResponseBuilder::default()
+    }
+    pub fn status(mut self, s: StatusCode) -> Self {
+        self.status = Some(s);
+        self
+    }
+    pub fn content_type(mut self, ct: ContentType) -> Self {
+        self.content_type = Some(ct);
+        self
+    }
+    pub fn body(mut self, body: &str) -> Self {
+        self.body = body.into();
+        self
+    }
+    pub fn header(mut self, k: &str, v: &str) -> Self {
+        self.headers.push((k.into(), v.into()));
+        self
+    }
     pub fn build(self) -> Response {
         Response {
             status: self.status.unwrap_or(StatusCode::Ok),
             content_type: self.content_type.unwrap_or(ContentType::Json),
-            body: self.body, headers: self.headers,
+            body: self.body,
+            headers: self.headers,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn error_helpers_return_valid_json_for_quoted_messages() {
+        for response in [
+            Response::bad_request("bad \"input\""),
+            Response::not_found("missing\\path"),
+        ] {
+            let value: serde_json::Value = serde_json::from_str(&response.body).unwrap();
+            assert!(value["error"].is_string());
         }
     }
 }

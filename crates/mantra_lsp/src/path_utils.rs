@@ -73,7 +73,9 @@ fn url_decode(s: &str) -> String {
                 result.push(c2);
             } else {
                 result.push('%');
-                if let Some(c1) = h1 { result.push(c1); }
+                if let Some(c1) = h1 {
+                    result.push(c1);
+                }
             }
         } else {
             result.push(ch);
@@ -106,6 +108,9 @@ mod tests {
     fn test_spaces_in_uri() {
         let uri = "file:///Users/user/My%20Projects/main.mantra";
         let path = uri_to_file_path(uri).unwrap();
-        assert_eq!(path.to_string_lossy(), "/Users/user/My Projects/main.mantra");
+        assert_eq!(
+            path.to_string_lossy(),
+            "/Users/user/My Projects/main.mantra"
+        );
     }
 }

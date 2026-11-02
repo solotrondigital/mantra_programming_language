@@ -1,0 +1,11 @@
+[package]
+name = "mantra_intelligence"
+version = "0.8.0"
+authors = ["Solotron Technologies Private Limited"]
+description = "Mantra Coding Intelligence (MVP 2) — AI-Assisted Compiler, Language Server, and Developer Tooling"
+license = "MIT OR GPL-3.0-or-later"
+entry = "lib/mantra_intelligence.mantra"
+
+[dependencies]
+"mantra.ai" = "0.8.0"
+"mantra.util" = "0.8.0"

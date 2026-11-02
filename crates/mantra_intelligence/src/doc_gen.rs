@@ -1,0 +1,140 @@
+//! Automated Documentation Generator
+//!
+//! Generates docstrings and Markdown API reference documentation
+//! directly from Mantra source files, AST declarations, and symbol types.
+
+use mantrac_ast::{ClassMember, Declaration};
+use mantrac_lexer::Lexer;
+use mantrac_parser::Parser;
+
+pub struct DocGenerator;
+
+impl DocGenerator {
+    /// Generates Markdown API reference documentation from Mantra source.
+    pub fn generate_markdown_doc(file_path: &str, source: &str) -> Result<String, String> {
+        let mut lexer = Lexer::new(source);
+        let tokens = lexer
+            .tokenize()
+            .map_err(|e| format!("Lexer error: {}", e.message))?;
+        let mut parser = Parser::new(tokens);
+        let program = parser
+            .parse()
+            .map_err(|e| format!("Parser error: {}", e.message))?;
+
+        let mut md = String::new();
+        md.push_str(&format!("# API Reference: `{}`\n\n", file_path));
+        md.push_str("Generated automatically by **Mantra AI Intelligence (MVP 2)**.\n\n");
+
+        for decl in program.declarations {
+            match decl {
+                Declaration::Class(cls) => {
+                    md.push_str(&format!("## Class `{}`\n\n", cls.name));
+                    if let Some(ref base) = cls.base_class {
+                        md.push_str(&format!("*Extends:* `{}`\n\n", base));
+                    }
+
+                    // Fields
+                    let mut fields = Vec::new();
+                    let mut methods = Vec::new();
+
+                    for m in cls.members {
+                        match m {
+                            ClassMember::Field(f) => {
+                                fields.push(format!(
+                                    "- **`{}`**: `{}`",
+                                    f.name,
+                                    f.ty.map_or("Any".to_string(), |t| format!("{:?}", t))
+                                ));
+                            }
+                            ClassMember::Method(method) | ClassMember::StaticMethod(method) => {
+                                let params: Vec<String> = method
+                                    .params
+                                    .iter()
+                                    .map(|p| format!("{}: {:?}", p.name, p.ty))
+                                    .collect();
+                                let ret = method
+                                    .return_type
+                                    .as_ref()
+                                    .map_or("Void".to_string(), |t| format!("{:?}", t));
+                                methods.push(format!(
+                                    "### `def {}({}) -> {}`\n\nExecutes `{}` method.\n",
+                                    method.name,
+                                    params.join(", "),
+                                    ret,
+                                    method.name
+                                ));
+                            }
+                            _ => {}
+                        }
+                    }
+
+                    if !fields.is_empty() {
+                        md.push_str("### Fields\n\n");
+                        for f in fields {
+                            md.push_str(&format!("{}\n", f));
+                        }
+                        md.push_str("\n");
+                    }
+
+                    if !methods.is_empty() {
+                        md.push_str("### Methods\n\n");
+                        for m in methods {
+                            md.push_str(&format!("{}\n", m));
+                        }
+                    }
+                }
+                Declaration::Function(f) => {
+                    let params: Vec<String> = f
+                        .params
+                        .iter()
+                        .map(|p| format!("{}: {:?}", p.name, p.ty))
+                        .collect();
+                    let ret = f
+                        .return_type
+                        .as_ref()
+                        .map_or("Void".to_string(), |t| format!("{:?}", t));
+                    md.push_str(&format!(
+                        "## Function `{}({}) -> {}`\n\nTop-level function `{}`.\n\n",
+                        f.name,
+                        params.join(", "),
+                        ret,
+                        f.name
+                    ));
+                }
+                _ => {}
+            }
+        }
+
+        Ok(md)
+    }
+
+    /// In-line docstring annotation: prepends doc comments above classes and functions.
+    pub fn annotate_source_with_docstrings(source: &str) -> String {
+        let mut result = Vec::new();
+        for line in source.lines() {
+            let trimmed = line.trim();
+            if trimmed.starts_with("class ") {
+                let name = trimmed
+                    .split_whitespace()
+                    .nth(1)
+                    .unwrap_or("")
+                    .trim_end_matches(':');
+                result.push(format!(
+                    "/// Documentation for class `{}`\n/// Auto-generated by Mantra AI.",
+                    name
+                ));
+            } else if trimmed.starts_with("pub def ") || trimmed.starts_with("def ") {
+                let name = trimmed
+                    .split_whitespace()
+                    .nth(if trimmed.starts_with("pub") { 2 } else { 1 })
+                    .unwrap_or("");
+                let fn_name = name.split('(').next().unwrap_or(name);
+                if !fn_name.starts_with("__") {
+                    result.push(format!("    /// Dispatches `{}` operation.", fn_name));
+                }
+            }
+            result.push(line.to_string());
+        }
+        result.join("\n")
+    }
+}

@@ -29,6 +29,7 @@ fi
 
 PKG_DIR="$WORKSPACE_ROOT/mantra_programming_language"
 WEB_DIR="$WORKSPACE_ROOT/mantra_website/mantra_web"
+EXAMPLES_REPO_DIR="$WORKSPACE_ROOT/mantra_programming_language_examples"
 TARGET_RELEASE="$PKG_DIR/target/release"
 
 DEST_PKG_INSTALLER="$PKG_DIR/installer"
@@ -50,7 +51,7 @@ for arg in "$@"; do
 done
 
 if [ -f "$PKG_DIR/scripts/release/sync_versions.py" ]; then
-    python3 "$PKG_DIR/scripts/release/sync_versions.py" || true
+    python3 "$PKG_DIR/scripts/release/sync_versions.py"
 fi
 
 if [ -z "$VERSION_ARG" ]; then
@@ -61,11 +62,13 @@ if [ -z "$VERSION_ARG" ]; then
         VERSION_ARG=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' "$PKG_DIR/crates/mantrac/Cargo.toml")
     fi
 fi
-VERSION_ARG="${VERSION_ARG:-0.7.0}"
+if [ -z "$VERSION_ARG" ]; then
+    VERSION_ARG=$(python3 -c 'import sys,tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["workspace"]["package"]["version"])' "$PKG_DIR/Cargo.toml")
+fi
 VERSION="${VERSION_ARG#v}"
 VERSION="${VERSION#V}"
 
-FORCED_UPDATE=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' "$PKG_DIR/Cargo.toml" 2>/dev/null || echo "false")
+FORCED_UPDATE=$(python3 -c 'import sys,tomllib; print(str(tomllib.load(open(sys.argv[1], "rb")).get("workspace", {}).get("metadata", {}).get("mantra", {}).get("forced-update", False)).lower())' "$PKG_DIR/Cargo.toml")
 
 DEST_RELEASE_DIR="$PKG_DIR/dist/releases/v${VERSION}"
 if [ "$FORCED_UPDATE" != "true" ] && [ -d "$DEST_RELEASE_DIR" ] && [ -n "$(ls -A "$DEST_RELEASE_DIR" 2>/dev/null)" ]; then
@@ -127,11 +130,13 @@ if [ -f "$TARGET_RELEASE/mantra-lsp" ]; then
     chmod 755 "$STAGE_BIN/mantra-lsp"
 fi
 
-# Copy latest examples if available
-if [ -d "$PKG_DIR/examples" ]; then
-    cp -r "$PKG_DIR/examples/"* "$STAGE_EXAMPLES/" 2>/dev/null || true
-elif [ -d "$WEB_DIR/examples" ]; then
-    cp -r "$WEB_DIR/examples/"* "$STAGE_EXAMPLES/" 2>/dev/null || true
+# Copy centralized examples if the sibling examples repository is available.
+if [ -d "$EXAMPLES_REPO_DIR/programming_language" ]; then
+    cp -r "$EXAMPLES_REPO_DIR/programming_language/." "$STAGE_EXAMPLES/" 2>/dev/null || true
+fi
+if [ -d "$EXAMPLES_REPO_DIR/website" ]; then
+    mkdir -p "$STAGE_EXAMPLES/website"
+    cp -r "$EXAMPLES_REPO_DIR/website/." "$STAGE_EXAMPLES/website/" 2>/dev/null || true
 fi
 
 # Copy logo asset
@@ -631,8 +636,6 @@ cp "$MACOS_DIR/install.sh" "$FINAL_STAGE/macos/install.sh"
 cp "$STAGE_BIN/"* "$FINAL_STAGE/macos/bin/"
 if [ -f "$DMG_OUTPUT" ]; then
     cp "$DMG_OUTPUT" "$FINAL_STAGE/macos/Mantra-${VERSION}-macOS.dmg"
-    # Backward compatible copy
-    cp "$DMG_OUTPUT" "$FINAL_STAGE/macos/Mantra-0.1.0-macOS.dmg" 2>/dev/null || true
 fi
 
 # Linux
@@ -640,7 +643,6 @@ cp "$LINUX_DIR/install.sh" "$FINAL_STAGE/linux/install.sh"
 cp "$LINUX_DIR/mantra.desktop" "$FINAL_STAGE/linux/mantra.desktop"
 cp "$STAGE_BIN/"* "$FINAL_STAGE/linux/bin/"
 cp "$TAR_OUTPUT" "$FINAL_STAGE/linux/mantra-${VERSION}-linux.tar.gz"
-cp "$TAR_OUTPUT" "$FINAL_STAGE/linux/mantra-0.1.0-linux.tar.gz" 2>/dev/null || true
 cp "$RUN_OUTPUT" "$FINAL_STAGE/linux/mantra-installer-linux.sh"
 
 # Windows

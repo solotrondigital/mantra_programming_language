@@ -30,6 +30,7 @@ pub enum Value {
     Map(Rc<RefCell<HashMap<String, Value>>>),
     Object(Rc<RefCell<ObjectInstance>>),
     BuiltinFunction(String),
+    AgentHandle(u64),
 }
 
 impl Value {
@@ -42,7 +43,7 @@ impl Value {
             Value::None | Value::Unit => false,
             Value::List(l) => !l.borrow().is_empty(),
             Value::Map(m) => !m.borrow().is_empty(),
-            Value::Object(_) | Value::BuiltinFunction(_) => true,
+            Value::Object(_) | Value::BuiltinFunction(_) | Value::AgentHandle(_) => true,
         }
     }
 
@@ -56,7 +57,13 @@ impl Value {
                     f.to_string()
                 }
             }
-            Value::Bool(b) => if *b { "True".to_string() } else { "False".to_string() },
+            Value::Bool(b) => {
+                if *b {
+                    "True".to_string()
+                } else {
+                    "False".to_string()
+                }
+            }
             Value::String(s) => s.clone(),
             Value::None => "None".to_string(),
             Value::Unit => "None".to_string(),
@@ -77,6 +84,7 @@ impl Value {
                 format!("<{} instance>", borrowed.class_name)
             }
             Value::BuiltinFunction(name) => format!("<built-in function {}>", name),
+            Value::AgentHandle(id) => format!("<agent {}>", id),
         }
     }
 }
@@ -100,8 +108,8 @@ impl PartialEq for Value {
             (Value::Unit, Value::Unit) => true,
             (Value::List(a), Value::List(b)) => *a.borrow() == *b.borrow(),
             (Value::Object(a), Value::Object(b)) => Rc::ptr_eq(a, b),
+            (Value::AgentHandle(a), Value::AgentHandle(b)) => a == b,
             _ => false,
         }
     }
 }
-

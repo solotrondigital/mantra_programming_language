@@ -21,9 +21,12 @@ if [ -n "$1" ]; then
     VERSION="${RAW_VER#v}"
     VERSION="${VERSION#V}"
 else
-    VERSION=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || true)
+    VERSION=$(python3 -c 'import sys,tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["workspace"]["package"]["version"])' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || true)
 fi
-VERSION="${VERSION:-0.7.0}"
+if [ -z "${VERSION}" ]; then
+    echo "Unable to resolve release version from crates/mantrac/Cargo.toml" >&2
+    exit 1
+fi
 FORCED_UPDATE=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || echo "false")
 if [ "$FORCED_UPDATE" = "true" ]; then
     echo ">> [Forced Update] forced-update=true: overriding distribution packages for v${VERSION}."
@@ -54,17 +57,17 @@ if [ ! -f "${LINUX_TAR}" ] && [ -f "${REPO_ROOT}/installer/linux/mantra-${VERSIO
     LINUX_TAR="${REPO_ROOT}/installer/linux/mantra-${VERSION}-linux.tar.gz"
 fi
 
-if [ -f "${MAC_DMG}" ]; then
-    MAC_SHA=$(shasum -a 256 "${MAC_DMG}" | awk '{print $1}')
-else
-    MAC_SHA=$(echo "mantra-${VERSION}-macos" | shasum -a 256 | awk '{print $1}')
+if [ ! -f "${MAC_DMG}" ]; then
+    echo "Missing macOS release artifact: ${MAC_DMG}" >&2
+    exit 1
 fi
+MAC_SHA=$(shasum -a 256 "${MAC_DMG}" | awk '{print $1}')
 
-if [ -f "${LINUX_TAR}" ]; then
-    LINUX_SHA=$(shasum -a 256 "${LINUX_TAR}" | awk '{print $1}')
-else
-    LINUX_SHA=$(echo "mantra-${VERSION}-linux" | shasum -a 256 | awk '{print $1}')
+if [ ! -f "${LINUX_TAR}" ]; then
+    echo "Missing Linux release artifact: ${LINUX_TAR}" >&2
+    exit 1
 fi
+LINUX_SHA=$(shasum -a 256 "${LINUX_TAR}" | awk '{print $1}')
 
 cat << EOF > "${FORMULA_PATH}"
 # ==============================================================================

@@ -37,14 +37,24 @@ impl BenchRunner {
             return Err("No benchmark targets found. Create files in benches/ (e.g. benches/bench_main.mantra)".to_string());
         }
 
-        println!("Running Mantra Benchmarks (iterations={}, warmup={})\n", iterations, warmup);
-        println!("{:<24} {:>10} {:>20} {:>22}", "BENCHMARK", "ITERATIONS", "TIME/OP", "THROUGHPUT");
+        println!(
+            "Running Mantra Benchmarks (iterations={}, warmup={})\n",
+            iterations, warmup
+        );
+        println!(
+            "{:<24} {:>10} {:>20} {:>22}",
+            "BENCHMARK", "ITERATIONS", "TIME/OP", "THROUGHPUT"
+        );
         println!("{:-<80}", "");
 
         let mut results = Vec::new();
 
         for file in &bench_files {
-            let stem = file.file_stem().unwrap_or_default().to_string_lossy().to_string();
+            let stem = file
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
 
             // Warmup iterations
             for _ in 0..warmup {
@@ -85,7 +95,10 @@ impl BenchRunner {
         }
 
         println!("{:-<80}", "");
-        println!("Benchmark suite completed: {} benchmark(s) executed successfully.\n", results.len());
+        println!(
+            "Benchmark suite completed: {} benchmark(s) executed successfully.\n",
+            results.len()
+        );
 
         Ok(results)
     }
@@ -126,4 +139,3 @@ impl BenchRunner {
         Ok(discovered)
     }
 }
-

@@ -35,6 +35,5 @@ pub use forms::{Checkbox, Switch, TextField};
 pub use images::{circular_image, ImageFit, MantraImage};
 pub use layout::{Column, Container, Divider, GridView, ListTile, Row};
 pub use loaders::{CircularLoader, ProgressBar, Shimmer};
-pub use navigation::{AppBar, BottomNavigationBar, BottomNavItem};
+pub use navigation::{AppBar, BottomNavItem, BottomNavigationBar};
 pub use typography::{GradientText, Heading, Text};
-

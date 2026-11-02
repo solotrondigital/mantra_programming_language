@@ -1,11 +1,12 @@
 [package]
 name = "mantra_mobile"
-version = "0.7.0"
+version.workspace = true
 edition = "2021"
 authors = ["Solotron Technologies Private Limited"]
 description = "Mantra Mobile Runtime and Bridge Framework for Android and iOS"
 license = "MIT OR GPL-3.0-or-later"
 
 [dependencies]
-# Zero external dependencies — pure Rust standard library implementation
+# serde_json is used for strict bridge protocol parsing and serialization.
+serde_json = "1"
 

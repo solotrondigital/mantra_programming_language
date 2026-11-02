@@ -59,4 +59,3 @@ fn test_event_dispatch() {
     assert_eq!(input_ev.event_type, EventType::Input);
     assert_eq!(input_ev.value.as_deref(), Some("admin@mantra.dev"));
 }
-

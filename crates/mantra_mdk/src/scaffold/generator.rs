@@ -1,8 +1,10 @@
+use super::ai::AiTemplateGenerator;
 use super::frontend::FrontendTemplateGenerator;
 use super::fs_service::FilesystemService;
 use super::graphql::GraphQLTemplateGenerator;
 use super::metadata::ProjectMetadataGenerator;
 use super::rest::RestTemplateGenerator;
+use super::standalone::StandaloneTemplateGenerator;
 use super::validator::{AppType, BackendService, ValidatedOptions};
 
 pub struct GenerationSummary {
@@ -45,6 +47,12 @@ impl ProjectGenerator {
                     GraphQLTemplateGenerator::generate(root, opts)?;
                 }
             },
+            AppType::Standalone => {
+                StandaloneTemplateGenerator::generate(root, opts)?;
+            }
+            AppType::Ai => {
+                AiTemplateGenerator::generate(root, opts)?;
+            }
         }
 
         Ok(GenerationSummary {

@@ -135,7 +135,12 @@ impl CompletionItem {
         let doc = self
             .documentation
             .as_deref()
-            .map(|d| format!(r#","documentation":{{"kind":"markdown","value":"{}"}}"#, escape_json_str(d)))
+            .map(|d| {
+                format!(
+                    r#","documentation":{{"kind":"markdown","value":"{}"}}"#,
+                    escape_json_str(d)
+                )
+            })
             .unwrap_or_default();
         let ins = self
             .insert_text
@@ -221,9 +226,7 @@ pub fn get_completions(
     let context = detect_context(prefix);
 
     match context {
-        CompletionContext::MemberAccess(obj_name) => {
-            member_completions(&obj_name, analysis)
-        }
+        CompletionContext::MemberAccess(obj_name) => member_completions(&obj_name, analysis),
         CompletionContext::TypeName => type_completions(analysis),
         CompletionContext::Import => import_completions(analysis),
         CompletionContext::General => general_completions(document, analysis),
@@ -365,32 +368,75 @@ fn general_completions(_document: &Document, analysis: &AnalysisResult) -> Vec<C
                 .collect();
             items.push(CompletionItem::function_item(
                 name,
-                &format!("def {}({}) -> {}", name, params.join(", "), func.return_type),
+                &format!(
+                    "def {}({}) -> {}",
+                    name,
+                    params.join(", "),
+                    func.return_type
+                ),
             ));
         }
     }
 
     // ── Built-in functions ────────────────────────────────────────────────
     let builtins: &[(&str, &str, &str)] = &[
-        ("print", "print(value: Any) -> Unit", "Print value to standard output"),
-        ("len", "len(collection: Any) -> Int", "Return length of list, string, or map"),
-        ("range", "range(n: Int) -> List<Int>", "Return integer range 0..n-1"),
+        (
+            "print",
+            "print(value: Any) -> Unit",
+            "Print value to standard output",
+        ),
+        (
+            "len",
+            "len(collection: Any) -> Int",
+            "Return length of list, string, or map",
+        ),
+        (
+            "range",
+            "range(n: Int) -> List<Int>",
+            "Return integer range 0..n-1",
+        ),
         ("str", "str(val: Any) -> String", "Convert value to string"),
         ("int", "int(val: Any) -> Int", "Convert value to Int"),
-        ("float", "float(val: Any) -> Float", "Convert value to Float"),
-        ("assert", "assert(condition: Bool) -> Unit", "Assert condition at runtime"),
-        ("read_file", "read_file(path: String) -> String", "Read file contents"),
-        ("write_file", "write_file(path: String, content: String) -> Bool", "Write file contents"),
-        ("system_exec", "system_exec(cmd: String) -> Int", "Execute shell command"),
-        ("get_env", "get_env(key: String, default_val: String) -> String", "Get environment variable"),
+        (
+            "float",
+            "float(val: Any) -> Float",
+            "Convert value to Float",
+        ),
+        (
+            "assert",
+            "assert(condition: Bool) -> Unit",
+            "Assert condition at runtime",
+        ),
+        (
+            "read_file",
+            "read_file(path: String) -> String",
+            "Read file contents",
+        ),
+        (
+            "write_file",
+            "write_file(path: String, content: String) -> Bool",
+            "Write file contents",
+        ),
+        (
+            "system_exec",
+            "system_exec(cmd: String) -> Int",
+            "Execute shell command",
+        ),
+        (
+            "get_env",
+            "get_env(key: String, default_val: String) -> String",
+            "Get environment variable",
+        ),
     ];
     for (label, sig, doc) in builtins {
         items.push(CompletionItem::builtin_fn(label, sig, doc));
     }
 
     // ── Built-in types ────────────────────────────────────────────────────
-    for t in &["Int", "Float", "Bool", "String", "Byte", "Unit", "Any", "None",
-               "Option", "Result", "List", "Map"] {
+    for t in &[
+        "Int", "Float", "Bool", "String", "Byte", "Unit", "Any", "None", "Option", "Result",
+        "List", "Map",
+    ] {
         items.push(CompletionItem::type_item(t));
     }
 
@@ -452,11 +498,12 @@ fn general_completions(_document: &Document, analysis: &AnalysisResult) -> Vec<C
         kind: completion_kind::SNIPPET,
         detail: Some("Class definition snippet".to_string()),
         documentation: Some("Define a new class".to_string()),
-        insert_text: Some("class ${1:Name}:\n    def __init__(self):\n        ${0:pass}".to_string()),
+        insert_text: Some(
+            "class ${1:Name}:\n    def __init__(self):\n        ${0:pass}".to_string(),
+        ),
         insert_text_format: insert_text_format::SNIPPET,
         sort_text: Some("z_snippet_class".to_string()),
     });
 
     items
 }
-

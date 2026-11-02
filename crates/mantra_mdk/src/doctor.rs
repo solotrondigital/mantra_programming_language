@@ -28,7 +28,11 @@ impl DoctorReport {
         for t in &self.tools {
             let symbol = if t.status { "✓" } else { "✗" };
             let ver = t.version.as_deref().unwrap_or("");
-            let note = t.note.as_deref().map(|n| format!(" ({})", n)).unwrap_or_default();
+            let note = t
+                .note
+                .as_deref()
+                .map(|n| format!(" ({})", n))
+                .unwrap_or_default();
             println!("  [{}] {}: {} {}", symbol, t.name, ver, note);
         }
     }
@@ -132,7 +136,9 @@ impl Doctor {
 
         println!();
         if report.is_healthy() {
-            println!("\x1b[32mAll core development components are verified and operational!\x1b[0m");
+            println!(
+                "\x1b[32mAll core development components are verified and operational!\x1b[0m"
+            );
         } else {
             println!("\x1b[33mSome optional or auxiliary components were not detected. See above for details.\x1b[0m");
         }
@@ -141,7 +147,12 @@ impl Doctor {
     }
 }
 
-fn check_tool(label: &str, binary_names: &[&str], version_args: &[&str], required: bool) -> ToolStatus {
+fn check_tool(
+    label: &str,
+    binary_names: &[&str],
+    version_args: &[&str],
+    required: bool,
+) -> ToolStatus {
     for &bin in binary_names {
         // Also check target/release and ~/.mantra/bin
         let candidates = resolve_binary_candidates(bin);
@@ -224,8 +235,7 @@ fn check_xcode() -> ToolStatus {
 }
 
 fn check_android_sdk() -> ToolStatus {
-    let sdk_root = env::var("ANDROID_HOME")
-        .or_else(|_| env::var("ANDROID_SDK_ROOT"));
+    let sdk_root = env::var("ANDROID_HOME").or_else(|_| env::var("ANDROID_SDK_ROOT"));
     match sdk_root {
         Ok(path) => ToolStatus {
             name: "Android SDK".to_string(),
@@ -239,7 +249,10 @@ fn check_android_sdk() -> ToolStatus {
             status: true,
             version: None,
             path: None,
-            note: Some("ANDROID_HOME environment variable not set (needed for Android APK builds)".to_string()),
+            note: Some(
+                "ANDROID_HOME environment variable not set (needed for Android APK builds)"
+                    .to_string(),
+            ),
         },
     }
 }

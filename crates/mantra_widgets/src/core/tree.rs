@@ -29,7 +29,11 @@ impl WidgetTree {
     /// Wraps the rendered widget tree in a full HTML5 responsive document.
     pub fn render_full_document(&self, title: &str, theme_css: &str, is_dark_mode: bool) -> String {
         let content = self.render(is_dark_mode);
-        let dark_class = if is_dark_mode { "mantra-theme-dark" } else { "mantra-theme-light" };
+        let dark_class = if is_dark_mode {
+            "mantra-theme-dark"
+        } else {
+            "mantra-theme-light"
+        };
 
         format!(
             r#"<!DOCTYPE html>
@@ -66,4 +70,3 @@ impl WidgetTree {
         )
     }
 }
-

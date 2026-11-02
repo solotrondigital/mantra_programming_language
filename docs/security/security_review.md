@@ -1,9 +1,11 @@
 # Mantra Programming Language — Security Review & Threat Model
 ## Production Toolchain Security, Runtime Isolation & FFI Hardening
 
-> **Document Status:** 🔒 COMPLETED & RATIFIED  
+> **Document Status:** SECURITY REQUIREMENTS AND THREAT MODEL — NOT A CERTIFICATION
 > **Target Release:** Mantra v0.6.0+  
-> **Security Baseline:** ISO/IEC 27001 & NIST SP 800-218 (SSDF) Compliant
+> **Reference frameworks:** ISO/IEC 27001 and NIST SP 800-218 (SSDF); no compliance assessment is implied
+
+> **Implementation note:** The statements below describe intended controls and must not be read as proof that the repository enforces them. Current `mantra audit` verifies a lockfile SHA-256 against an archive present in `vendor/cache`; registry fetching, a process sandbox, signal-safe FFI isolation, and external security certification are not implemented by this audit.
 
 ---
 

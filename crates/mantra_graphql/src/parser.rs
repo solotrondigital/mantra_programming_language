@@ -77,7 +77,10 @@ impl Parser {
                     definitions.push(Definition::Fragment(self.parse_fragment_definition()?));
                 }
                 other => {
-                    return Err(format!("Unexpected token at top level of GraphQL document: {:?}", other));
+                    return Err(format!(
+                        "Unexpected token at top level of GraphQL document: {:?}",
+                        other
+                    ));
                 }
             }
         }
@@ -270,7 +273,10 @@ impl Parser {
         let name = self.expect_name()?;
         let on_tok = self.expect_name()?;
         if on_tok != "on" {
-            return Err(format!("Expected 'on' in fragment definition, found '{}'", on_tok));
+            return Err(format!(
+                "Expected 'on' in fragment definition, found '{}'",
+                on_tok
+            ));
         }
         let type_condition = self.expect_name()?;
         let directives = self.parse_directives()?;
@@ -342,7 +348,10 @@ impl Parser {
                 self.expect(Token::RightBrace)?;
                 Ok(GraphQLValue::Object(map))
             }
-            other => Err(format!("Unexpected token when parsing GraphQL value: {:?}", other)),
+            other => Err(format!(
+                "Unexpected token when parsing GraphQL value: {:?}",
+                other
+            )),
         }
     }
 }

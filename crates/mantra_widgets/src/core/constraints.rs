@@ -8,15 +8,24 @@ pub struct Size {
 }
 
 impl Size {
-    pub const ZERO: Size = Size { width: 0.0, height: 0.0 };
-    pub const INFINITY: Size = Size { width: f64::INFINITY, height: f64::INFINITY };
+    pub const ZERO: Size = Size {
+        width: 0.0,
+        height: 0.0,
+    };
+    pub const INFINITY: Size = Size {
+        width: f64::INFINITY,
+        height: f64::INFINITY,
+    };
 
     pub fn new(width: f64, height: f64) -> Self {
         Self { width, height }
     }
 
     pub fn square(dimension: f64) -> Self {
-        Self { width: dimension, height: dimension }
+        Self {
+            width: dimension,
+            height: dimension,
+        }
     }
 }
 
@@ -97,7 +106,10 @@ impl BoxConstraints {
 
     /// Checks if minimum constraints are zero and maximum is finite.
     pub fn is_loose(&self) -> bool {
-        self.min_width == 0.0 && self.min_height == 0.0 && self.max_width.is_finite() && self.max_height.is_finite()
+        self.min_width == 0.0
+            && self.min_height == 0.0
+            && self.max_width.is_finite()
+            && self.max_height.is_finite()
     }
 
     /// Clamps given width within min and max width constraints.
@@ -128,4 +140,3 @@ impl BoxConstraints {
         }
     }
 }
-

@@ -115,11 +115,15 @@ impl Widget for Avatar {
 }
 
 pub fn circle_avatar(size: f64, initials: impl Into<String>) -> Avatar {
-    Avatar::new(size).with_initials(initials).with_shape(ShapeVariant::Circle)
+    Avatar::new(size)
+        .with_initials(initials)
+        .with_shape(ShapeVariant::Circle)
 }
 
 pub fn rounded_avatar(size: f64, initials: impl Into<String>) -> Avatar {
-    Avatar::new(size).with_initials(initials).with_shape(ShapeVariant::Rounded)
+    Avatar::new(size)
+        .with_initials(initials)
+        .with_shape(ShapeVariant::Rounded)
 }
 
 fn uuid_simple() -> u32 {
@@ -127,4 +131,3 @@ fn uuid_simple() -> u32 {
     static COUNTER: AtomicU32 = AtomicU32::new(3000);
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
-

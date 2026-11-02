@@ -28,10 +28,18 @@ pub fn get_signature_help_json(
     // Look up methods across all classes
     for cls in st.classes.values() {
         if let Some(method) = cls.methods.get(&func_name) {
-            return Some(build_signature_json(&func_name, &method.params, active_param));
+            return Some(build_signature_json(
+                &func_name,
+                &method.params,
+                active_param,
+            ));
         }
         if let Some(method) = cls.static_methods.get(&func_name) {
-            return Some(build_signature_json(&func_name, &method.params, active_param));
+            return Some(build_signature_json(
+                &func_name,
+                &method.params,
+                active_param,
+            ));
         }
     }
 
@@ -137,4 +145,3 @@ fn builtin_signature_json(name: &str, active_param: u32) -> Option<String> {
         active_param.min(params.len().saturating_sub(1) as u32),
     ))
 }
-

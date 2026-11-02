@@ -5,6 +5,8 @@ use std::path::PathBuf;
 pub enum AppType {
     Frontend,
     Backend,
+    Standalone,
+    Ai,
 }
 
 /// Supported backend services.
@@ -52,12 +54,12 @@ pub struct ProjectOptionsValidator;
 impl ProjectOptionsValidator {
     /// Validates raw options against the strict conditional rules.
     pub fn validate(raw: RawProjectOptions) -> Result<ValidatedOptions, String> {
-        // 1. Validate --type (Required: frontend | backend)
+        // 1. Validate --type (Required: frontend | backend | standalone | ai)
         let app_type_raw = match raw.app_type {
             Some(t) if !t.trim().is_empty() => t.trim().to_lowercase(),
             _ => {
                 return Err(
-                    "Error: Missing required argument --type.\n\nAvailable types: frontend, backend."
+                    "Error: Missing required argument --type.\n\nAvailable types: frontend, backend, standalone, ai."
                         .to_string(),
                 );
             }
@@ -66,9 +68,11 @@ impl ProjectOptionsValidator {
         let app_type = match app_type_raw.as_str() {
             "frontend" => AppType::Frontend,
             "backend" => AppType::Backend,
+            "standalone" => AppType::Standalone,
+            "ai" => AppType::Ai,
             other => {
                 return Err(format!(
-                    "Error: Unknown application type '{}'.\n\nAvailable types: frontend, backend.",
+                    "Error: Unknown application type '{}'.\n\nAvailable types: frontend, backend, standalone, ai.",
                     other
                 ));
             }
@@ -89,7 +93,9 @@ impl ProjectOptionsValidator {
         let org = match raw.org {
             Some(o) if !o.trim().is_empty() => {
                 let trimmed = o.trim().to_string();
-                if !trimmed.chars().all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '_' || c == '-')
+                if !trimmed
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '_' || c == '-')
                     || !trimmed.contains('.')
                 {
                     return Err(format!(
@@ -110,13 +116,16 @@ impl ProjectOptionsValidator {
             AppType::Frontend => {
                 // Reject --service on frontend
                 if raw.service.is_some() {
-                    return Err("Error: --service is only supported for backend projects.".to_string());
+                    return Err(
+                        "Error: --service is only supported for backend projects.".to_string()
+                    );
                 }
 
                 // Validate platforms if provided, otherwise default to [ios, android, web]
                 if let Some(plats) = raw.platforms {
                     if plats.is_empty() {
-                        validated_platforms = vec!["ios".to_string(), "android".to_string(), "web".to_string()];
+                        validated_platforms =
+                            vec!["ios".to_string(), "android".to_string(), "web".to_string()];
                     } else {
                         for plat in &plats {
                             let normalized = plat.trim().to_lowercase();
@@ -136,7 +145,8 @@ impl ProjectOptionsValidator {
                         }
                     }
                 } else {
-                    validated_platforms = vec!["ios".to_string(), "android".to_string(), "web".to_string()];
+                    validated_platforms =
+                        vec!["ios".to_string(), "android".to_string(), "web".to_string()];
                 }
             }
             AppType::Backend => {
@@ -171,6 +181,20 @@ impl ProjectOptionsValidator {
                 };
                 validated_service = Some(service);
             }
+            AppType::Standalone | AppType::Ai => {
+                // Reject --service on standalone/ai
+                if raw.service.is_some() {
+                    return Err(
+                        "Error: --service is only supported for backend projects.".to_string()
+                    );
+                }
+                // Reject --platforms on standalone/ai
+                if raw.platforms.is_some() {
+                    return Err(
+                        "Error: --platforms is only supported for frontend projects.".to_string(),
+                    );
+                }
+            }
         }
 
         // 5. Target Directory & Overwrite Prevention
@@ -186,11 +210,19 @@ impl ProjectOptionsValidator {
 
         // 6. Description
         let description = raw.description.unwrap_or_else(|| match app_type {
-            AppType::Frontend => format!("Mantra cross-platform hybrid application: {}", project_name),
+            AppType::Frontend => {
+                format!("Mantra cross-platform hybrid application: {}", project_name)
+            }
             AppType::Backend => match validated_service.unwrap() {
-                BackendService::Rest => format!("Mantra REST API backend application: {}", project_name),
-                BackendService::Graphql => format!("Mantra GraphQL API backend application: {}", project_name),
+                BackendService::Rest => {
+                    format!("Mantra REST API backend application: {}", project_name)
+                }
+                BackendService::Graphql => {
+                    format!("Mantra GraphQL API backend application: {}", project_name)
+                }
             },
+            AppType::Standalone => format!("Mantra standalone application: {}", project_name),
+            AppType::Ai => format!("Mantra AI application: {}", project_name),
         });
 
         Ok(ValidatedOptions {

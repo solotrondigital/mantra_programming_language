@@ -13,7 +13,13 @@ pub struct Color {
 }
 
 impl Color {
-    pub const TRANSPARENT: Color = Color { r: 0, g: 0, b: 0, a: 0.0, hex: String::new() };
+    pub const TRANSPARENT: Color = Color {
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 0.0,
+        hex: String::new(),
+    };
 
     pub fn from_rgb(r: u8, g: u8, b: u8) -> Self {
         Self {
@@ -52,9 +58,12 @@ impl Color {
                 (r, g, b, a)
             }
             3 => {
-                let r = u8::from_str_radix(&format!("{}{}", &clean[0..1], &clean[0..1]), 16).unwrap_or(0);
-                let g = u8::from_str_radix(&format!("{}{}", &clean[1..2], &clean[1..2]), 16).unwrap_or(0);
-                let b = u8::from_str_radix(&format!("{}{}", &clean[2..3], &clean[2..3]), 16).unwrap_or(0);
+                let r = u8::from_str_radix(&format!("{}{}", &clean[0..1], &clean[0..1]), 16)
+                    .unwrap_or(0);
+                let g = u8::from_str_radix(&format!("{}{}", &clean[1..2], &clean[1..2]), 16)
+                    .unwrap_or(0);
+                let b = u8::from_str_radix(&format!("{}{}", &clean[2..3], &clean[2..3]), 16)
+                    .unwrap_or(0);
                 (r, g, b, 1.0)
             }
             _ => (0, 0, 0, 1.0),
@@ -108,36 +117,35 @@ pub struct MantraPalette {
 impl MantraPalette {
     pub fn light() -> Self {
         Self {
-            primary: Color::from_hex("#4f46e5"),      // Indigo 600
-            secondary: Color::from_hex("#64748b"),    // Slate 500
-            accent: Color::from_hex("#06b6d4"),       // Cyan 500
-            success: Color::from_hex("#10b981"),      // Emerald 500
-            warning: Color::from_hex("#f59e0b"),      // Amber 500
-            danger: Color::from_hex("#ef4444"),       // Red 500
-            info: Color::from_hex("#0ea5e9"),         // Sky 500
-            background: Color::from_hex("#f8fafc"),   // Slate 50
-            surface: Color::from_hex("#ffffff"),      // White
-            text_primary: Color::from_hex("#0f172a"), // Slate 900
-            text_secondary: Color::from_hex("#64748b"),// Slate 500
-            border: Color::from_hex("#e2e8f0"),       // Slate 200
+            primary: Color::from_hex("#4f46e5"),        // Indigo 600
+            secondary: Color::from_hex("#64748b"),      // Slate 500
+            accent: Color::from_hex("#06b6d4"),         // Cyan 500
+            success: Color::from_hex("#10b981"),        // Emerald 500
+            warning: Color::from_hex("#f59e0b"),        // Amber 500
+            danger: Color::from_hex("#ef4444"),         // Red 500
+            info: Color::from_hex("#0ea5e9"),           // Sky 500
+            background: Color::from_hex("#f8fafc"),     // Slate 50
+            surface: Color::from_hex("#ffffff"),        // White
+            text_primary: Color::from_hex("#0f172a"),   // Slate 900
+            text_secondary: Color::from_hex("#64748b"), // Slate 500
+            border: Color::from_hex("#e2e8f0"),         // Slate 200
         }
     }
 
     pub fn dark() -> Self {
         Self {
-            primary: Color::from_hex("#6366f1"),      // Indigo 500
-            secondary: Color::from_hex("#94a3b8"),    // Slate 400
-            accent: Color::from_hex("#22d3ee"),       // Cyan 400
-            success: Color::from_hex("#34d399"),      // Emerald 400
-            warning: Color::from_hex("#fbbf24"),      // Amber 400
-            danger: Color::from_hex("#f87171"),       // Red 400
-            info: Color::from_hex("#38bdf8"),         // Sky 400
-            background: Color::from_hex("#0f172a"),   // Slate 900
-            surface: Color::from_hex("#1e293b"),      // Slate 800
-            text_primary: Color::from_hex("#f8fafc"), // Slate 50
-            text_secondary: Color::from_hex("#94a3b8"),// Slate 400
-            border: Color::from_hex("#334155"),       // Slate 700
+            primary: Color::from_hex("#6366f1"),        // Indigo 500
+            secondary: Color::from_hex("#94a3b8"),      // Slate 400
+            accent: Color::from_hex("#22d3ee"),         // Cyan 400
+            success: Color::from_hex("#34d399"),        // Emerald 400
+            warning: Color::from_hex("#fbbf24"),        // Amber 400
+            danger: Color::from_hex("#f87171"),         // Red 400
+            info: Color::from_hex("#38bdf8"),           // Sky 400
+            background: Color::from_hex("#0f172a"),     // Slate 900
+            surface: Color::from_hex("#1e293b"),        // Slate 800
+            text_primary: Color::from_hex("#f8fafc"),   // Slate 50
+            text_secondary: Color::from_hex("#94a3b8"), // Slate 400
+            border: Color::from_hex("#334155"),         // Slate 700
         }
     }
 }
-

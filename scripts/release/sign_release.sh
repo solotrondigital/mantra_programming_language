@@ -17,9 +17,20 @@ if [ -n "$1" ]; then
     VERSION="${RAW_VER#v}"
     VERSION="${VERSION#V}"
 else
-    VERSION=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || true)
+    VERSION=$(python3 -c 'import sys,tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["workspace"]["package"]["version"])' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || true)
 fi
-VERSION="${VERSION:-0.7.0}"
+if [ -z "${VERSION}" ]; then
+    echo "Unable to resolve release version from Cargo.toml workspace.package.version" >&2
+    exit 1
+fi
+if ! command -v gpg >/dev/null 2>&1 || [ -z "${GPG_KEY_ID:-}" ]; then
+    echo "A configured GPG signing key is required (GPG_KEY_ID); refusing to publish unsigned release artifacts." >&2
+    exit 1
+fi
+if ! gpg --batch --list-secret-keys "${GPG_KEY_ID}" >/dev/null 2>&1; then
+    echo "Signing key '${GPG_KEY_ID}' is not available in the GPG keyring." >&2
+    exit 1
+fi
 DIST_DIR="${REPO_ROOT}/dist/releases/v${VERSION}"
 
 echo "=================================================================="
@@ -31,6 +42,8 @@ echo "Target Version  : v${VERSION}"
 echo "=================================================================="
 
 mkdir -p "${DIST_DIR}"
+rm -f "${DIST_DIR}/SHA256SUMS" "${DIST_DIR}/SHA512SUMS" \
+    "${DIST_DIR}/SHA256SUMS.sig" "${DIST_DIR}/SHA256SUMS.asc" "${DIST_DIR}/release.json.asc"
 
 # 1. Run Python Manifest & SBOM Generators
 echo ">> [1/3] Generating Release Manifest & SBOMs..."
@@ -38,49 +51,35 @@ python3 "${SCRIPT_DIR}/generate_manifest.py" "${VERSION}"
 python3 "${SCRIPT_DIR}/generate_sbom.py" "${VERSION}"
 
 # 2. Cryptographic Checksum Generation
-echo ">> [2/3] Verifying and updating SHA-256 & SHA-512 digests..."
+echo ">> [2/3] Generating SHA-256 & SHA-512 digests from release files..."
 cd "${DIST_DIR}"
 
-if command -v shasum >/dev/null 2>&1; then
-    shasum -a 256 *.json > SHA256SUMS.tmp 2>/dev/null || true
-    shasum -a 512 *.json > SHA512SUMS.tmp 2>/dev/null || true
-    if [ -f SHA256SUMS.tmp ]; then
-        cat SHA256SUMS.tmp >> SHA256SUMS 2>/dev/null || true
-        sort -u SHA256SUMS -o SHA256SUMS 2>/dev/null || true
-        rm -f SHA256SUMS.tmp
-    fi
-    if [ -f SHA512SUMS.tmp ]; then
-        cat SHA512SUMS.tmp >> SHA512SUMS 2>/dev/null || true
-        sort -u SHA512SUMS -o SHA512SUMS 2>/dev/null || true
-        rm -f SHA512SUMS.tmp
-    fi
+rm -f SHA256SUMS SHA512SUMS SHA256SUMS.sig SHA256SUMS.asc release.json.asc
+shopt -s nullglob
+files=(*); shopt -u nullglob
+if [ "${#files[@]}" -eq 0 ]; then
+    echo "No release files found; refusing to sign an empty release." >&2
+    exit 1
 fi
+for file in "${files[@]}"; do
+    [ -f "$file" ] || continue
+    shasum -a 256 "$file" >> SHA256SUMS
+    shasum -a 512 "$file" >> SHA512SUMS
+done
 
-# 3. GPG / Minisign Signing (simulated or active with key)
+# 3. GPG Signing. Never label an unsigned checksum digest as a signature.
 echo ">> [3/3] Generating detached signatures for release artifacts..."
-if command -v gpg >/dev/null 2>&1 && [ -n "${GPG_KEY_ID}" ]; then
-    echo "Signing with GPG Key: ${GPG_KEY_ID}"
+if [ -n "${GPG_PASSPHRASE:-}" ]; then
+    printf '%s' "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign -u "${GPG_KEY_ID}" SHA256SUMS
+    printf '%s' "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign -u "${GPG_KEY_ID}" release.json
+else
     gpg --batch --yes --armor --detach-sign -u "${GPG_KEY_ID}" SHA256SUMS
     gpg --batch --yes --armor --detach-sign -u "${GPG_KEY_ID}" release.json
-    echo "   ✓ Generated SHA256SUMS.asc & release.json.asc"
-else
-    # Create deterministic signed envelope for release verification
-    echo "-----BEGIN MANTRA RELEASE SIGNATURE-----" > "${DIST_DIR}/SHA256SUMS.sig"
-    echo "Version: Mantra v${VERSION}" >> "${DIST_DIR}/SHA256SUMS.sig"
-    echo "Signer: Solotron Technologies Private Limited <security@solotron.tech>" >> "${DIST_DIR}/SHA256SUMS.sig"
-    echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> "${DIST_DIR}/SHA256SUMS.sig"
-    if [ -f "${DIST_DIR}/SHA256SUMS" ]; then
-        SIG_HASH=$(shasum -a 256 "${DIST_DIR}/SHA256SUMS" | awk '{print $1}')
-    else
-        SIG_HASH="mantra-release-${VERSION}"
-    fi
-    echo "Signature: ${SIG_HASH}" >> "${DIST_DIR}/SHA256SUMS.sig"
-    echo "-----END MANTRA RELEASE SIGNATURE-----" >> "${DIST_DIR}/SHA256SUMS.sig"
-    echo "   ✓ Generated signed envelope: ${DIST_DIR}/SHA256SUMS.sig"
 fi
+echo "   ✓ Generated SHA256SUMS.asc and release.json.asc"
 
 echo ""
 echo "Release Artifacts in ${DIST_DIR}:"
 ls -la "${DIST_DIR}"
 echo ""
-echo "✓ All release engineering artifacts verified and signed successfully!"
+echo "✓ Release artifacts were checksummed and signed with GPG."

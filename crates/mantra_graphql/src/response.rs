@@ -85,4 +85,3 @@ impl GraphQLResponse {
         format!("{{{}}}", parts.join(","))
     }
 }
-

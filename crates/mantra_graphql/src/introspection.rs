@@ -10,8 +10,14 @@ pub fn resolve_schema(schema: &GraphQLSchema) -> GraphQLValue {
     let mut schema_map = HashMap::new();
 
     let mut query_type_map = HashMap::new();
-    query_type_map.insert("name".to_string(), GraphQLValue::String(schema.query_type.clone()));
-    schema_map.insert("queryType".to_string(), GraphQLValue::Object(query_type_map));
+    query_type_map.insert(
+        "name".to_string(),
+        GraphQLValue::String(schema.query_type.clone()),
+    );
+    schema_map.insert(
+        "queryType".to_string(),
+        GraphQLValue::Object(query_type_map),
+    );
 
     if let Some(ref mut_name) = schema.mutation_type {
         let mut m_map = HashMap::new();
@@ -51,7 +57,10 @@ pub fn resolve_type(schema: &GraphQLSchema, name: &str) -> GraphQLValue {
 
 fn format_type_definition(t_def: &TypeDefinition) -> GraphQLValue {
     let mut map = HashMap::new();
-    map.insert("name".to_string(), GraphQLValue::String(t_def.name().to_string()));
+    map.insert(
+        "name".to_string(),
+        GraphQLValue::String(t_def.name().to_string()),
+    );
 
     let kind_str = match t_def.kind() {
         TypeKind::Scalar => "SCALAR",
@@ -63,10 +72,16 @@ fn format_type_definition(t_def: &TypeDefinition) -> GraphQLValue {
         TypeKind::List => "LIST",
         TypeKind::NonNull => "NON_NULL",
     };
-    map.insert("kind".to_string(), GraphQLValue::String(kind_str.to_string()));
+    map.insert(
+        "kind".to_string(),
+        GraphQLValue::String(kind_str.to_string()),
+    );
 
     if let Some(desc) = t_def.description() {
-        map.insert("description".to_string(), GraphQLValue::String(desc.to_string()));
+        map.insert(
+            "description".to_string(),
+            GraphQLValue::String(desc.to_string()),
+        );
     } else {
         map.insert("description".to_string(), GraphQLValue::Null);
     }
@@ -119,7 +134,10 @@ fn format_field(f: &FieldDefinition) -> GraphQLValue {
     }
 
     let mut type_map = HashMap::new();
-    type_map.insert("name".to_string(), GraphQLValue::String(f.field_type.to_string()));
+    type_map.insert(
+        "name".to_string(),
+        GraphQLValue::String(f.field_type.to_string()),
+    );
     map.insert("type".to_string(), GraphQLValue::Object(type_map));
 
     let mut args = Vec::new();
@@ -127,7 +145,10 @@ fn format_field(f: &FieldDefinition) -> GraphQLValue {
         let mut arg_map = HashMap::new();
         arg_map.insert("name".to_string(), GraphQLValue::String(a.name.clone()));
         let mut arg_type_map = HashMap::new();
-        arg_type_map.insert("name".to_string(), GraphQLValue::String(a.arg_type.to_string()));
+        arg_type_map.insert(
+            "name".to_string(),
+            GraphQLValue::String(a.arg_type.to_string()),
+        );
         arg_map.insert("type".to_string(), GraphQLValue::Object(arg_type_map));
         args.push(GraphQLValue::Object(arg_map));
     }

@@ -282,4 +282,3 @@ pub enum Literal {
     Bool(bool),
     None,
 }
-

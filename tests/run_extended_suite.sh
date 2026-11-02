@@ -20,6 +20,9 @@ echo "    MANTRA EXTENDED TESTING, FUZZING & REGRESSION SUITE (v0.6.0)  "
 echo "=================================================================="
 echo ""
 
+echo ">> Verifying public native ABI header from C11 and C++11..."
+bash "$DIR/tests/abi/check_header.sh"
+
 if [ -f "$DIR/target/release/mantrac.exe" ] && [ -f "$DIR/target/release/mantra.exe" ]; then
     MANTRAC="$DIR/target/release/mantrac.exe"
     MANTRA="$DIR/target/release/mantra.exe"
@@ -83,7 +86,7 @@ PYTHON_CMD="python3"
 if ! command -v python3 >/dev/null 2>&1; then
     PYTHON_CMD="python"
 fi
-$PYTHON_CMD "$DIR/tests/fuzz/fuzz_runner.py" 250
+$PYTHON_CMD "$DIR/tests/fuzz/fuzz_runner.py" 250 --seed "${MANTRA_FUZZ_SEED:-0}"
 
 # 4. Run Micro-benchmarks
 echo ""
@@ -95,10 +98,22 @@ echo ""
 echo ">> [5/5] Executing MDK Security Audit Verification..."
 MDK_TEST_DIR="${TEMP:-${TMPDIR:-/tmp}}/mantra_mdk_integration_test"
 if [ -d "$MDK_TEST_DIR" ]; then
-    cd "$MDK_TEST_DIR"
-    $MANTRA audit || true
+    AUDIT_DIR="$(mktemp -d "${TEMP:-${TMPDIR:-/tmp}}/mantra-audit-XXXXXX")"
+    trap 'rm -rf "$AUDIT_DIR"' EXIT
+    cat > "$AUDIT_DIR/mantra.toml" <<'EOF'
+[package]
+name = "audit-fixture"
+version = "0.1.0"
+edition = "2026"
+
+[dependencies]
+EOF
+    cd "$AUDIT_DIR"
+    $MANTRA lock
+    $MANTRA audit
 else
-    echo ">> Skipping audit: MDK integration test directory not found at $MDK_TEST_DIR"
+    echo ">> Skipping audit: MDK integration test directory not found at $MDK_TEST_DIR" >&2
+    exit 1
 fi
 
 echo ""

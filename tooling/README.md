@@ -133,7 +133,7 @@ Error: Process completed with exit code 127.
   Diagnostics: err_unimplemented_abstract.mantra (E0105) ... PASS (E0105 verified)
 
 [4/4] Running MDK CLI Integration Tests...
-  MDK: mantra new test_app                           ... PASS
+  MDK: mantra create test_app                           ... PASS
   MDK: mantra check                                  ... PASS
   MDK: mantra run                                    ... PASS
   MDK: mantra test                                   ... PASS

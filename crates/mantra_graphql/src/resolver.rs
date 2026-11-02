@@ -61,11 +61,12 @@ impl ResolverRegistry {
     where
         F: Fn(&ResolveContext) -> Result<GraphQLValue, String> + Send + Sync + 'static,
     {
-        self.resolvers.insert((type_name.to_string(), field_name.to_string()), Arc::new(f));
+        self.resolvers
+            .insert((type_name.to_string(), field_name.to_string()), Arc::new(f));
     }
 
     pub fn get(&self, type_name: &str, field_name: &str) -> Option<&ResolverFn> {
-        self.resolvers.get(&(type_name.to_string(), field_name.to_string()))
+        self.resolvers
+            .get(&(type_name.to_string(), field_name.to_string()))
     }
 }
-

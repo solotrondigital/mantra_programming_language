@@ -87,4 +87,3 @@ impl MantraTheme {
         )
     }
 }
-

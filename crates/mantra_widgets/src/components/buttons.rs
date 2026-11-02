@@ -170,7 +170,14 @@ impl Widget for MantraButton {
             .with_style("padding", self.size.padding())
             .with_style("font-size", &format!("{}px", self.size.font_size()))
             .with_style("border-radius", &self.shape.to_border_radius().to_css())
-            .with_style("cursor", if self.is_disabled || self.is_loading { "not-allowed" } else { "pointer" })
+            .with_style(
+                "cursor",
+                if self.is_disabled || self.is_loading {
+                    "not-allowed"
+                } else {
+                    "pointer"
+                },
+            )
             .with_style("opacity", if self.is_disabled { "0.6" } else { "1.0" })
             .with_style("display", "inline-flex")
             .with_style("align-items", "center")
@@ -188,7 +195,13 @@ impl Widget for MantraButton {
 
         if let Some(act) = &self.on_click {
             if !self.is_disabled && !self.is_loading {
-                elem = elem.with_attribute("onclick", format!("window.MantraUI && window.MantraUI.emit('click', '{}', '{}')", self.id, act));
+                elem = elem.with_attribute(
+                    "onclick",
+                    format!(
+                        "window.MantraUI && window.MantraUI.emit('click', '{}', '{}')",
+                        self.id, act
+                    ),
+                );
             }
         }
 
@@ -199,7 +212,10 @@ impl Widget for MantraButton {
             elem = elem.add_child(format!(r#"<span class="mantra-btn-icon">{}</span>"#, icon));
         }
 
-        elem = elem.add_child(format!(r#"<span class="mantra-btn-text">{}</span>"#, self.text));
+        elem = elem.add_child(format!(
+            r#"<span class="mantra-btn-text">{}</span>"#,
+            self.text
+        ));
         elem.render()
     }
 }
@@ -252,7 +268,9 @@ pub fn social_button(provider: &str, text: impl Into<String>) -> MantraButton {
         "github" => "🐙",
         _ => "🔗",
     };
-    MantraButton::new(text).with_icon(icon).with_type(ButtonType::Outline)
+    MantraButton::new(text)
+        .with_icon(icon)
+        .with_type(ButtonType::Outline)
 }
 
 /// Floating Action Button (FAB).
@@ -300,7 +318,12 @@ impl Widget for ButtonGroup {
     }
 
     fn render(&self, ctx: &BuildContext) -> String {
-        let children_html = self.buttons.iter().map(|b| b.render(ctx)).collect::<Vec<_>>().join("");
+        let children_html = self
+            .buttons
+            .iter()
+            .map(|b| b.render(ctx))
+            .collect::<Vec<_>>()
+            .join("");
         format!(
             r#"<div id="{}" class="mantra-btn-group" style="display:inline-flex;border-radius:8px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.05);">{}</div>"#,
             self.id, children_html
@@ -313,4 +336,3 @@ fn uuid_simple() -> u32 {
     static COUNTER: AtomicU32 = AtomicU32::new(1000);
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
-

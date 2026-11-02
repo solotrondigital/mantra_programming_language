@@ -5,10 +5,10 @@
 // Manages the three-stage bootstrap execution pipeline and records the result
 // of each stage for inclusion in the bootstrap_report.txt artifact.
 
-use std::time::{Instant, Duration};
-use std::path::{Path, PathBuf};
-use crate::version::{CompilerVersion, BootstrapStage};
 use crate::reproducibility::ReproducibilityChecker;
+use crate::version::{BootstrapStage, CompilerVersion};
+use std::path::{Path, PathBuf};
+use std::time::{Duration, Instant};
 
 /// Result of a single bootstrap stage execution.
 #[derive(Debug, Clone)]
@@ -25,7 +25,9 @@ impl StageResult {
         let status = if self.success { "PASS" } else { "FAIL" };
         format!(
             "  Stage {:?}: {} ({:.2?}) → {}",
-            self.stage, status, self.duration,
+            self.stage,
+            status,
+            self.duration,
             self.output_path.display()
         )
     }
@@ -44,11 +46,11 @@ impl BootstrapPipeline {
     pub fn new(workspace_root: &Path) -> Self {
         let root = workspace_root.to_path_buf();
         BootstrapPipeline {
-            mantrac_binary:   root.join("target/release/mantrac"),
-            frontend_source:  root.join("compiler_src/frontend.mantra"),
-            stage1_output:    std::env::temp_dir().join("mantra_bootstrap_stage1.tokens"),
-            stage2_output:    std::env::temp_dir().join("mantra_bootstrap_stage2.tokens"),
-            workspace_root:   root,
+            mantrac_binary: root.join("target/release/mantrac"),
+            frontend_source: root.join("compiler_src/frontend.mantra"),
+            stage1_output: std::env::temp_dir().join("mantra_bootstrap_stage1.tokens"),
+            stage2_output: std::env::temp_dir().join("mantra_bootstrap_stage2.tokens"),
+            workspace_root: root,
         }
     }
 
@@ -67,11 +69,18 @@ impl BootstrapPipeline {
                 success: false,
                 duration: t.elapsed(),
                 output_path: self.stage1_output.clone(),
-                error: Some(format!("Bootstrap compiler not found: {}", self.mantrac_binary.display())),
+                error: Some(format!(
+                    "Bootstrap compiler not found: {}",
+                    self.mantrac_binary.display()
+                )),
             };
         }
 
-        let out_path = if stage == 1 { &self.stage1_output } else { &self.stage2_output };
+        let out_path = if stage == 1 {
+            &self.stage1_output
+        } else {
+            &self.stage2_output
+        };
 
         let status = std::process::Command::new(&self.mantrac_binary)
             .arg(&self.frontend_source)
@@ -100,9 +109,8 @@ impl BootstrapPipeline {
 
     /// Execute all three stages and return a full bootstrap report.
     pub fn run_all(&self) -> BootstrapReport {
-        let mut report = BootstrapReport::new(
-            CompilerVersion::current(BootstrapStage::RustBootstrap)
-        );
+        let mut report =
+            BootstrapReport::new(CompilerVersion::current(BootstrapStage::RustBootstrap));
 
         // Stage 1
         let s1 = self.run_stage(1);
@@ -118,9 +126,8 @@ impl BootstrapPipeline {
             // Reproducibility check (only if stage 2 passed)
             if s2_ok {
                 let checker = ReproducibilityChecker::new();
-                report.reproducible = Some(
-                    checker.compare_files(&self.stage1_output, &self.stage2_output)
-                );
+                report.reproducible =
+                    Some(checker.compare_files(&self.stage1_output, &self.stage2_output));
             }
         }
 
@@ -152,14 +159,17 @@ impl BootstrapReport {
 
     pub fn all_passed(&self) -> bool {
         let stages_ok = self.stages.iter().all(|s| s.success);
-        let repro_ok  = self.reproducible.unwrap_or(false);
+        let repro_ok = self.reproducible.unwrap_or(false);
         stages_ok && repro_ok
     }
 
     pub fn to_report_string(&self) -> String {
         let mut out = String::new();
         out.push_str("Mantra v0.3.0 Bootstrap Verification Report\n");
-        out.push_str(&format!("Compiler: {}\n", self.compiler_version.to_version_string()));
+        out.push_str(&format!(
+            "Compiler: {}\n",
+            self.compiler_version.to_version_string()
+        ));
         out.push_str(&format!("Stages:   {}\n\n", self.stages.len()));
 
         for s in &self.stages {
@@ -172,9 +182,9 @@ impl BootstrapReport {
 
         out.push('\n');
         match self.reproducible {
-            Some(true)  => out.push_str("Reproducibility: PASS\n"),
+            Some(true) => out.push_str("Reproducibility: PASS\n"),
             Some(false) => out.push_str("Reproducibility: FAIL\n"),
-            None        => out.push_str("Reproducibility: NOT CHECKED\n"),
+            None => out.push_str("Reproducibility: NOT CHECKED\n"),
         }
 
         out.push('\n');
@@ -200,4 +210,3 @@ mod tests {
         assert!(!report.all_passed(), "Empty report should not pass");
     }
 }
-

@@ -2,12 +2,12 @@
 //! Provides RestController, JsonSerializer, RouteHandler, and ApiResponse.
 //! Used by the Mantra standard library package `mantra.rest`.
 
+pub mod api_response;
 pub mod controller;
 pub mod json;
 pub mod route;
-pub mod api_response;
 
-pub use controller::{RestController, CrudController};
-pub use json::{JsonSerializer, JsonValue, JsonObject};
-pub use route::{RouteHandler, RouteRegistry, HandlerFn};
-pub use api_response::{ApiResponse, ApiError, Pagination};
+pub use api_response::{ApiError, ApiResponse, Pagination};
+pub use controller::{CrudController, RestController};
+pub use json::{JsonObject, JsonSerializer, JsonValue};
+pub use route::{HandlerFn, RouteHandler, RouteRegistry};

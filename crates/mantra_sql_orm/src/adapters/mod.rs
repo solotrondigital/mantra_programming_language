@@ -148,7 +148,11 @@ pub trait DatabaseAdapter: Send + Sync {
     fn is_connected(&self) -> bool;
 
     // ── Stored Procedures ───────────────────────────────────────────────────
-    fn execute_procedure(&self, name: &str, params: &[ProcedureParam]) -> Result<ProcedureResult, String>;
+    fn execute_procedure(
+        &self,
+        name: &str,
+        params: &[ProcedureParam],
+    ) -> Result<ProcedureResult, String>;
 
     // ── Cursors ─────────────────────────────────────────────────────────────
     fn open_cursor(&self, name: &str, query: &str) -> Result<Cursor, String>;
@@ -161,6 +165,10 @@ pub trait DatabaseAdapter: Send + Sync {
     fn refresh_materialized_view(&self, name: &str) -> Result<String, String>;
 
     // ── Database Functions ──────────────────────────────────────────────────
-    fn execute_scalar_function(&self, name: &str, args: &[FieldValue]) -> Result<FieldValue, String>;
+    fn execute_scalar_function(
+        &self,
+        name: &str,
+        args: &[FieldValue],
+    ) -> Result<FieldValue, String>;
     fn execute_table_function(&self, name: &str, args: &[FieldValue]) -> Result<Vec<Row>, String>;
 }

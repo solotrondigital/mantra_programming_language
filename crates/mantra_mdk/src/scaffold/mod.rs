@@ -1,18 +1,24 @@
+pub mod ai;
 pub mod frontend;
 pub mod fs_service;
 pub mod generator;
 pub mod graphql;
 pub mod metadata;
 pub mod rest;
+pub mod standalone;
 pub mod validator;
 
+pub use ai::AiTemplateGenerator;
 pub use frontend::FrontendTemplateGenerator;
 pub use fs_service::FilesystemService;
 pub use generator::{GenerationSummary, ProjectGenerator};
 pub use graphql::GraphQLTemplateGenerator;
 pub use metadata::ProjectMetadataGenerator;
 pub use rest::RestTemplateGenerator;
-pub use validator::{AppType, BackendService, ProjectOptionsValidator, RawProjectOptions, ValidatedOptions};
+pub use standalone::StandaloneTemplateGenerator;
+pub use validator::{
+    AppType, BackendService, ProjectOptionsValidator, RawProjectOptions, ValidatedOptions,
+};
 
 /// Argument parser for the `mantra create` command.
 pub struct ArgumentParser;
@@ -30,7 +36,10 @@ impl ArgumentParser {
                 if i < args.len() {
                     raw.app_type = Some(args[i].clone());
                 } else {
-                    return Err("Error: --type requires a value (frontend or backend).".to_string());
+                    return Err(
+                        "Error: --type requires a value (frontend, backend, standalone, or ai)."
+                            .to_string(),
+                    );
                 }
             } else if let Some(val) = arg.strip_prefix("--type=") {
                 raw.app_type = Some(val.to_string());
@@ -48,7 +57,9 @@ impl ArgumentParser {
                 if i < args.len() {
                     raw.org = Some(args[i].clone());
                 } else {
-                    return Err("Error: --org requires a domain value (e.g. com.example).".to_string());
+                    return Err(
+                        "Error: --org requires a domain value (e.g. com.example).".to_string()
+                    );
                 }
             } else if let Some(val) = arg.strip_prefix("--org=") {
                 raw.org = Some(val.to_string());
@@ -99,7 +110,10 @@ impl ArgumentParser {
                     raw.directory = Some(arg.clone());
                 }
             } else {
-                return Err(format!("Error: Unknown option '{}' for 'mantra create'.", arg));
+                return Err(format!(
+                    "Error: Unknown option '{}' for 'mantra create'.",
+                    arg
+                ));
             }
 
             i += 1;
@@ -131,6 +145,12 @@ impl CreateCommand {
                     println!("Service: {}", service.as_str());
                 }
             }
+            AppType::Standalone => {
+                println!("Type: standalone");
+            }
+            AppType::Ai => {
+                println!("Type: ai");
+            }
         }
         println!("Location: {}\n", summary.directory);
         println!("Next steps:");
@@ -141,4 +161,3 @@ impl CreateCommand {
         Ok(())
     }
 }
-

@@ -39,7 +39,11 @@ impl Widget for EmptyState {
     }
 
     fn render(&self, ctx: &BuildContext) -> String {
-        let action_html = self.action.as_ref().map(|a| a.render(ctx)).unwrap_or_default();
+        let action_html = self
+            .action
+            .as_ref()
+            .map(|a| a.render(ctx))
+            .unwrap_or_default();
 
         format!(
             r#"<div id="{}" class="mantra-empty-state" style="text-align:center;padding:48px 24px;">
@@ -53,7 +57,10 @@ impl Widget for EmptyState {
     }
 
     fn children(&self) -> Vec<&dyn Widget> {
-        self.action.as_ref().map(|a| vec![a.as_ref()]).unwrap_or_default()
+        self.action
+            .as_ref()
+            .map(|a| vec![a.as_ref()])
+            .unwrap_or_default()
     }
 }
 
@@ -135,7 +142,14 @@ impl Widget for PricingCard {
                 </ul>
                 <button class="mantra-btn mantra-btn-primary" style="width:100%;padding:12px;border-radius:10px;font-size:14px;font-weight:600;border:none;background:var(--mantra-primary,#4f46e5);color:#fff;cursor:pointer;">{}</button>
             </div>"#,
-            self.id, border_css, popular_badge, self.tier, self.price, self.billing_period, features_html, self.button_text
+            self.id,
+            border_css,
+            popular_badge,
+            self.tier,
+            self.price,
+            self.billing_period,
+            features_html,
+            self.button_text
         )
     }
 }
@@ -145,4 +159,3 @@ fn uuid_simple() -> u32 {
     static COUNTER: AtomicU32 = AtomicU32::new(16000);
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
-

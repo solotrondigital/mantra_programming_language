@@ -1,0 +1,6 @@
+[package]
+name = "mantra_ml"
+version = "0.8.0"
+description = "Model inference, embeddings, vector search, document processing, evaluation, and RAG"
+entry = "lib/mantra_ml.mantra"
+

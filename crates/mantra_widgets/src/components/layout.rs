@@ -114,7 +114,10 @@ impl Widget for Container {
     }
 
     fn children(&self) -> Vec<&dyn Widget> {
-        self.child.as_ref().map(|c| vec![c.as_ref()]).unwrap_or_default()
+        self.child
+            .as_ref()
+            .map(|c| vec![c.as_ref()])
+            .unwrap_or_default()
     }
 }
 
@@ -338,8 +341,16 @@ impl Widget for ListTile {
     }
 
     fn render(&self, ctx: &BuildContext) -> String {
-        let leading_html = self.leading.as_ref().map(|l| l.render(ctx)).unwrap_or_default();
-        let trailing_html = self.trailing.as_ref().map(|t| t.render(ctx)).unwrap_or_default();
+        let leading_html = self
+            .leading
+            .as_ref()
+            .map(|l| l.render(ctx))
+            .unwrap_or_default();
+        let trailing_html = self
+            .trailing
+            .as_ref()
+            .map(|t| t.render(ctx))
+            .unwrap_or_default();
 
         let subtitle_html = self
             .subtitle
@@ -402,7 +413,12 @@ impl Widget for GridView {
     }
 
     fn render(&self, ctx: &BuildContext) -> String {
-        let items_html = self.children.iter().map(|ch| ch.render(ctx)).collect::<Vec<_>>().join("");
+        let items_html = self
+            .children
+            .iter()
+            .map(|ch| ch.render(ctx))
+            .collect::<Vec<_>>()
+            .join("");
         format!(
             r#"<div id="{}" class="mantra-grid" style="display:grid;grid-template-columns:repeat({}, minmax(0, 1fr));gap:{}px;width:100%;box-sizing:border-box;">{}</div>"#,
             self.id, self.columns, self.gap, items_html

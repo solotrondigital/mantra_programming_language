@@ -1,0 +1,11 @@
+[package]
+name = "mantra_email"
+version.workspace = true
+edition = "2021"
+authors = ["Solotron Technologies Private Limited"]
+description = "Generic email sending package for the Mantra Programming Language — SMTP client, RFC 5322 message builder, To/Cc/Bcc routing, and multi-server dispatch."
+license = "MIT OR GPL-3.0-or-later"
+
+[dependencies]
+mantrac_vm = { path = "../mantrac_vm" }
+

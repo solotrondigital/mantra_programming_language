@@ -18,10 +18,13 @@ impl MobileBuilder {
         }
 
         println!("==================================================");
-        println!("   Mantra Mobile Application Platform (v0.6.0)   ");
+        println!("   Mantra Mobile Application Platform (v{})   ", env!("CARGO_PKG_VERSION"));
         println!("==================================================");
         println!("Target Platform : {}", target);
-        println!("Build Profile   : {}", if release { "release" } else { "debug" });
+        println!(
+            "Build Profile   : {}",
+            if release { "release" } else { "debug" }
+        );
 
         match target.to_lowercase().as_str() {
             "android" | "apk" => Self::build_apk(root, release, None),
@@ -51,7 +54,10 @@ impl MobileBuilder {
         println!("   Mantra Mobile Application Platform — Android APK");
         println!("==================================================");
         println!("Target Platform : Android (APK)");
-        println!("Build Profile   : {}", if release { "release" } else { "debug" });
+        println!(
+            "Build Profile   : {}",
+            if release { "release" } else { "debug" }
+        );
 
         let www_dir = get_www_dir(root).unwrap_or_else(|_| PathBuf::from("platforms/web"));
 
@@ -61,12 +67,28 @@ impl MobileBuilder {
         let apk_bytes = Self::package_android_apk(&android_dir, &www_dir)?;
 
         let rel_dir = if release { "release" } else { "debug" };
-        let apk_filename = if release { "app-release-unsigned.apk" } else { "app-debug.apk" };
+        let apk_filename = if release {
+            "app-release-unsigned.apk"
+        } else {
+            "app-debug.apk"
+        };
 
-        let primary_output = root.join("android/app/build/outputs/apk").join(rel_dir).join(apk_filename);
-        let secondary_output = root.join("android/app/build/outputs/apk").join(rel_dir).join("app-release.apk");
-        let platform_output = root.join("platforms/android/app/build/outputs/apk").join(rel_dir).join(apk_filename);
-        let target_output = root.join("target/android/app/build/outputs/apk").join(rel_dir).join(apk_filename);
+        let primary_output = root
+            .join("android/app/build/outputs/apk")
+            .join(rel_dir)
+            .join(apk_filename);
+        let secondary_output = root
+            .join("android/app/build/outputs/apk")
+            .join(rel_dir)
+            .join("app-release.apk");
+        let platform_output = root
+            .join("platforms/android/app/build/outputs/apk")
+            .join(rel_dir)
+            .join(apk_filename);
+        let target_output = root
+            .join("target/android/app/build/outputs/apk")
+            .join(rel_dir)
+            .join(apk_filename);
 
         write_artifact(&primary_output, &apk_bytes)?;
         if release {
@@ -90,7 +112,11 @@ impl MobileBuilder {
     }
 
     /// Builds Android App Bundle (AAB) with optional environment defines
-    pub fn build_appbundle(root: &Path, release: bool, defines_file: Option<&str>) -> Result<(), String> {
+    pub fn build_appbundle(
+        root: &Path,
+        release: bool,
+        defines_file: Option<&str>,
+    ) -> Result<(), String> {
         if let Some(df) = defines_file {
             let vars = crate::env_loader::EnvLoader::load_file(Path::new(df))?;
             crate::env_loader::EnvLoader::print_summary(df, &vars);
@@ -100,7 +126,10 @@ impl MobileBuilder {
         println!("   Mantra Mobile Application Platform — Android AAB");
         println!("==================================================");
         println!("Target Platform : Android App Bundle (AAB)");
-        println!("Build Profile   : {}", if release { "release" } else { "debug" });
+        println!(
+            "Build Profile   : {}",
+            if release { "release" } else { "debug" }
+        );
 
         let www_dir = get_www_dir(root).unwrap_or_else(|_| PathBuf::from("platforms/web"));
 
@@ -111,9 +140,12 @@ impl MobileBuilder {
 
         let primary_output = root.join("android/app/build/outputs/bundle/release/app-release.aab");
         let apk_mirror_output = root.join("android/app/build/outputs/apk/release/app-release.aab");
-        let platform_output = root.join("platforms/android/app/build/outputs/bundle/release/app-release.aab");
-        let target_output = root.join("target/android/app/build/outputs/bundle/release/app-release.aab");
-        let target_mirror = root.join("target/android/app/build/outputs/apk/release/app-release.aab");
+        let platform_output =
+            root.join("platforms/android/app/build/outputs/bundle/release/app-release.aab");
+        let target_output =
+            root.join("target/android/app/build/outputs/bundle/release/app-release.aab");
+        let target_mirror =
+            root.join("target/android/app/build/outputs/apk/release/app-release.aab");
 
         write_artifact(&primary_output, &aab_bytes)?;
         let _ = write_artifact(&apk_mirror_output, &aab_bytes);
@@ -129,7 +161,10 @@ impl MobileBuilder {
         println!("\n[Android Build Succeeded]");
         println!("Target Artifact: {}", display_path);
         println!("Next Steps:");
-        println!("  • To inspect bundle: bundletool build-apks --bundle={}", display_path);
+        println!(
+            "  • To inspect bundle: bundletool build-apks --bundle={}",
+            display_path
+        );
         println!("  • To upload to Google Play: Google Play Console > Production > Create Release");
 
         println!("\n✓ Android App Bundle (AAB) prepared at: {}", display_path);
@@ -148,7 +183,10 @@ impl MobileBuilder {
         match device.to_lowercase().as_str() {
             "android" => Self::run_android_target(defines_file),
             "ios" => Self::run_ios_target(defines_file),
-            other => Err(format!("Unknown mobile device '{}'. Supported devices: 'android', 'ios'.", other)),
+            other => Err(format!(
+                "Unknown mobile device '{}'. Supported devices: 'android', 'ios'.",
+                other
+            )),
         }
     }
 
@@ -173,12 +211,23 @@ impl MobileBuilder {
             let app_bundle_path = build_native_ios_app(root, &project_name, &bundle_id, false)?;
 
             // Bring Simulator window to front
-            let _ = std::process::Command::new("open").arg("-a").arg("Simulator").status();
+            let _ = std::process::Command::new("open")
+                .arg("-a")
+                .arg("Simulator")
+                .status();
 
             // Install native application into booted simulator
-            println!(">> Installing native app bundle into iOS Simulator ({})...", sim_name);
+            println!(
+                ">> Installing native app bundle into iOS Simulator ({})...",
+                sim_name
+            );
             let install_res = std::process::Command::new("xcrun")
-                .args(&["simctl", "install", "booted", &app_bundle_path.to_string_lossy()])
+                .args(&[
+                    "simctl",
+                    "install",
+                    "booted",
+                    &app_bundle_path.to_string_lossy(),
+                ])
                 .status();
 
             if let Ok(st) = install_res {
@@ -197,7 +246,10 @@ impl MobileBuilder {
                 Ok(out) if out.status.success() => {
                     let pid_info = String::from_utf8_lossy(&out.stdout).trim().to_string();
                     println!("✓ Connected to opened iOS Simulator: {}", sim_name);
-                    println!("✓ Application launched in simulator: {} ({})", bundle_id, pid_info);
+                    println!(
+                        "✓ Application launched in simulator: {} ({})",
+                        bundle_id, pid_info
+                    );
                     println!("✓ Mobile bridge & Native SwiftUI runtime active (No WebView).");
                 }
                 Ok(out) => {
@@ -221,12 +273,18 @@ impl MobileBuilder {
             println!("Status        : Checking available devices...");
 
             if let Some((avail_name, avail_id)) = detect_available_ios_simulator() {
-                println!(">> Found available simulator: {} ({})", avail_name, avail_id);
+                println!(
+                    ">> Found available simulator: {} ({})",
+                    avail_name, avail_id
+                );
                 println!(">> Booting iOS Simulator...");
                 let _ = std::process::Command::new("xcrun")
                     .args(&["simctl", "boot", &avail_id])
                     .status();
-                let _ = std::process::Command::new("open").arg("-a").arg("Simulator").status();
+                let _ = std::process::Command::new("open")
+                    .arg("-a")
+                    .arg("Simulator")
+                    .status();
 
                 let app_bundle_path = build_native_ios_app(root, &project_name, &bundle_id, false)?;
 
@@ -234,7 +292,12 @@ impl MobileBuilder {
                 std::thread::sleep(std::time::Duration::from_secs(2));
 
                 let _ = std::process::Command::new("xcrun")
-                    .args(&["simctl", "install", "booted", &app_bundle_path.to_string_lossy()])
+                    .args(&[
+                        "simctl",
+                        "install",
+                        "booted",
+                        &app_bundle_path.to_string_lossy(),
+                    ])
                     .status();
 
                 let _ = std::process::Command::new("xcrun")
@@ -251,7 +314,9 @@ impl MobileBuilder {
                 println!("  Running in simulated fallback bridge mode...");
 
                 let runtime = MobileRuntime::default();
-                let info = runtime.handle_message(r#"{"id":"dev_2","action":"device.info","origin":"file://","timestamp":100}"#);
+                let info = runtime.handle_message(
+                    r#"{"id":"dev_2","action":"device.info","origin":"file://","timestamp":100}"#,
+                );
                 println!("✓ Bridge Runtime Check: {}", info);
                 Ok(())
             }
@@ -281,8 +346,10 @@ impl MobileBuilder {
                 let _ = Self::build_apk(root, false, defines_file);
 
                 let apk_path = root.join("android/app/build/outputs/apk/debug/app-debug.apk");
-                let platform_apk = root.join("platforms/android/app/build/outputs/apk/debug/app-debug.apk");
-                let target_apk = root.join("target/android/app/build/outputs/apk/debug/app-debug.apk");
+                let platform_apk =
+                    root.join("platforms/android/app/build/outputs/apk/debug/app-debug.apk");
+                let target_apk =
+                    root.join("target/android/app/build/outputs/apk/debug/app-debug.apk");
                 let apk_to_install = if apk_path.exists() {
                     apk_path
                 } else if platform_apk.exists() {
@@ -294,7 +361,13 @@ impl MobileBuilder {
                 if apk_to_install.exists() {
                     println!(">> Installing APK to {}...", dev_id);
                     let install_out = std::process::Command::new(adb)
-                        .args(&["-s", dev_id, "install", "-r", &apk_to_install.to_string_lossy()])
+                        .args(&[
+                            "-s",
+                            dev_id,
+                            "install",
+                            "-r",
+                            &apk_to_install.to_string_lossy(),
+                        ])
                         .output();
 
                     if let Ok(out) = install_out {
@@ -312,20 +385,34 @@ impl MobileBuilder {
                 println!(">> Launching application on Android device...");
                 let activity_component = format!("{}/.MainActivity", package_name);
                 let launch_res = std::process::Command::new(adb)
-                    .args(&["-s", dev_id, "shell", "am", "start", "-n", &activity_component])
+                    .args(&[
+                        "-s",
+                        dev_id,
+                        "shell",
+                        "am",
+                        "start",
+                        "-n",
+                        &activity_component,
+                    ])
                     .output();
 
                 match launch_res {
                     Ok(out) if out.status.success() => {
                         println!("✓ Connected to opened Android device/emulator: {}", dev_id);
-                        println!("✓ Application deployed to Android runtime ({})", activity_component);
+                        println!(
+                            "✓ Application deployed to Android runtime ({})",
+                            activity_component
+                        );
                         println!("✓ Pure Native Android Runtime active (Material Components • No WebView).");
                         println!("✓ Native bridge MantraBridge.kt active.");
                     }
                     Ok(out) => {
                         let err = String::from_utf8_lossy(&out.stderr);
                         println!("✓ Connected to opened Android device/emulator: {}", dev_id);
-                        println!("✓ Application deployed to Android runtime ({})", activity_component);
+                        println!(
+                            "✓ Application deployed to Android runtime ({})",
+                            activity_component
+                        );
                         if !err.trim().is_empty() {
                             println!("  Notice: {}", err.trim());
                         }
@@ -345,7 +432,10 @@ impl MobileBuilder {
                     if !avds.is_empty() {
                         let avd_name = &avds[0];
                         println!(">> Found configured AVD: {}", avd_name);
-                        println!(">> Launching Android emulator in background: emulator -avd {}...", avd_name);
+                        println!(
+                            ">> Launching Android emulator in background: emulator -avd {}...",
+                            avd_name
+                        );
                         let _ = std::process::Command::new(&emulator)
                             .args(&["-avd", avd_name])
                             .spawn();
@@ -357,7 +447,9 @@ impl MobileBuilder {
                 println!("  To start an emulator: open Android Studio > Device Manager, or run: emulator -avd <name>");
                 println!("  Falling back to simulated bridge runtime...");
                 let runtime = MobileRuntime::default();
-                let info = runtime.handle_message(r#"{"id":"dev_1","action":"device.info","origin":"file://","timestamp":100}"#);
+                let info = runtime.handle_message(
+                    r#"{"id":"dev_1","action":"device.info","origin":"file://","timestamp":100}"#,
+                );
                 println!("✓ Bridge Runtime Check: {}", info);
                 Ok(())
             }
@@ -366,7 +458,9 @@ impl MobileBuilder {
             println!("  Install Android SDK Platform-Tools or set ANDROID_HOME.");
             println!("  Falling back to simulated bridge runtime...");
             let runtime = MobileRuntime::default();
-            let info = runtime.handle_message(r#"{"id":"dev_1","action":"device.info","origin":"file://","timestamp":100}"#);
+            let info = runtime.handle_message(
+                r#"{"id":"dev_1","action":"device.info","origin":"file://","timestamp":100}"#,
+            );
             println!("✓ Bridge Runtime Check: {}", info);
             Ok(())
         }
@@ -386,22 +480,35 @@ impl MobileBuilder {
         let _ = fs::create_dir_all(&res_layout);
         let layout_xml = res_layout.join("activity_main.xml");
         if !layout_xml.exists() {
-            let _ = fs::write(&layout_xml, AndroidBridgeTemplate::generate_native_layout_xml(&project_name, ""));
+            let _ = fs::write(
+                &layout_xml,
+                AndroidBridgeTemplate::generate_native_layout_xml(&project_name, ""),
+            );
         }
 
-        let pkg_path = android_dir.join("app/src/main/java").join(package_name.replace('.', "/"));
+        let pkg_path = android_dir
+            .join("app/src/main/java")
+            .join(package_name.replace('.', "/"));
         let _ = fs::create_dir_all(&pkg_path);
         let main_activity_kt = pkg_path.join("MainActivity.kt");
         if !main_activity_kt.exists() {
-            let _ = fs::write(&main_activity_kt, AndroidBridgeTemplate::generate_main_activity_kotlin(&package_name, &project_name));
+            let _ = fs::write(
+                &main_activity_kt,
+                AndroidBridgeTemplate::generate_main_activity_kotlin(&package_name, &project_name),
+            );
         }
         let bridge_kt = pkg_path.join("MantraBridge.kt");
         if !bridge_kt.exists() {
-            let _ = fs::write(&bridge_kt, AndroidBridgeTemplate::generate_bridge_kotlin(&package_name));
+            let _ = fs::write(
+                &bridge_kt,
+                AndroidBridgeTemplate::generate_bridge_kotlin(&package_name),
+            );
         }
 
         println!(">> [Android] Validating Security & Network Policies...");
-        let net_sec = AndroidBridgeTemplate::generate_network_security_config().as_bytes().to_vec();
+        let net_sec = AndroidBridgeTemplate::generate_network_security_config()
+            .as_bytes()
+            .to_vec();
         let net_sec_path = android_dir.join("app/src/main/res/xml/network_security_config.xml");
         if let Some(parent) = net_sec_path.parent() {
             let _ = fs::create_dir_all(parent);
@@ -419,27 +526,43 @@ impl MobileBuilder {
         if let (Some(aapt2), Some(android_jar)) = (find_aapt2(), find_android_jar()) {
             let manifest_path = android_dir.join("app/src/main/AndroidManifest.xml");
             if manifest_path.exists() {
-                let temp_dir = std::env::temp_dir().join(format!("mantra_apk_{}_{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default().as_millis()));
+                let temp_dir = std::env::temp_dir().join(format!(
+                    "mantra_apk_{}_{}",
+                    std::process::id(),
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_millis()
+                ));
                 let _ = fs::create_dir_all(&temp_dir);
                 let temp_apk = temp_dir.join("linked.apk");
 
                 let mut cmd = std::process::Command::new(&aapt2);
                 cmd.arg("link")
-                    .arg("-I").arg(&android_jar)
-                    .arg("--manifest").arg(&manifest_path)
-                    .arg("-o").arg(&temp_apk);
+                    .arg("-I")
+                    .arg(&android_jar)
+                    .arg("--manifest")
+                    .arg(&manifest_path)
+                    .arg("-o")
+                    .arg(&temp_apk);
 
                 if let Ok(res) = cmd.output() {
                     if res.status.success() && temp_apk.exists() {
                         // Sign with apksigner if available
-                        if let (Some(apksigner), Some(keystore)) = (find_apksigner(), find_debug_keystore()) {
+                        if let (Some(apksigner), Some(keystore)) =
+                            (find_apksigner(), find_debug_keystore())
+                        {
                             let _ = std::process::Command::new(&apksigner)
                                 .args(&[
                                     "sign",
-                                    "--ks", &keystore.to_string_lossy(),
-                                    "--ks-pass", "pass:android",
-                                    "--key-pass", "pass:android",
-                                    "--ks-key-alias", "androiddebugkey",
+                                    "--ks",
+                                    &keystore.to_string_lossy(),
+                                    "--ks-pass",
+                                    "pass:android",
+                                    "--key-pass",
+                                    "pass:android",
+                                    "--ks-key-alias",
+                                    "androiddebugkey",
                                     &temp_apk.to_string_lossy(),
                                 ])
                                 .output();
@@ -476,7 +599,9 @@ impl MobileBuilder {
         }
 
         // 3. res/xml/network_security_config.xml
-        let net_sec = AndroidBridgeTemplate::generate_network_security_config().as_bytes().to_vec();
+        let net_sec = AndroidBridgeTemplate::generate_network_security_config()
+            .as_bytes()
+            .to_vec();
         entries.push(("res/xml/network_security_config.xml".to_string(), net_sec));
 
         // 4. classes.dex
@@ -499,7 +624,10 @@ impl MobileBuilder {
         } else {
             default_android_manifest()
         };
-        entries.push(("base/manifest/AndroidManifest.xml".to_string(), manifest_content));
+        entries.push((
+            "base/manifest/AndroidManifest.xml".to_string(),
+            manifest_content,
+        ));
 
         // 2. base/res/layout/activity_main.xml
         let layout_path = android_dir.join("app/src/main/res/layout/activity_main.xml");
@@ -510,8 +638,13 @@ impl MobileBuilder {
         }
 
         // 3. base/res/xml/network_security_config.xml
-        let net_sec = AndroidBridgeTemplate::generate_network_security_config().as_bytes().to_vec();
-        entries.push(("base/res/xml/network_security_config.xml".to_string(), net_sec));
+        let net_sec = AndroidBridgeTemplate::generate_network_security_config()
+            .as_bytes()
+            .to_vec();
+        entries.push((
+            "base/res/xml/network_security_config.xml".to_string(),
+            net_sec,
+        ));
 
         // 4. base/dex/classes.dex
         entries.push(("base/dex/classes.dex".to_string(), default_classes_dex()));
@@ -530,20 +663,38 @@ impl MobileBuilder {
         let project_name = get_project_name(root);
         let bundle_id = get_ios_bundle_id(root, &project_name);
 
-        println!("\n>> [iOS] Building native SwiftUI application ({})", bundle_id);
+        println!(
+            "\n>> [iOS] Building native SwiftUI application ({})",
+            bundle_id
+        );
         println!(">> [iOS] Validating Native App Transport Security & Permissions...");
         println!("   ✓ App Transport Security (ATS) configured to require TLS 1.3");
         println!("   ✓ Validating Info.plist hardware privacy usage strings");
 
-        let rel_dir = if release { "Release-iphoneos" } else { "Debug-iphonesimulator" };
+        let rel_dir = if release {
+            "Release-iphoneos"
+        } else {
+            "Debug-iphonesimulator"
+        };
         let app_bundle_dir = build_native_ios_app(root, &project_name, &bundle_id, release)?;
 
         let primary_output = if release {
-            let ipa_path = root.join("ios/build").join(rel_dir).join(format!("{}.ipa", project_name));
-            let target_ipa = root.join("target/ios/build").join(rel_dir).join(format!("{}.ipa", project_name));
+            let ipa_path = root
+                .join("ios/build")
+                .join(rel_dir)
+                .join(format!("{}.ipa", project_name));
+            let target_ipa = root
+                .join("target/ios/build")
+                .join(rel_dir)
+                .join(format!("{}.ipa", project_name));
             let legacy_ipa = root.join("ios/build").join(rel_dir).join("App.ipa");
             let mut entries = Vec::new();
-            collect_files_recursive(&app_bundle_dir, app_bundle_dir.parent().unwrap_or(&app_bundle_dir), "Payload", &mut entries);
+            collect_files_recursive(
+                &app_bundle_dir,
+                app_bundle_dir.parent().unwrap_or(&app_bundle_dir),
+                "Payload",
+                &mut entries,
+            );
             let ipa_bytes = build_zip_archive(&entries);
             let _ = write_artifact(&ipa_path, &ipa_bytes);
             let _ = write_artifact(&target_ipa, &ipa_bytes);
@@ -588,7 +739,8 @@ impl MobileBuilder {
         println!("  ✓ Capability security origin enforcement: PASS");
 
         // 3. Verify lifecycle event transitions
-        let req3 = r#"{"id":"test_3","action":"lifecycle.status","origin":"file://","timestamp":100}"#;
+        let req3 =
+            r#"{"id":"test_3","action":"lifecycle.status","origin":"file://","timestamp":100}"#;
         let resp3 = runtime.handle_message(req3);
         if !resp3.contains("active") {
             return Err("Lifecycle status query failed".to_string());
@@ -737,9 +889,16 @@ fn find_android_emulator() -> Option<PathBuf> {
 }
 
 fn list_available_avds(emulator: &Path) -> Vec<String> {
-    if let Ok(output) = std::process::Command::new(emulator).arg("-list-avds").output() {
+    if let Ok(output) = std::process::Command::new(emulator)
+        .arg("-list-avds")
+        .output()
+    {
         let stdout = String::from_utf8_lossy(&output.stdout);
-        return stdout.lines().map(|l| l.trim().to_string()).filter(|l| !l.is_empty()).collect();
+        return stdout
+            .lines()
+            .map(|l| l.trim().to_string())
+            .filter(|l| !l.is_empty())
+            .collect();
     }
     Vec::new()
 }
@@ -810,7 +969,10 @@ fn find_android_jar() -> Option<PathBuf> {
 }
 
 fn find_apksigner() -> Option<PathBuf> {
-    if let Ok(output) = std::process::Command::new("which").arg("apksigner").output() {
+    if let Ok(output) = std::process::Command::new("which")
+        .arg("apksigner")
+        .output()
+    {
         if output.status.success() {
             let path_str = String::from_utf8_lossy(&output.stdout).trim().to_string();
             if !path_str.is_empty() {
@@ -912,7 +1074,10 @@ fn get_ios_bundle_id(root: &Path, project_name: &str) -> String {
                 }
                 if matched_key {
                     if trimmed.starts_with("<string>") && trimmed.ends_with("</string>") {
-                        let id = trimmed.trim_start_matches("<string>").trim_end_matches("</string>").trim();
+                        let id = trimmed
+                            .trim_start_matches("<string>")
+                            .trim_end_matches("</string>")
+                            .trim();
                         if !id.is_empty() {
                             return id.to_string();
                         }
@@ -925,9 +1090,21 @@ fn get_ios_bundle_id(root: &Path, project_name: &str) -> String {
     format!("com.example.{}", project_name)
 }
 
-fn build_native_ios_app(root: &Path, project_name: &str, bundle_id: &str, release: bool) -> Result<PathBuf, String> {
-    let rel_dir = if release { "Release-iphoneos" } else { "Debug-iphonesimulator" };
-    let app_bundle_dir = root.join("ios/build").join(rel_dir).join(format!("{}.app", project_name));
+fn build_native_ios_app(
+    root: &Path,
+    project_name: &str,
+    bundle_id: &str,
+    release: bool,
+) -> Result<PathBuf, String> {
+    let rel_dir = if release {
+        "Release-iphoneos"
+    } else {
+        "Debug-iphonesimulator"
+    };
+    let app_bundle_dir = root
+        .join("ios/build")
+        .join(rel_dir)
+        .join(format!("{}.app", project_name));
     fs::create_dir_all(&app_bundle_dir)
         .map_err(|e| format!("Failed to create iOS bundle directory: {}", e))?;
 
@@ -942,14 +1119,20 @@ fn build_native_ios_app(root: &Path, project_name: &str, bundle_id: &str, releas
     // Ensure Swift source files exist (always regenerate App.swift with correct project name)
     let content_view_path = ios_src_dir.join("ContentView.swift");
     if !content_view_path.exists() {
-        fs::write(&content_view_path, IosBridgeTemplate::generate_swiftui_content_view(project_name, ""))
-            .map_err(|e| format!("Failed to write ContentView.swift: {}", e))?;
+        fs::write(
+            &content_view_path,
+            IosBridgeTemplate::generate_swiftui_content_view(project_name, ""),
+        )
+        .map_err(|e| format!("Failed to write ContentView.swift: {}", e))?;
     }
 
     let app_swift_path = ios_src_dir.join("App.swift");
     // Always regenerate App.swift to ensure project name is correct
-    fs::write(&app_swift_path, IosBridgeTemplate::generate_native_app_swift(project_name))
-        .map_err(|e| format!("Failed to write App.swift: {}", e))?;
+    fs::write(
+        &app_swift_path,
+        IosBridgeTemplate::generate_native_app_swift(project_name),
+    )
+    .map_err(|e| format!("Failed to write App.swift: {}", e))?;
 
     let bridge_path = ios_src_dir.join("MantraBridge.swift");
     if !bridge_path.exists() {
@@ -973,22 +1156,33 @@ fn build_native_ios_app(root: &Path, project_name: &str, bundle_id: &str, releas
     }
 
     let sdk = String::from_utf8_lossy(&sdk_out.stdout).trim().to_string();
-    let arch = if std::env::consts::ARCH == "x86_64" { "x86_64" } else { "arm64" };
+    let arch = if std::env::consts::ARCH == "x86_64" {
+        "x86_64"
+    } else {
+        "arm64"
+    };
     let target = format!("{}-apple-ios17.0-simulator", arch);
     let out_bin = app_bundle_dir.join(project_name);
 
-    println!("   Compiling SwiftUI sources ({} target: {})...", arch, target);
+    println!(
+        "   Compiling SwiftUI sources ({} target: {})...",
+        arch, target
+    );
 
     let mut cmd = std::process::Command::new("swiftc");
-    cmd.arg("-sdk").arg(&sdk)
-        .arg("-target").arg(&target)
+    cmd.arg("-sdk")
+        .arg(&sdk)
+        .arg("-target")
+        .arg(&target)
         .arg("-parse-as-library")
-        .arg("-o").arg(&out_bin)
+        .arg("-o")
+        .arg(&out_bin)
         .arg(&app_swift_path)
         .arg(&content_view_path)
         .arg(&bridge_path);
 
-    let compile_res = cmd.output()
+    let compile_res = cmd
+        .output()
         .map_err(|e| format!("swiftc not found — is Xcode installed? ({})", e))?;
 
     if !compile_res.status.success() {
@@ -1016,12 +1210,21 @@ fn build_native_ios_app(root: &Path, project_name: &str, bundle_id: &str, releas
     }
 
     // Mirror to target and generic outputs
-    let target_output = root.join("target/ios/build").join(rel_dir).join(format!("{}.app", project_name));
+    let target_output = root
+        .join("target/ios/build")
+        .join(rel_dir)
+        .join(format!("{}.app", project_name));
     let generic_output = root.join("ios/build").join(rel_dir).join("App.app");
     let target_generic_output = root.join("target/ios/build").join(rel_dir).join("App.app");
-    if let Some(parent) = target_output.parent() { let _ = fs::create_dir_all(parent); }
-    if let Some(parent) = generic_output.parent() { let _ = fs::create_dir_all(parent); }
-    if let Some(parent) = target_generic_output.parent() { let _ = fs::create_dir_all(parent); }
+    if let Some(parent) = target_output.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    if let Some(parent) = generic_output.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
+    if let Some(parent) = target_generic_output.parent() {
+        let _ = fs::create_dir_all(parent);
+    }
     let _ = copy_dir_recursive(&app_bundle_dir, &target_output);
     let _ = copy_dir_recursive(&app_bundle_dir, &generic_output);
     let _ = copy_dir_recursive(&app_bundle_dir, &target_generic_output);
@@ -1051,7 +1254,12 @@ fn write_artifact(path: &Path, bytes: &[u8]) -> Result<(), String> {
     Ok(())
 }
 
-fn collect_files_recursive(dir: &Path, base: &Path, prefix: &str, entries: &mut Vec<(String, Vec<u8>)>) {
+fn collect_files_recursive(
+    dir: &Path,
+    base: &Path,
+    prefix: &str,
+    entries: &mut Vec<(String, Vec<u8>)>,
+) {
     if !dir.exists() {
         return;
     }
@@ -1065,7 +1273,11 @@ fn collect_files_recursive(dir: &Path, base: &Path, prefix: &str, entries: &mut 
                     let zip_path = if prefix.is_empty() {
                         rel.to_string_lossy().replace('\\', "/")
                     } else {
-                        format!("{}/{}", prefix.trim_end_matches('/'), rel.to_string_lossy().replace('\\', "/"))
+                        format!(
+                            "{}/{}",
+                            prefix.trim_end_matches('/'),
+                            rel.to_string_lossy().replace('\\', "/")
+                        )
                     };
                     if let Ok(bytes) = fs::read(&path) {
                         entries.push((zip_path, bytes));
@@ -1101,38 +1313,38 @@ fn build_zip_archive(entries: &[(String, Vec<u8>)]) -> Vec<u8> {
 
         // Local file header (30 bytes + name + data)
         out.extend_from_slice(&0x04034b50u32.to_le_bytes()); // Local header signature PK\x03\x04
-        out.extend_from_slice(&20u16.to_le_bytes());          // Version needed
-        out.extend_from_slice(&0u16.to_le_bytes());           // Bit flag
-        out.extend_from_slice(&0u16.to_le_bytes());           // Compression method (0 = Stored)
-        out.extend_from_slice(&0u16.to_le_bytes());           // Mod time
-        out.extend_from_slice(&0u16.to_le_bytes());           // Mod date
-        out.extend_from_slice(&crc.to_le_bytes());            // CRC-32
-        out.extend_from_slice(&data_len.to_le_bytes());       // Compressed size
-        out.extend_from_slice(&data_len.to_le_bytes());       // Uncompressed size
-        out.extend_from_slice(&name_len.to_le_bytes());       // File name length
-        out.extend_from_slice(&0u16.to_le_bytes());           // Extra field length
-        out.extend_from_slice(name_bytes);                    // File name
-        out.extend_from_slice(data);                          // File data
+        out.extend_from_slice(&20u16.to_le_bytes()); // Version needed
+        out.extend_from_slice(&0u16.to_le_bytes()); // Bit flag
+        out.extend_from_slice(&0u16.to_le_bytes()); // Compression method (0 = Stored)
+        out.extend_from_slice(&0u16.to_le_bytes()); // Mod time
+        out.extend_from_slice(&0u16.to_le_bytes()); // Mod date
+        out.extend_from_slice(&crc.to_le_bytes()); // CRC-32
+        out.extend_from_slice(&data_len.to_le_bytes()); // Compressed size
+        out.extend_from_slice(&data_len.to_le_bytes()); // Uncompressed size
+        out.extend_from_slice(&name_len.to_le_bytes()); // File name length
+        out.extend_from_slice(&0u16.to_le_bytes()); // Extra field length
+        out.extend_from_slice(name_bytes); // File name
+        out.extend_from_slice(data); // File data
 
         // Central directory file header (46 bytes + name)
         central_dir.extend_from_slice(&0x02014b50u32.to_le_bytes()); // Central directory signature PK\x01\x02
-        central_dir.extend_from_slice(&20u16.to_le_bytes());          // Version made by
-        central_dir.extend_from_slice(&20u16.to_le_bytes());          // Version needed
-        central_dir.extend_from_slice(&0u16.to_le_bytes());           // Bit flag
-        central_dir.extend_from_slice(&0u16.to_le_bytes());           // Compression method (0 = Stored)
-        central_dir.extend_from_slice(&0u16.to_le_bytes());           // Mod time
-        central_dir.extend_from_slice(&0u16.to_le_bytes());           // Mod date
-        central_dir.extend_from_slice(&crc.to_le_bytes());            // CRC-32
-        central_dir.extend_from_slice(&data_len.to_le_bytes());       // Compressed size
-        central_dir.extend_from_slice(&data_len.to_le_bytes());       // Uncompressed size
-        central_dir.extend_from_slice(&name_len.to_le_bytes());       // File name length
-        central_dir.extend_from_slice(&0u16.to_le_bytes());           // Extra field length
-        central_dir.extend_from_slice(&0u16.to_le_bytes());           // File comment length
-        central_dir.extend_from_slice(&0u16.to_le_bytes());           // Disk number start
-        central_dir.extend_from_slice(&0u16.to_le_bytes());           // Internal file attributes
-        central_dir.extend_from_slice(&0u32.to_le_bytes());           // External file attributes
-        central_dir.extend_from_slice(&offset.to_le_bytes());         // Relative offset of local header
-        central_dir.extend_from_slice(name_bytes);                    // File name
+        central_dir.extend_from_slice(&20u16.to_le_bytes()); // Version made by
+        central_dir.extend_from_slice(&20u16.to_le_bytes()); // Version needed
+        central_dir.extend_from_slice(&0u16.to_le_bytes()); // Bit flag
+        central_dir.extend_from_slice(&0u16.to_le_bytes()); // Compression method (0 = Stored)
+        central_dir.extend_from_slice(&0u16.to_le_bytes()); // Mod time
+        central_dir.extend_from_slice(&0u16.to_le_bytes()); // Mod date
+        central_dir.extend_from_slice(&crc.to_le_bytes()); // CRC-32
+        central_dir.extend_from_slice(&data_len.to_le_bytes()); // Compressed size
+        central_dir.extend_from_slice(&data_len.to_le_bytes()); // Uncompressed size
+        central_dir.extend_from_slice(&name_len.to_le_bytes()); // File name length
+        central_dir.extend_from_slice(&0u16.to_le_bytes()); // Extra field length
+        central_dir.extend_from_slice(&0u16.to_le_bytes()); // File comment length
+        central_dir.extend_from_slice(&0u16.to_le_bytes()); // Disk number start
+        central_dir.extend_from_slice(&0u16.to_le_bytes()); // Internal file attributes
+        central_dir.extend_from_slice(&0u32.to_le_bytes()); // External file attributes
+        central_dir.extend_from_slice(&offset.to_le_bytes()); // Relative offset of local header
+        central_dir.extend_from_slice(name_bytes); // File name
     }
 
     let cd_offset = out.len() as u32;
@@ -1143,13 +1355,13 @@ fn build_zip_archive(entries: &[(String, Vec<u8>)]) -> Vec<u8> {
 
     // End of central directory record (22 bytes)
     out.extend_from_slice(&0x06054b50u32.to_le_bytes()); // EOCD signature PK\x05\x06
-    out.extend_from_slice(&0u16.to_le_bytes());          // Disk number
-    out.extend_from_slice(&0u16.to_le_bytes());          // Start disk
-    out.extend_from_slice(&entry_count.to_le_bytes());   // Total entries on disk
-    out.extend_from_slice(&entry_count.to_le_bytes());   // Total entries
-    out.extend_from_slice(&cd_size.to_le_bytes());       // Central directory size
-    out.extend_from_slice(&cd_offset.to_le_bytes());     // Central directory offset
-    out.extend_from_slice(&0u16.to_le_bytes());          // Comment length
+    out.extend_from_slice(&0u16.to_le_bytes()); // Disk number
+    out.extend_from_slice(&0u16.to_le_bytes()); // Start disk
+    out.extend_from_slice(&entry_count.to_le_bytes()); // Total entries on disk
+    out.extend_from_slice(&entry_count.to_le_bytes()); // Total entries
+    out.extend_from_slice(&cd_size.to_le_bytes()); // Central directory size
+    out.extend_from_slice(&cd_offset.to_le_bytes()); // Central directory offset
+    out.extend_from_slice(&0u16.to_le_bytes()); // Comment length
 
     out
 }
@@ -1170,31 +1382,14 @@ fn default_android_manifest() -> Vec<u8> {
 
 fn default_classes_dex() -> Vec<u8> {
     vec![
-        0x64, 0x65, 0x78, 0x0a, 0x30, 0x33, 0x35, 0x00,
-        0x7a, 0x3e, 0x11, 0x5a,
-        0x9e, 0x48, 0x22, 0x74, 0x56, 0x24, 0x7e, 0x82,
-        0xb9, 0x98, 0x00, 0x12, 0x34, 0x56, 0x78, 0x9a,
-        0xbc, 0xde, 0xf0, 0x12,
-        0x70, 0x00, 0x00, 0x00,
-        0x70, 0x00, 0x00, 0x00,
-        0x78, 0x56, 0x34, 0x12,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00,
-        0x70, 0x00, 0x00, 0x00,
+        0x64, 0x65, 0x78, 0x0a, 0x30, 0x33, 0x35, 0x00, 0x7a, 0x3e, 0x11, 0x5a, 0x9e, 0x48, 0x22,
+        0x74, 0x56, 0x24, 0x7e, 0x82, 0xb9, 0x98, 0x00, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde,
+        0xf0, 0x12, 0x70, 0x00, 0x00, 0x00, 0x70, 0x00, 0x00, 0x00, 0x78, 0x56, 0x34, 0x12, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x70, 0x00, 0x00, 0x00,
     ]
 }
 
@@ -1212,8 +1407,12 @@ fn copy_dir_recursive(src: &Path, dst: &Path) -> Result<(), String> {
         if entry_path.is_dir() {
             copy_dir_recursive(&entry_path, &target_path)?;
         } else {
-            fs::copy(&entry_path, &target_path)
-                .map_err(|e| format!("Failed to copy file {:?} to {:?}: {}", entry_path, target_path, e))?;
+            fs::copy(&entry_path, &target_path).map_err(|e| {
+                format!(
+                    "Failed to copy file {:?} to {:?}: {}",
+                    entry_path, target_path, e
+                )
+            })?;
         }
     }
     Ok(())

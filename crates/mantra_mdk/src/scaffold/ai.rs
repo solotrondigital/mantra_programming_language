@@ -1,0 +1,340 @@
+use super::fs_service::FilesystemService;
+use super::validator::ValidatedOptions;
+use std::path::Path;
+
+pub struct AiTemplateGenerator;
+
+impl AiTemplateGenerator {
+    pub fn generate(root: &Path, opts: &ValidatedOptions) -> Result<(), String> {
+        let name = &opts.project_name;
+
+        // 1. Directory Structure
+        FilesystemService::create_dir_all(&root.join("src"))?;
+        FilesystemService::create_dir_all(&root.join("tests"))?;
+
+        // 2. src/main.mantra
+        let main_src = format!(
+            r#"# ==============================================================================
+# {name} — Mantra Native AI Application
+# Built with the mantra.ai unified multi-provider ecosystem
+#
+# DYNAMIC CONFIGURATION & ENVIRONMENT ARCHITECTURE:
+# -------------------------------------------------
+# 1. PropertiesTOML: Inspired by Java's java.util.Properties.
+#    Loads configuration from mantra.toml / config files using:
+#      let properties = PropertiesTOML("mantra.toml")
+#      let val: String = properties.getProperty("project.name")
+#
+# 2. ENV: Reads operating system environment variables across Windows (set),
+#    macOS (export), and Linux (export):
+#      let apiKey: String = ENV.get("OPENAI_API_KEY")
+# ==============================================================================
+
+# ==============================================================================
+# PropertiesTOML: Inspired by Java's java.util.Properties
+# Loads configuration files and retrieves dotted key-value properties.
+# ==============================================================================
+class PropertiesTOML:
+    pub file_path: String
+
+    def __init__(self, file_path: String = "mantra.toml"):
+        self.file_path = file_path
+
+    pub def load(self, file_path: String):
+        self.file_path = file_path
+
+    pub def getProperty(self, key_path: String) -> String:
+        return read_toml_value(self.file_path, key_path)
+
+    pub def get(self, key_path: String) -> String:
+        return read_toml_value(self.file_path, key_path)
+
+    pub def getPropertyOrDefault(self, key_path: String, default_val: String) -> String:
+        let val: String = read_toml_value(self.file_path, key_path)
+        if len(val) == 0:
+            return default_val
+        return val
+
+    pub static def loadFile(file_path: String) -> PropertiesTOML:
+        return PropertiesTOML(file_path)
+
+# ==============================================================================
+# ENV: Access Operating System Environment Variables
+# Supports Windows OS (set VAR=val) and macOS/Linux (export VAR=val).
+# ==============================================================================
+class ENV:
+    pub static def get(key: String) -> String:
+        return get_env(key, "")
+
+    pub static def getKey(key: String) -> String:
+        return get_env(key, "")
+
+    pub static def getOrDefault(key: String, default_val: String) -> String:
+        return get_env(key, default_val)
+
+    pub static def has(key: String) -> Bool:
+        let val: String = get_env(key, "")
+        return len(val) > 0
+
+class AuthCredential:
+    pub kind: String
+    pub value: String
+
+    def __init__(self, kind: String, value: String):
+        self.kind = kind
+        self.value = value
+
+    pub def masked(self) -> String:
+        if len(self.value) <= 8:
+            return "***"
+        return "***[SECURE_KEY]***"
+
+def env(var_name: String) -> AuthCredential:
+    return AuthCredential("env", var_name)
+
+def api_key(key: String) -> AuthCredential:
+    return AuthCredential("key", key)
+
+class TokenUsage:
+    pub prompt_tokens: Int
+    pub completion_tokens: Int
+    pub total_tokens: Int
+    pub cost: Float
+
+    def __init__(self, prompt_tokens: Int, completion_tokens: Int, cost: Float):
+        self.prompt_tokens = prompt_tokens
+        self.completion_tokens = completion_tokens
+        self.total_tokens = prompt_tokens + completion_tokens
+        self.cost = cost
+
+    pub def describe(self) -> String:
+        return "Tokens: " + str(self.total_tokens) + " (Prompt: " + str(self.prompt_tokens) + ", Completion: " + str(self.completion_tokens) + ") | Cost: $" + str(self.cost)
+
+class AIResponse:
+    pub model: String
+    pub provider: String
+    pub text: String
+    pub finish_reason: String
+    pub usage: TokenUsage
+
+    def __init__(self, model: String, provider: String, text: String, usage: TokenUsage):
+        self.model = model
+        self.provider = provider
+        self.text = text
+        self.finish_reason = "stop"
+        self.usage = usage
+
+    pub def describe(self) -> String:
+        return "[" + self.provider + ":" + self.model + "] " + self.text
+
+class ModelHandle:
+    pub provider: String
+    pub name: String
+    pub auth: AuthCredential
+    pub temperature: Float
+    pub max_tokens: Int
+
+    def __init__(self, provider: String, name: String, auth: AuthCredential, temperature: Float, max_tokens: Int):
+        self.provider = provider
+        self.name = name
+        self.auth = auth
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+
+    pub def generate(self, prompt: String) -> AIResponse:
+        let prompt_len: Int = len(prompt)
+        let prompt_tokens: Int = prompt_len + 12
+        let resp_text: String = "Response from " + self.provider + " (" + self.name + ") for: " + prompt
+        let completion_tokens: Int = len(resp_text) + 8
+        let cost: Float = 0.002
+        let usage: TokenUsage = TokenUsage(prompt_tokens, completion_tokens, cost)
+        return AIResponse(self.name, self.provider, resp_text, usage)
+
+    pub def stream_message(self, prompt: String):
+        print("  [" + self.provider + ":" + self.name + " stream chunk 1] Initializing stream...")
+        print("  [" + self.provider + ":" + self.name + " stream chunk 2] Generating response for: '" + prompt + "'")
+        print("  [" + self.provider + ":" + self.name + " stream chunk 3] Execution completed [finish: stop].")
+
+# ------------------------------------------------------------------------------
+# Dynamic AI Facade: Loads Model Details via PropertiesTOML & ENV
+# ------------------------------------------------------------------------------
+
+class AI:
+    pub static def model(provider: String, name: String, auth: AuthCredential) -> ModelHandle:
+        return ModelHandle(provider, name, auth, 0.7, 2048)
+
+    pub static def get(alias: String) -> ModelHandle:
+        # Dynamically load model specifications from mantra.toml via PropertiesTOML
+        let properties = PropertiesTOML("mantra.toml")
+        let prov: String = properties.getProperty("ai.models." + alias + ".provider")
+        let name: String = properties.getProperty("ai.models." + alias + ".name")
+        let key: String = properties.getProperty("ai.models." + alias + ".api_key")
+        let env_var: String = properties.getProperty("ai.models." + alias + ".env")
+
+        # Resolve credential: check toml api_key first; if empty, load from OS environment via ENV
+        mut auth: AuthCredential = env(env_var)
+        if len(key) > 0:
+            auth = api_key(key)
+        else:
+            let os_key: String = ENV.get(env_var)
+            if len(os_key) > 0:
+                auth = api_key(os_key)
+
+        return ModelHandle(prov, name, auth, 0.7, 2048)
+
+# ------------------------------------------------------------------------------
+# Smart Assistant Domain Service
+# ------------------------------------------------------------------------------
+
+class SmartAssistantService:
+    pub assistant_model: ModelHandle
+    pub analyst_model: ModelHandle
+    pub coder_model: ModelHandle
+
+    def __init__(self):
+        # Dynamically bound from mantra.toml definitions via PropertiesTOML
+        self.assistant_model = AI.get("assistant")
+        self.analyst_model = AI.get("analyst")
+        self.coder_model = AI.get("coder")
+
+    pub def ask(self, question: String) -> String:
+        print("[AI Service] Dispatching prompt to " + self.assistant_model.provider + " (" + self.assistant_model.name + ")...")
+        let response: AIResponse = self.assistant_model.generate(question)
+        print("  -> " + response.usage.describe())
+        return response.text
+
+    pub def stream_summary(self, topic: String):
+        print("[AI Service] Streaming response from " + self.assistant_model.provider + "...")
+        self.assistant_model.stream_message(topic)
+
+# ------------------------------------------------------------------------------
+# Display Helper: Prints all dynamic variables loaded via PropertiesTOML & ENV
+# ------------------------------------------------------------------------------
+
+def print_toml_variables():
+    print("==================================================================")
+    print("      DYNAMIC VARIABLES LOADED VIA PropertiesTOML & ENV           ")
+    print("==================================================================")
+
+    # 1. Load configuration via PropertiesTOML (like Java Properties)
+    let properties = PropertiesTOML("mantra.toml")
+
+    # 2. Project variables
+    let proj_name: String = properties.getProperty("project.name")
+    let proj_org: String = properties.getProperty("project.org")
+    let proj_ver: String = properties.getProperty("project.version")
+    let proj_type: String = properties.getProperty("project.type")
+    let proj_entry: String = properties.getProperty("project.entry")
+    let proj_desc: String = properties.getProperty("project.description")
+    print("Project Configuration (from mantra.toml):")
+    print("  • Name        : " + proj_name)
+    print("  • Org         : " + proj_org)
+    print("  • Version     : " + proj_ver)
+    print("  • Type        : " + proj_type)
+    print("  • Entry       : " + proj_entry)
+    print("  • Description : " + proj_desc)
+
+    # 3. AI Global variables
+    let def_prov: String = properties.getProperty("ai.default_provider")
+    let def_model: String = properties.getProperty("ai.default_model")
+    let timeout: String = properties.getProperty("ai.timeout_ms")
+    let max_retries: String = properties.getProperty("ai.max_retries")
+    print("\nAI Global Settings (from mantra.toml):")
+    print("  • Default Provider : " + def_prov)
+    print("  • Default Model    : " + def_model)
+    print("  • Timeout (ms)     : " + timeout)
+    print("  • Max Retries      : " + max_retries)
+
+    # 4. Model variables (dynamically obtained via properties.getProperty())
+    let asst_prov: String = properties.getProperty("ai.models.assistant.provider")
+    let asst_name: String = properties.getProperty("ai.models.assistant.name")
+    let asst_temp: String = properties.getProperty("ai.models.assistant.temperature")
+    let asst_tokens: String = properties.getProperty("ai.models.assistant.max_tokens")
+
+    let analyst_prov: String = properties.getProperty("ai.models.analyst.provider")
+    let analyst_name: String = properties.getProperty("ai.models.analyst.name")
+    let analyst_temp: String = properties.getProperty("ai.models.analyst.temperature")
+    let analyst_tokens: String = properties.getProperty("ai.models.analyst.max_tokens")
+
+    let coder_prov: String = properties.getProperty("ai.models.coder.provider")
+    let coder_name: String = properties.getProperty("ai.models.coder.name")
+    let coder_temp: String = properties.getProperty("ai.models.coder.temperature")
+    let coder_tokens: String = properties.getProperty("ai.models.coder.max_tokens")
+
+    print("\nConfigured Models (from mantra.toml via PropertiesTOML):")
+    print("  [assistant] " + asst_prov + " / " + asst_name + " (temp: " + asst_temp + ", max_tokens: " + asst_tokens + ")")
+    print("  [analyst]   " + analyst_prov + " / " + analyst_name + " (temp: " + analyst_temp + ", max_tokens: " + analyst_tokens + ")")
+    print("  [coder]     " + coder_prov + " / " + coder_name + " (temp: " + coder_temp + ", max_tokens: " + coder_tokens + ")")
+
+    # 5. OS Environment Variables (Windows / macOS / Linux) via ENV
+    print("\nOS Environment Variables (Loaded via ENV.get()):")
+    let env_openai: String = ENV.getOrDefault("OPENAI_API_KEY", "<not set>")
+    let env_gemini: String = ENV.getOrDefault("GEMINI_API_KEY", "<not set>")
+    let env_anthropic: String = ENV.getOrDefault("ANTHROPIC_API_KEY", "<not set>")
+    print("  • OPENAI_API_KEY    : " + env_openai)
+    print("  • GEMINI_API_KEY    : " + env_gemini)
+    print("  • ANTHROPIC_API_KEY : " + env_anthropic)
+    print("==================================================================\n")
+
+# ------------------------------------------------------------------------------
+# Main Application Entry Point
+# ------------------------------------------------------------------------------
+
+def main() -> Int:
+    # 1. Print all variable values dynamically loaded via PropertiesTOML and ENV
+    print_toml_variables()
+
+    # 2. Initialize domain service with dynamic bindings
+    let service = SmartAssistantService()
+
+    print("--- 1. Generating Model Response ---")
+    let answer = service.ask("Explain native AI integration in the Mantra Programming Language")
+    print("Result: " + answer + "\n")
+
+    print("--- 2. Streaming Response Demonstration ---")
+    service.stream_summary("Mantra AI Compiler Pipeline and Streaming Runtime")
+
+    print("\n--- 3. Multi-Provider Direct Model Binding ---")
+    let properties = PropertiesTOML("mantra.toml")
+    let analyst_prov: String = properties.getProperty("ai.models.analyst.provider")
+    let analyst_name: String = properties.getProperty("ai.models.analyst.name")
+    let analyst_key: String = properties.getProperty("ai.models.analyst.api_key")
+    let analyst_model = AI.model(analyst_prov, analyst_name, api_key(analyst_key))
+    print("Bound provider: " + analyst_model.provider + " / " + analyst_model.name)
+    let resp = analyst_model.generate("Provide structural analysis of multi-provider routing")
+    print("Result: " + resp.describe())
+
+    print("\n==================================================================")
+    print("         {name} AI Execution Completed Successfully! 🚀")
+    print("==================================================================")
+    return 0
+"#,
+            name = name,
+        );
+        FilesystemService::write_file(&root.join("src/main.mantra"), &main_src)?;
+
+        // 3. tests/app_test.mantra
+        let test_src = format!(
+            r#"# Test suite for {name} (Mantra AI)
+
+def test_model_initialization() -> Bool:
+    print("[TEST] Verifying {name} AI model configuration...")
+    return True
+
+def test_token_tracking() -> Bool:
+    print("[TEST] Verifying token usage and quota metrics...")
+    return True
+
+def main() -> Int:
+    assert(test_model_initialization() == True)
+    assert(test_token_tracking() == True)
+    print("All AI integration tests passed!")
+    return 0
+"#,
+            name = name
+        );
+        FilesystemService::write_file(&root.join("tests/app_test.mantra"), &test_src)?;
+
+        Ok(())
+    }
+}

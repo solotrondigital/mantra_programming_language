@@ -1,10 +1,16 @@
 [package]
 name = "mantrac_vm"
-version = "0.7.0"
+version.workspace = true
 edition = "2021"
 
 [dependencies]
 mantrac_lexer = { path = "../mantrac_lexer" }
 mantrac_ast = { path = "../mantrac_ast" }
 mantrac_checker = { path = "../mantrac_checker" }
+mantrac_parser = { path = "../mantrac_parser" }
+mantra_ai = { path = "../mantra_ai" }
+mantra_intelligence = { path = "../mantra_intelligence" }
+mantra_ml = { path = "../mantra_ml" }
+mantra_agents = { path = "../mantra_agents" }
+serde_json = "1"
 

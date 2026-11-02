@@ -20,7 +20,8 @@ fn assert_no_mr_files(dir: &Path) {
             assert_no_mr_files(&path);
         } else if let Some(ext) = path.extension() {
             assert_ne!(
-                ext, "mr",
+                ext,
+                "mr",
                 "Found prohibited .mr extension in file: {}",
                 path.display()
             );
@@ -51,7 +52,11 @@ fn test_frontend_creation_all_platforms() {
     ];
 
     let result = CreateCommand::execute(&args);
-    assert!(result.is_ok(), "Failed to create frontend project: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Failed to create frontend project: {:?}",
+        result
+    );
 
     let root = Path::new(project);
     assert!(root.join("mantra.toml").exists());
@@ -156,7 +161,10 @@ fn test_frontend_rejection_of_service_argument() {
 
     let raw = ArgumentParser::parse(&args).unwrap();
     let err = ProjectOptionsValidator::validate(raw).unwrap_err();
-    assert_eq!(err, "Error: --service is only supported for backend projects.");
+    assert_eq!(
+        err,
+        "Error: --service is only supported for backend projects."
+    );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -182,7 +190,11 @@ fn test_backend_rest_creation() {
     ];
 
     let result = CreateCommand::execute(&args);
-    assert!(result.is_ok(), "Failed to create REST project: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Failed to create REST project: {:?}",
+        result
+    );
 
     let root = Path::new(project);
     assert!(root.join("mantra.toml").exists());
@@ -191,17 +203,25 @@ fn test_backend_rest_creation() {
     assert!(root.join("src/main.mantra").exists());
     assert!(root.join("src/config/app_config.mantra").exists());
     assert!(root.join("src/routes/api_routes.mantra").exists());
-    assert!(root.join("src/controllers/health_controller.mantra").exists());
+    assert!(root
+        .join("src/controllers/health_controller.mantra")
+        .exists());
     assert!(root.join("src/controllers/user_controller.mantra").exists());
     assert!(root.join("src/models/user.mantra").exists());
     assert!(root.join("src/services/user_service.mantra").exists());
-    assert!(root.join("src/repositories/user_repository.mantra").exists());
+    assert!(root
+        .join("src/repositories/user_repository.mantra")
+        .exists());
     assert!(root.join("src/middleware/auth_middleware.mantra").exists());
-    assert!(root.join("src/middleware/logger_middleware.mantra").exists());
+    assert!(root
+        .join("src/middleware/logger_middleware.mantra")
+        .exists());
     assert!(root.join("src/validators/user_validator.mantra").exists());
     assert!(root.join("src/utils/response_formatter.mantra").exists());
     assert!(root.join("tests/unit/user_service_test.mantra").exists());
-    assert!(root.join("tests/integration/health_api_test.mantra").exists());
+    assert!(root
+        .join("tests/integration/health_api_test.mantra")
+        .exists());
     assert!(root.join("docs/api_spec.md").exists());
 
     // Ensure NO frontend / mobile platform directories
@@ -284,7 +304,11 @@ fn test_backend_graphql_creation() {
     ];
 
     let result = CreateCommand::execute(&args);
-    assert!(result.is_ok(), "Failed to create GraphQL project: {:?}", result);
+    assert!(
+        result.is_ok(),
+        "Failed to create GraphQL project: {:?}",
+        result
+    );
 
     let root = Path::new(project);
     assert!(root.join("mantra.toml").exists());
@@ -293,20 +317,34 @@ fn test_backend_graphql_creation() {
     assert!(root.join("src/main.mantra").exists());
     assert!(root.join("src/config/app_config.mantra").exists());
     assert!(root.join("src/graphql/schema/schema.mantra").exists());
-    assert!(root.join("src/graphql/resolvers/query_resolver.mantra").exists());
-    assert!(root.join("src/graphql/resolvers/mutation_resolver.mantra").exists());
+    assert!(root
+        .join("src/graphql/resolvers/query_resolver.mantra")
+        .exists());
+    assert!(root
+        .join("src/graphql/resolvers/mutation_resolver.mantra")
+        .exists());
     assert!(root.join("src/graphql/types/user_type.mantra").exists());
-    assert!(root.join("src/graphql/queries/user_queries.mantra").exists());
-    assert!(root.join("src/graphql/mutations/user_mutations.mantra").exists());
+    assert!(root
+        .join("src/graphql/queries/user_queries.mantra")
+        .exists());
+    assert!(root
+        .join("src/graphql/mutations/user_mutations.mantra")
+        .exists());
     assert!(root.join("src/graphql/scalars/date_time.mantra").exists());
     assert!(root.join("src/services/user_service.mantra").exists());
     assert!(root.join("src/models/user.mantra").exists());
-    assert!(root.join("src/repositories/user_repository.mantra").exists());
+    assert!(root
+        .join("src/repositories/user_repository.mantra")
+        .exists());
     assert!(root.join("src/middleware/auth_middleware.mantra").exists());
-    assert!(root.join("src/middleware/logging_middleware.mantra").exists());
+    assert!(root
+        .join("src/middleware/logging_middleware.mantra")
+        .exists());
     assert!(root.join("src/utils/graphql_formatter.mantra").exists());
     assert!(root.join("tests/unit/resolver_test.mantra").exists());
-    assert!(root.join("tests/integration/graphql_api_test.mantra").exists());
+    assert!(root
+        .join("tests/integration/graphql_api_test.mantra")
+        .exists());
     assert!(root.join("docs/schema.graphql").exists());
 
     // Ensure NO REST-specific controllers or routes
@@ -335,7 +373,7 @@ fn test_missing_type() {
     let err = ProjectOptionsValidator::validate(raw).unwrap_err();
     assert_eq!(
         err,
-        "Error: Missing required argument --type.\n\nAvailable types: frontend, backend."
+        "Error: Missing required argument --type.\n\nAvailable types: frontend, backend, standalone, ai."
     );
 }
 
@@ -351,7 +389,7 @@ fn test_unknown_type() {
     let err = ProjectOptionsValidator::validate(raw).unwrap_err();
     assert_eq!(
         err,
-        "Error: Unknown application type 'desktop'.\n\nAvailable types: frontend, backend."
+        "Error: Unknown application type 'desktop'.\n\nAvailable types: frontend, backend, standalone, ai."
     );
 }
 
@@ -439,7 +477,8 @@ fn test_mobile_build_apk_and_appbundle() {
     let apk_res = mantra_mdk::MobileBuilder::build_apk(root, true, None);
     assert!(apk_res.is_ok(), "build_apk failed: {:?}", apk_res);
 
-    let apk_path = root.join("target/android/app/build/outputs/apk/release/app-release-unsigned.apk");
+    let apk_path =
+        root.join("target/android/app/build/outputs/apk/release/app-release-unsigned.apk");
     assert!(apk_path.exists(), "APK not found at {}", apk_path.display());
     let apk_bytes = fs::read(&apk_path).unwrap();
     assert!(!apk_bytes.is_empty());
@@ -454,9 +493,199 @@ fn test_mobile_build_apk_and_appbundle() {
     assert!(aab_path.exists(), "AAB not found at {}", aab_path.display());
 
     let aab_mirror = root.join("target/android/app/build/outputs/apk/release/app-release.aab");
-    assert!(aab_mirror.exists(), "AAB mirror not found at {}", aab_mirror.display());
+    assert!(
+        aab_mirror.exists(),
+        "AAB mirror not found at {}",
+        aab_mirror.display()
+    );
 
     cleanup(project);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Standalone Project Tests
+// ─────────────────────────────────────────────────────────────────────────────
 
+#[test]
+fn test_standalone_creation_and_run() {
+    let project = "test_standalone_proj";
+    cleanup(project);
+
+    let args = vec![
+        "--type".to_string(),
+        "standalone".to_string(),
+        "--org".to_string(),
+        "com.raghav".to_string(),
+        "--project-name".to_string(),
+        project.to_string(),
+        "--description".to_string(),
+        "Test standalone application".to_string(),
+    ];
+
+    let result = CreateCommand::execute(&args);
+    assert!(
+        result.is_ok(),
+        "Failed to create standalone project: {:?}",
+        result
+    );
+
+    let root = Path::new(project);
+    assert!(root.join("mantra.toml").exists());
+    assert!(root.join("README.md").exists());
+    assert!(root.join(".gitignore").exists());
+    assert!(root.join("src/main.mantra").exists());
+    assert!(root.join("tests/app_test.mantra").exists());
+
+    // Check manifest
+    let manifest = fs::read_to_string(root.join("mantra.toml")).unwrap();
+    assert!(manifest.contains("type = \"standalone\""));
+    assert!(manifest.contains("entry = \"src/main.mantra\""));
+    assert!(!manifest.contains("[platforms]"));
+
+    // Check README
+    let readme = fs::read_to_string(root.join("README.md")).unwrap();
+    assert!(readme.contains("A standalone application"));
+    assert!(readme.contains("## Mantra Project Creation Reference"));
+    assert!(readme.contains("--type standalone"));
+
+    // Verify NO .mr files
+    assert_no_mr_files(root);
+
+    // Test running the standalone project's main.mantra directly
+    let entry = root.join("src/main.mantra");
+    let run_res = mantra_mdk::Runner::run_target(Some(entry.to_str().unwrap()));
+    assert!(run_res.is_ok(), "Standalone runner failed: {:?}", run_res);
+
+    cleanup(project);
+}
+
+#[test]
+fn test_standalone_rejects_service() {
+    let args = vec![
+        "--type".to_string(),
+        "standalone".to_string(),
+        "--service".to_string(),
+        "REST".to_string(),
+        "--project-name".to_string(),
+        "standalone_service_err".to_string(),
+    ];
+    let raw = ArgumentParser::parse(&args).unwrap();
+    let err = ProjectOptionsValidator::validate(raw).unwrap_err();
+    assert_eq!(
+        err,
+        "Error: --service is only supported for backend projects."
+    );
+}
+
+#[test]
+fn test_standalone_rejects_platforms() {
+    let args = vec![
+        "--type".to_string(),
+        "standalone".to_string(),
+        "--platforms".to_string(),
+        "ios,android".to_string(),
+        "--project-name".to_string(),
+        "standalone_platforms_err".to_string(),
+    ];
+    let raw = ArgumentParser::parse(&args).unwrap();
+    let err = ProjectOptionsValidator::validate(raw).unwrap_err();
+    assert_eq!(
+        err,
+        "Error: --platforms is only supported for frontend projects."
+    );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Native AI Project Tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+#[test]
+fn test_ai_creation_and_run() {
+    let project = "test_ai_assistant_app";
+    cleanup(project);
+
+    let args = vec![
+        "--type".to_string(),
+        "ai".to_string(),
+        "--org".to_string(),
+        "com.acme".to_string(),
+        "--project-name".to_string(),
+        project.to_string(),
+        "--description".to_string(),
+        "Mantra AI assistant test application".to_string(),
+    ];
+
+    let result = CreateCommand::execute(&args);
+    assert!(result.is_ok(), "Failed to create AI project: {:?}", result);
+
+    let root = Path::new(project);
+    assert!(root.join("mantra.toml").exists());
+    assert!(root.join("README.md").exists());
+    assert!(root.join(".gitignore").exists());
+    assert!(root.join("src/main.mantra").exists());
+    assert!(root.join("tests/app_test.mantra").exists());
+
+    // Check manifest
+    let manifest = fs::read_to_string(root.join("mantra.toml")).unwrap();
+    assert!(manifest.contains("type = \"ai\""));
+    assert!(manifest.contains("entry = \"src/main.mantra\""));
+    assert!(manifest.contains(&format!("\"mantra.ai\" = \"{}\"", env!("CARGO_PKG_VERSION"))));
+    assert!(manifest.contains("[ai]"));
+    assert!(manifest.contains("default_provider = \"openai\""));
+    assert!(manifest.contains("[ai.models.assistant]"));
+    assert!(manifest.contains("[ai.models.analyst]"));
+    assert!(manifest.contains("[ai.models.coder]"));
+    assert!(!manifest.contains("[platforms]"));
+
+    // Check README
+    let readme = fs::read_to_string(root.join("README.md")).unwrap();
+    assert!(readme.contains("A native AI application"));
+    assert!(readme.contains("## Mantra Project Creation Reference"));
+    assert!(readme.contains("--type ai"));
+
+    // Verify NO .mr files
+    assert_no_mr_files(root);
+
+    // Test running the AI project's main.mantra directly
+    let entry = root.join("src/main.mantra");
+    let run_res = mantra_mdk::Runner::run_target(Some(entry.to_str().unwrap()));
+    assert!(run_res.is_ok(), "AI runner failed: {:?}", run_res);
+
+    cleanup(project);
+}
+
+#[test]
+fn test_ai_rejects_service() {
+    let args = vec![
+        "--type".to_string(),
+        "ai".to_string(),
+        "--service".to_string(),
+        "REST".to_string(),
+        "--project-name".to_string(),
+        "ai_service_err".to_string(),
+    ];
+    let raw = ArgumentParser::parse(&args).unwrap();
+    let err = ProjectOptionsValidator::validate(raw).unwrap_err();
+    assert_eq!(
+        err,
+        "Error: --service is only supported for backend projects."
+    );
+}
+
+#[test]
+fn test_ai_rejects_platforms() {
+    let args = vec![
+        "--type".to_string(),
+        "ai".to_string(),
+        "--platforms".to_string(),
+        "ios,android".to_string(),
+        "--project-name".to_string(),
+        "ai_platforms_err".to_string(),
+    ];
+    let raw = ArgumentParser::parse(&args).unwrap();
+    let err = ProjectOptionsValidator::validate(raw).unwrap_err();
+    assert_eq!(
+        err,
+        "Error: --platforms is only supported for frontend projects."
+    );
+}

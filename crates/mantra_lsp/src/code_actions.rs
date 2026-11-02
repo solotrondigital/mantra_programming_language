@@ -23,7 +23,13 @@ impl CodeAction {
         let cmd = self
             .command
             .as_deref()
-            .map(|c| format!(r#","command":{{"command":"{}","title":"{}"}}"#, escape_json_str(c), escape_json_str(&self.title)))
+            .map(|c| {
+                format!(
+                    r#","command":{{"command":"{}","title":"{}"}}"#,
+                    escape_json_str(c),
+                    escape_json_str(&self.title)
+                )
+            })
             .unwrap_or_default();
         format!(
             r#"{{"title":"{}","kind":"{}"{}{}}}"#,
@@ -73,9 +79,71 @@ pub fn get_code_actions(
         });
     }
 
-    // ── Diagnostic-based quick fixes ─────────────────────────────────────
+    // ── Diagnostic-based quick fixes via mantra_intelligence (MVP 2) ───
     for diag in diagnostics_json {
-        if diag.contains("undefined") || diag.contains("Undefined") {
+        let parsed = serde_json::from_str::<serde_json::Value>(diag).ok();
+        let code = parsed
+            .as_ref()
+            .and_then(|value| value.get("code"))
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("");
+        let message = parsed
+            .as_ref()
+            .and_then(|value| value.get("message"))
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or(diag);
+        let diagnostic_line = parsed
+            .as_ref()
+            .and_then(|value| value.pointer("/range/start/line"))
+            .and_then(serde_json::Value::as_u64)
+            .map(|line| line as usize + 1)
+            .unwrap_or((_range.start.line + 1) as usize);
+        let diagnostic_col = parsed
+            .as_ref()
+            .and_then(|value| value.pointer("/range/start/character"))
+            .and_then(serde_json::Value::as_u64)
+            .map(|col| col as usize + 1)
+            .unwrap_or(_range.start.character as usize + 1);
+
+        let patches = mantra_intelligence::QuickFixEngine::suggest_fixes(
+            &document.uri,
+            &document.text,
+            code,
+            message,
+            diagnostic_line,
+            diagnostic_col,
+        );
+        for patch in patches {
+            let start_line = patch.line.saturating_sub(1) as u32;
+            let end_line = patch.line as u32;
+            let edit_json = format!(
+                r#"{{"changes":{{"{}":[{{"range":{{"start":{{"line":{},"character":0}},"end":{{"line":{},"character":0}}}},"newText":"{}\n"}}]}}}}"#,
+                escape_json_str(&document.uri),
+                start_line,
+                end_line,
+                escape_json_str(&patch.replacement),
+            );
+            actions.push(CodeAction {
+                title: format!("✨ Mantra AI: {}", patch.title),
+                kind: "quickfix".to_string(),
+                edit_json: Some(edit_json),
+                command: None,
+            });
+        }
+
+        if message.to_lowercase().contains("error")
+            || message.contains("Type mismatch")
+            || code.starts_with('E')
+        {
+            actions.push(CodeAction {
+                title: "💡 Mantra AI: Explain compiler error".to_string(),
+                kind: "quickfix".to_string(),
+                edit_json: None,
+                command: Some("mantra.ai.explainError".to_string()),
+            });
+        }
+
+        if message.to_lowercase().contains("undefined") {
             actions.push(CodeAction {
                 title: "Add import for undefined symbol".to_string(),
                 kind: "quickfix".to_string(),
@@ -131,4 +199,3 @@ fn organize_imports(document: &Document) -> Option<String> {
     }
     Some(result)
 }
-

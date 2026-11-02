@@ -85,6 +85,7 @@ impl StorageBackend for MemoryStorageBackend {
 }
 
 /// High-level Storage Manager providing JSON serialization for bridge requests.
+#[derive(Clone)]
 pub struct StorageManager {
     backend: Arc<dyn StorageBackend>,
 }
@@ -95,20 +96,16 @@ impl StorageManager {
     }
 
     pub fn handle_get(&self, tier: StorageTier, key: &str) -> Result<String, String> {
-        match self.backend.get(tier, key) {
-            Some(val) => Ok(format!(r#"{{"key":"{}","value":"{}"}}"#, key, val)),
-            None => Ok(format!(r#"{{"key":"{}","value":null}}"#, key)),
-        }
+        Ok(serde_json::json!({"key": key, "value": self.backend.get(tier, key)}).to_string())
     }
 
     pub fn handle_set(&self, tier: StorageTier, key: &str, value: &str) -> Result<String, String> {
         self.backend.set(tier, key, value)?;
-        Ok(format!(r#"{{"key":"{}","status":"stored"}}"#, key))
+        Ok(serde_json::json!({"key": key, "status": "stored"}).to_string())
     }
 
     pub fn handle_remove(&self, tier: StorageTier, key: &str) -> Result<String, String> {
         self.backend.remove(tier, key)?;
-        Ok(format!(r#"{{"key":"{}","status":"removed"}}"#, key))
+        Ok(serde_json::json!({"key": key, "status": "removed"}).to_string())
     }
 }
-

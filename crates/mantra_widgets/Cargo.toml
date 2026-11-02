@@ -1,6 +1,6 @@
 [package]
 name = "mantra_widgets"
-version = "0.7.0"
+version.workspace = true
 edition = "2021"
 authors = ["Solotron Technologies Private Limited"]
 description = "Official comprehensive UI component library, design system, and responsive rendering engine for the Mantra Programming Language"

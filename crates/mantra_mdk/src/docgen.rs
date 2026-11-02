@@ -28,14 +28,18 @@ impl DocGenerator {
                         doc.push_str(&format!("*Extends:* `{}`  \n", base));
                     }
                     if !cls.interfaces.is_empty() {
-                        doc.push_str(&format!("*Implements:* `{}`  \n", cls.interfaces.join(", ")));
+                        doc.push_str(&format!(
+                            "*Implements:* `{}`  \n",
+                            cls.interfaces.join(", ")
+                        ));
                     }
                     doc.push('\n');
 
                     for member in &cls.members {
                         match member {
                             ClassMember::Method(m) => {
-                                let params: Vec<String> = m.params.iter().map(|p| p.name.clone()).collect();
+                                let params: Vec<String> =
+                                    m.params.iter().map(|p| p.name.clone()).collect();
                                 doc.push_str(&format!("- `def {}({})`", m.name, params.join(", ")));
                                 if let Some(ref ret) = m.return_type {
                                     doc.push_str(&format!(" -> `{}`", ret));
@@ -43,8 +47,13 @@ impl DocGenerator {
                                 doc.push_str("\n\n");
                             }
                             ClassMember::StaticMethod(sm) => {
-                                let params: Vec<String> = sm.params.iter().map(|p| p.name.clone()).collect();
-                                doc.push_str(&format!("- *static* `def {}({})`\n\n", sm.name, params.join(", ")));
+                                let params: Vec<String> =
+                                    sm.params.iter().map(|p| p.name.clone()).collect();
+                                doc.push_str(&format!(
+                                    "- *static* `def {}({})`\n\n",
+                                    sm.name,
+                                    params.join(", ")
+                                ));
                             }
                             ClassMember::Field(f) => {
                                 doc.push_str(&format!("- *field* `{}`\n\n", f.name));
@@ -57,12 +66,21 @@ impl DocGenerator {
                     doc.push_str(&format!("## Interface `{}`\n\n", iface.name));
                     for m in &iface.methods {
                         let params: Vec<String> = m.params.iter().map(|p| p.name.clone()).collect();
-                        doc.push_str(&format!("- `def {}({}) -> {}`\n\n", m.name, params.join(", "), m.return_type));
+                        doc.push_str(&format!(
+                            "- `def {}({}) -> {}`\n\n",
+                            m.name,
+                            params.join(", "),
+                            m.return_type
+                        ));
                     }
                 }
                 Declaration::Function(f) => {
                     let params: Vec<String> = f.params.iter().map(|p| p.name.clone()).collect();
-                    doc.push_str(&format!("### Function `{}({})`\n\n", f.name, params.join(", ")));
+                    doc.push_str(&format!(
+                        "### Function `{}({})`\n\n",
+                        f.name,
+                        params.join(", ")
+                    ));
                 }
                 _ => {}
             }
@@ -71,4 +89,3 @@ impl DocGenerator {
         Ok(doc)
     }
 }
-
