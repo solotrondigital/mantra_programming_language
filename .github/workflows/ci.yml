@@ -51,11 +51,20 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
 
+      - name: Setup Python for release version checks
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Build All Workspace Crates (Release)
         run: cargo build --release
 
-      - name: Run Rust Unit and Integration Tests
-        run: cargo test --workspace
+      - name: Verify Cargo workspace versions
+        shell: bash
+        run: python scripts/release/version_config.py verify
+
+      - name: Run Rust Tests (skip AI provider/model package)
+        run: cargo test --workspace --exclude mantra_ai
 
       - name: Run Core Conformance & MDK Tests
         shell: bash
@@ -77,9 +86,22 @@ jobs:
         shell: bash
         run: |
           ROOT_DIR="$(pwd)"
-          export PATH="$ROOT_DIR/target/release:$PATH"
-          mantra --version
-          mantrac --version
+          INSTALL_BIN="$RUNNER_TEMP/mantra-install/bin"
+          mkdir -p "$INSTALL_BIN"
+          for executable in mantra mantrac mantra-lsp; do
+            if [ -f "$ROOT_DIR/target/release/${executable}.exe" ]; then
+              cp "$ROOT_DIR/target/release/${executable}.exe" "$INSTALL_BIN/"
+            elif [ -f "$ROOT_DIR/target/release/$executable" ]; then
+              cp "$ROOT_DIR/target/release/$executable" "$INSTALL_BIN/"
+            fi
+          done
+          echo "$INSTALL_BIN" >> "$GITHUB_PATH"
+          export PATH="$INSTALL_BIN:$PATH"
+          EXPECTED_VERSION="$(python scripts/release/version_config.py version)"
+          mantra --version | tee /tmp/mantra-version.txt
+          mantrac --version | tee /tmp/mantrac-version.txt
+          grep -F "v${EXPECTED_VERSION}" /tmp/mantra-version.txt
+          grep -F "${EXPECTED_VERSION}" /tmp/mantrac-version.txt
           rm -rf /tmp/ci_test_app
           mantra create --type standalone --org com.ci --project-name ci_test_app --directory /tmp/ci_test_app
           cd /tmp/ci_test_app

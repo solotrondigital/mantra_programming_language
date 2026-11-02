@@ -14,6 +14,10 @@ import json
 import hashlib
 import tomllib
 import re
+try:
+    from .version_config import read_config
+except ImportError:
+    from version_config import read_config
 from datetime import datetime, timezone
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -27,9 +31,7 @@ def get_version():
     if len(sys.argv) > 1 and re.fullmatch(r"v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", sys.argv[1]):
         v = sys.argv[1]
         return v.lstrip("vV")
-    cargo_path = os.path.join(REPO_ROOT, "crates", "mantrac", "Cargo.toml")
-    with open(cargo_path, "rb") as f:
-        return tomllib.load(f)["package"]["version"]
+    return read_config()[0]
 
 VERSION = get_version()
 DIST_DIR = os.path.join(REPO_ROOT, f"dist/releases/v{VERSION}")

@@ -1,0 +1,85 @@
+name: Publish Homebrew Formula
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (must match Cargo.toml)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Resolve workspace release version
+        id: version
+        shell: bash
+        run: |
+          VERSION="$(python scripts/release/version_config.py version)"
+          REQUESTED="${{ inputs.version || github.event.release.tag_name }}"
+          REQUESTED="${REQUESTED#v}"
+          if [[ -n "$REQUESTED" && "$REQUESTED" != "$VERSION" ]]; then
+            echo "Requested release $REQUESTED does not match Cargo.toml version $VERSION" >&2
+            exit 1
+          fi
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Download published release assets and generate formula
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          mkdir -p dist/release-assets
+          gh release download "v$VERSION" --dir dist/release-assets
+          python scripts/release/generate_homebrew_formula.py "$VERSION" dist/release-assets dist/mantra.rb
+          ruby -c dist/mantra.rb
+      - name: Push formula to Homebrew tap
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ steps.version.outputs.value }}
+        shell: bash
+        run: |
+          if [[ -z "$HOMEBREW_TAP_TOKEN" ]]; then
+            echo "HOMEBREW_TAP_TOKEN is required to deploy the Homebrew formula." >&2
+            exit 1
+          fi
+          TMP_DIR="$(mktemp -d)"
+          trap 'rm -rf "$TMP_DIR"' EXIT
+          TARGET=""
+          for REPOSITORY in solotrondigital/homebrew-tap solotrontech/homebrew-tap; do
+            if git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${REPOSITORY}.git" "$TMP_DIR/tap" 2>/dev/null; then
+              TARGET="$REPOSITORY"
+              break
+            fi
+            rm -rf "$TMP_DIR/tap"
+          done
+          if [[ -z "$TARGET" ]]; then
+            echo "Could not clone the configured Homebrew tap repository." >&2
+            exit 1
+          fi
+          cd "$TMP_DIR/tap"
+          BRANCH=main
+          if ! git ls-remote --exit-code --heads origin main >/dev/null 2>&1; then BRANCH=master; fi
+          git checkout -B "$BRANCH" "origin/$BRANCH"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p Formula
+          cp "$GITHUB_WORKSPACE/dist/mantra.rb" Formula/mantra.rb
+          git add Formula/mantra.rb
+          if ! git diff --cached --quiet; then
+            git commit -m "feat(formula): bump mantra to v$VERSION"
+            git push origin "HEAD:$BRANCH"
+          else
+            echo "Homebrew formula is already current at v$VERSION."
+          fi

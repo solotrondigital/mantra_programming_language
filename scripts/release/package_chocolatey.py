@@ -21,14 +21,15 @@ if hasattr(sys.stderr, "reconfigure"):
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 def get_version():
-    if len(sys.argv) > 1 and sys.argv[1] and not sys.argv[1].startswith("-"):
-        return sys.argv[1].lstrip("vV")
     cargo_path = os.path.join(REPO_ROOT, "Cargo.toml")
-    if os.path.exists(cargo_path):
-        import tomllib
-        with open(cargo_path, "rb") as f:
-            return tomllib.load(f)["workspace"]["package"]["version"]
-    raise RuntimeError("Unable to read workspace version from Cargo.toml")
+    import tomllib
+    with open(cargo_path, "rb") as f:
+        workspace_version = tomllib.load(f)["workspace"]["package"]["version"]
+    if len(sys.argv) > 1 and sys.argv[1] and not sys.argv[1].startswith("-"):
+        requested_version = sys.argv[1].lstrip("vV")
+        if requested_version != workspace_version:
+            raise ValueError(f"Requested Chocolatey version {requested_version} does not match Cargo workspace version {workspace_version}")
+    return workspace_version
 
 def update_nuspec(version):
     nuspec_path = os.path.join(REPO_ROOT, "distribution/choco-mantra/mantra.nuspec")
@@ -68,6 +69,8 @@ def update_install_ps1(version):
             with open(zp, "rb") as zf:
                 checksum = hashlib.sha256(zf.read()).hexdigest()
             break
+    if not checksum:
+        raise FileNotFoundError(f"Missing Windows installer ZIP for v{version}; refusing to package with a placeholder checksum")
 
     content = re.sub(r"\$version\s*=\s*'[^']+'", f"$version     = '{version}'", content)
     content = re.sub(
