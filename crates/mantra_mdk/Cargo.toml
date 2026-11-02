@@ -23,4 +23,5 @@ mantra_mobile = { path = "../mantra_mobile" }
 mantra_ai = { path = "../mantra_ai" }
 mantra_intelligence = { path = "../mantra_intelligence" }
 sha2 = "0.10"
+serde_json = "1"
 

@@ -14,6 +14,7 @@ pub mod mobile_builder;
 pub mod project;
 pub mod runner;
 pub mod scaffold;
+pub mod install;
 pub mod uninstall;
 
 use audit::Auditor;
@@ -92,7 +93,9 @@ Package Management & Distribution:
     publish                Package project into distributable archive (.tar.gz/.nupkg)
 
 Toolchain Management:
+    install [--version <VERSION>]  Install the latest release or a selected version
     uninstall --version <VERSION>  Remove that installed Mantra version and activate the newest remaining version
+    uninstall                       Remove Mantra and all managed versions from this system
 
 Developer Tools & Quality:
     fmt [FILES...]         Format Mantra source files with 4-space indentation
@@ -153,6 +156,12 @@ fn main() {
         }
         "uninstall" => {
             if let Err(error) = uninstall::run(&args[2..]) {
+                eprintln!("{error}");
+                exit(1);
+            }
+        }
+        "install" => {
+            if let Err(error) = install::run(&args[2..]) {
                 eprintln!("{error}");
                 exit(1);
             }

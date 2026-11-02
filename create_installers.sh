@@ -249,7 +249,8 @@ Run the install script in terminal:
 ./install.sh
 \`\`\`
 The installer stores this release under \`~/.mantra/versions/${VERSION}\` and selects it from \`~/.mantra/bin\`.
-Remove it later with \`mantra uninstall --version ${VERSION}\`.
+Run \`mantra install\` to update to the newest release or \`mantra install --version ${VERSION}\` to install a selected release.
+Run \`mantra uninstall --version ${VERSION}\` to remove one release, or \`mantra uninstall\` to remove Mantra completely.
 
 Verify:
 \`\`\`bash
@@ -654,7 +655,7 @@ mantrac --help
 
 Each release is stored separately under \`~/.mantra/versions\` on macOS/Linux
 or \`%LOCALAPPDATA%\\Mantra\\versions\` on Windows. To remove one version and
-activate the newest remaining version, run \`mantra uninstall --version ${VERSION}\`.
+activate the newest remaining version, run \`mantra uninstall --version ${VERSION}\`. Run \`mantra uninstall\` to remove all Mantra versions and installer-managed PATH entries.
 EOF
 
 # ------------------------------------------------------------------------------
