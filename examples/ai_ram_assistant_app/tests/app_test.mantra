@@ -1,4 +1,7 @@
-# Test suite for ai_ram_assistant_app (Mantra AI)
+# Test suite for ai_ram_assistant_app (Mantra AI + mantra_email)
+
+from mantra_util import PropertiesTOML, ENV
+from mantra_email import EmailMessage, SmtpClient, Email
 
 def test_model_initialization() -> Bool:
     print("[TEST] Verifying ai_ram_assistant_app AI model configuration...")
@@ -8,8 +11,25 @@ def test_token_tracking() -> Bool:
     print("[TEST] Verifying token usage and quota metrics...")
     return True
 
+def test_email_properties_loading() -> Bool:
+    print("[TEST] Verifying email properties from mantra.toml...")
+    let properties = PropertiesTOML("mantra.toml")
+    let server: String = properties.getProperty("email.server")
+    let to_email: String = properties.getProperty("email.to")
+    let port_str: String = properties.getProperty("email.port")
+    return len(server) > 0 and len(to_email) > 0 and len(port_str) > 0
+
+def test_email_message_builder() -> Bool:
+    print("[TEST] Verifying EmailMessage RFC-5322 builder with CC/BCC...")
+    let msg = EmailMessage("bot@solotrontech.com", "contactus@solotrontech.com", "Test Subject", "Test Body")
+    msg.set_cc("engineering@solotrontech.com")
+    msg.set_bcc("audit@solotrontech.com")
+    return len(msg.from_email) > 0 and len(msg.to) > 0 and len(msg.cc) > 0
+
 def main() -> Int:
     assert(test_model_initialization() == True)
     assert(test_token_tracking() == True)
-    print("All AI integration tests passed!")
+    assert(test_email_properties_loading() == True)
+    assert(test_email_message_builder() == True)
+    print("All AI & mantra_email integration tests passed!")
     return 0

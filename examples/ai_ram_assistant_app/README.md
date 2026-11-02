@@ -16,11 +16,23 @@ ai_ram_assistant_app/
     └── app_test.mantra # Test suite verifying model invocation & tokens
 ```
 
-## Configured AI Providers
-Models are declared in `mantra.toml` and accessible via `AI.get("<alias>")` or `AI.model(...)`:
+## Configured AI Providers & Email Service
+Models and email transport are declared in `mantra.toml`:
 - **Assistant**: OpenAI `gpt-4o`
 - **Analyst**: Google Gemini `gemini-1.5-pro`
 - **Coder**: Anthropic Claude `claude-3-5-sonnet`
+- **Email Service**: `mantra_email` SMTP client (`smtp.solotrontech.com:587`) for dispatching automated AI execution reports
+
+## Automated Email Dispatching (`AssistantEmailNotifier`)
+The `AssistantEmailNotifier` class loads SMTP server settings and recipient routing from `mantra.toml` using `PropertiesTOML` and `ENV`:
+```mantra
+let email_notifier = AssistantEmailNotifier("mantra.toml")
+email_notifier.send_ai_summary(
+    "Mantra AI Execution & Native Integration",
+    "openai:gpt-4o",
+    "Analysis completed."
+)
+```
 
 ## Getting Started
 

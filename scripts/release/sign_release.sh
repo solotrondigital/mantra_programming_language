@@ -67,7 +67,7 @@ else
     # Create deterministic signed envelope for release verification
     echo "-----BEGIN MANTRA RELEASE SIGNATURE-----" > "${DIST_DIR}/SHA256SUMS.sig"
     echo "Version: Mantra v${VERSION}" >> "${DIST_DIR}/SHA256SUMS.sig"
-    echo "Signer: Solotron Technologies Private Limited <security@solotron.tech>" >> "${DIST_DIR}/SHA256SUMS.sig"
+    echo "Signer: Solotron Technologies Private Limited <contactus@solotrontech.com>" >> "${DIST_DIR}/SHA256SUMS.sig"
     echo "Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> "${DIST_DIR}/SHA256SUMS.sig"
     if [ -f "${DIST_DIR}/SHA256SUMS" ]; then
         SIG_HASH=$(shasum -a 256 "${DIST_DIR}/SHA256SUMS" | awk '{print $1}')

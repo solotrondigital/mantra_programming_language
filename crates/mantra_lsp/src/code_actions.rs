@@ -73,8 +73,43 @@ pub fn get_code_actions(
         });
     }
 
-    // ── Diagnostic-based quick fixes ─────────────────────────────────────
+    // ── Diagnostic-based quick fixes via mantra_intelligence (MVP 2) ───
     for diag in diagnostics_json {
+        let patches = mantra_intelligence::QuickFixEngine::suggest_fixes(
+            &document.uri,
+            &document.text,
+            "E0012",
+            diag,
+            (_range.start.line + 1) as usize,
+            _range.start.character as usize,
+        );
+        for patch in patches {
+            let start_line = patch.line.saturating_sub(1) as u32;
+            let end_line = patch.line as u32;
+            let edit_json = format!(
+                r#"{{"changes":{{"{}":[{{"range":{{"start":{{"line":{},"character":0}},"end":{{"line":{},"character":0}}}},"newText":"{}\n"}}]}}}}"#,
+                escape_json_str(&document.uri),
+                start_line,
+                end_line,
+                escape_json_str(&patch.replacement),
+            );
+            actions.push(CodeAction {
+                title: format!("✨ Mantra AI: {}", patch.title),
+                kind: "quickfix".to_string(),
+                edit_json: Some(edit_json),
+                command: None,
+            });
+        }
+
+        if diag.contains("error") || diag.contains("Error") || diag.contains("E00") {
+            actions.push(CodeAction {
+                title: "💡 Mantra AI: Explain compiler error".to_string(),
+                kind: "quickfix".to_string(),
+                edit_json: None,
+                command: Some("mantra.ai.explainError".to_string()),
+            });
+        }
+
         if diag.contains("undefined") || diag.contains("Undefined") {
             actions.push(CodeAction {
                 title: "Add import for undefined symbol".to_string(),

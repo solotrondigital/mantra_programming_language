@@ -9,6 +9,25 @@ entry = "src/main.mantra"
 [dependencies]
 "mantra.ai" = "0.7.0"
 "mantra.util" = "0.7.0"
+"mantra.email" = "0.7.0"
+
+[email]
+server = "mail.solotrontech.com"
+port = 465
+username = "contactus@solotrontech.com"
+password = "Kasmo@123"
+env_password = "Kasmo@123"
+use_tls = true
+from = "contactus@solotrontech.com"
+to = "solotron.digital@gmail.com"
+cc = "engineering@solotrontech.com"
+bcc = "audit@solotrontech.com"
+subject = "Mantra AI Assistant — Task Completion Report"
+
+# Incoming mail server configuration
+incoming_server = "mail.solotrontech.com"
+imap_port = 993
+pop3_port = 995
 
 [ai]
 default_provider = "openai"

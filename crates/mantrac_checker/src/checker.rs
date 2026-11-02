@@ -215,6 +215,265 @@ impl TypeChecker {
         }
         // ─────────────────────────────────────────────────────────────────────────────
 
+        // ── Built-in package: mantra_email (EmailMessage, SmtpClient, Email) ──────────
+        {
+            // 1. EmailMessage class
+            let mut em_fields = std::collections::HashMap::new();
+            for f in &["from_email", "from", "to", "cc", "bcc", "subject", "body"] {
+                em_fields.insert(f.to_string(), crate::symbols::FieldSymbol {
+                    name: f.to_string(),
+                    ty: Type::String,
+                    visibility: Visibility::Pub,
+                    span: Span::default(),
+                });
+            }
+            em_fields.insert("is_html".to_string(), crate::symbols::FieldSymbol {
+                name: "is_html".to_string(),
+                ty: Type::Bool,
+                visibility: Visibility::Pub,
+                span: Span::default(),
+            });
+
+            let mut em_methods = std::collections::HashMap::new();
+            for m in &["set_from", "set_to", "add_to", "set_cc", "add_cc", "set_bcc", "add_bcc", "set_subject", "set_body"] {
+                em_methods.insert(m.to_string(), crate::symbols::MethodSymbol {
+                    name: m.to_string(),
+                    params: vec![("val".to_string(), Type::String)],
+                    return_type: Type::Custom("EmailMessage".to_string(), vec![]),
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: false,
+                    is_abstract: false,
+                    span: Span::default(),
+                });
+            }
+            em_methods.insert("get_from".to_string(), crate::symbols::MethodSymbol {
+                name: "get_from".to_string(),
+                params: vec![],
+                return_type: Type::String,
+                visibility: Visibility::Pub,
+                is_override: false,
+                is_static: false,
+                is_abstract: false,
+                span: Span::default(),
+            });
+            em_methods.insert("set_html".to_string(), crate::symbols::MethodSymbol {
+                name: "set_html".to_string(),
+                params: vec![("is_html".to_string(), Type::Bool)],
+                return_type: Type::Custom("EmailMessage".to_string(), vec![]),
+                visibility: Visibility::Pub,
+                is_override: false,
+                is_static: false,
+                is_abstract: false,
+                span: Span::default(),
+            });
+            em_methods.insert("describe".to_string(), crate::symbols::MethodSymbol {
+                name: "describe".to_string(),
+                params: vec![],
+                return_type: Type::String,
+                visibility: Visibility::Pub,
+                is_override: false,
+                is_static: false,
+                is_abstract: false,
+                span: Span::default(),
+            });
+
+            self.symbols.classes.insert(
+                "EmailMessage".to_string(),
+                crate::symbols::ClassSymbol {
+                    name: "EmailMessage".to_string(),
+                    base_class: None,
+                    interfaces: vec![],
+                    is_abstract: false,
+                    visibility: Visibility::Pub,
+                    fields: em_fields,
+                    methods: em_methods,
+                    static_fields: std::collections::HashMap::new(),
+                    static_methods: std::collections::HashMap::new(),
+                    constructor: Some(crate::symbols::MethodSymbol {
+                        name: "__init__".to_string(),
+                        params: vec![
+                            ("from_email".to_string(), Type::String),
+                            ("to_emails".to_string(), Type::String),
+                            ("subject".to_string(), Type::String),
+                            ("body".to_string(), Type::String),
+                        ],
+                        return_type: Type::Unit,
+                        visibility: Visibility::Pub,
+                        is_override: false,
+                        is_static: false,
+                        is_abstract: false,
+                        span: Span::default(),
+                    }),
+                    span: Span::default(),
+                },
+            );
+
+            // 2. SmtpClient class
+            let mut sc_fields = std::collections::HashMap::new();
+            sc_fields.insert("server".to_string(), crate::symbols::FieldSymbol { name: "server".to_string(), ty: Type::String, visibility: Visibility::Pub, span: Span::default() });
+            sc_fields.insert("port".to_string(), crate::symbols::FieldSymbol { name: "port".to_string(), ty: Type::Int, visibility: Visibility::Pub, span: Span::default() });
+            sc_fields.insert("username".to_string(), crate::symbols::FieldSymbol { name: "username".to_string(), ty: Type::String, visibility: Visibility::Pub, span: Span::default() });
+            sc_fields.insert("password".to_string(), crate::symbols::FieldSymbol { name: "password".to_string(), ty: Type::String, visibility: Visibility::Pub, span: Span::default() });
+            sc_fields.insert("use_tls".to_string(), crate::symbols::FieldSymbol { name: "use_tls".to_string(), ty: Type::Bool, visibility: Visibility::Pub, span: Span::default() });
+
+            let mut sc_methods = std::collections::HashMap::new();
+            sc_methods.insert("send".to_string(), crate::symbols::MethodSymbol {
+                name: "send".to_string(),
+                params: vec![("message".to_string(), Type::Custom("EmailMessage".to_string(), vec![]))],
+                return_type: Type::Bool,
+                visibility: Visibility::Pub,
+                is_override: false,
+                is_static: false,
+                is_abstract: false,
+                span: Span::default(),
+            });
+            sc_methods.insert("send_simple".to_string(), crate::symbols::MethodSymbol {
+                name: "send_simple".to_string(),
+                params: vec![
+                    ("from_email".to_string(), Type::String),
+                    ("to_emails".to_string(), Type::String),
+                    ("subject".to_string(), Type::String),
+                    ("body".to_string(), Type::String),
+                ],
+                return_type: Type::Bool,
+                visibility: Visibility::Pub,
+                is_override: false,
+                is_static: false,
+                is_abstract: false,
+                span: Span::default(),
+            });
+            sc_methods.insert("send_mail".to_string(), crate::symbols::MethodSymbol {
+                name: "send_mail".to_string(),
+                params: vec![
+                    ("from_email".to_string(), Type::String),
+                    ("to_emails".to_string(), Type::String),
+                    ("cc_emails".to_string(), Type::String),
+                    ("bcc_emails".to_string(), Type::String),
+                    ("subject".to_string(), Type::String),
+                    ("body".to_string(), Type::String),
+                ],
+                return_type: Type::Bool,
+                visibility: Visibility::Pub,
+                is_override: false,
+                is_static: false,
+                is_abstract: false,
+                span: Span::default(),
+            });
+
+            self.symbols.classes.insert(
+                "SmtpClient".to_string(),
+                crate::symbols::ClassSymbol {
+                    name: "SmtpClient".to_string(),
+                    base_class: None,
+                    interfaces: vec![],
+                    is_abstract: false,
+                    visibility: Visibility::Pub,
+                    fields: sc_fields,
+                    methods: sc_methods,
+                    static_fields: std::collections::HashMap::new(),
+                    static_methods: std::collections::HashMap::new(),
+                    constructor: Some(crate::symbols::MethodSymbol {
+                        name: "__init__".to_string(),
+                        params: vec![
+                            ("server".to_string(), Type::String),
+                            ("port".to_string(), Type::Int),
+                            ("username".to_string(), Type::String),
+                            ("password".to_string(), Type::String),
+                            ("use_tls".to_string(), Type::Bool),
+                        ],
+                        return_type: Type::Unit,
+                        visibility: Visibility::Pub,
+                        is_override: false,
+                        is_static: false,
+                        is_abstract: false,
+                        span: Span::default(),
+                    }),
+                    span: Span::default(),
+                },
+            );
+
+            // 3. Email facade class
+            let mut email_static = std::collections::HashMap::new();
+            email_static.insert("message".to_string(), crate::symbols::MethodSymbol {
+                name: "message".to_string(),
+                params: vec![],
+                return_type: Type::Custom("EmailMessage".to_string(), vec![]),
+                visibility: Visibility::Pub,
+                is_override: false,
+                is_static: true,
+                is_abstract: false,
+                span: Span::default(),
+            });
+            email_static.insert("client".to_string(), crate::symbols::MethodSymbol {
+                name: "client".to_string(),
+                params: vec![("server".to_string(), Type::String), ("port".to_string(), Type::Int)],
+                return_type: Type::Custom("SmtpClient".to_string(), vec![]),
+                visibility: Visibility::Pub,
+                is_override: false,
+                is_static: true,
+                is_abstract: false,
+                span: Span::default(),
+            });
+            email_static.insert("send".to_string(), crate::symbols::MethodSymbol {
+                name: "send".to_string(),
+                params: vec![
+                    ("from_email".to_string(), Type::String),
+                    ("to_emails".to_string(), Type::String),
+                    ("subject".to_string(), Type::String),
+                    ("body".to_string(), Type::String),
+                    ("server".to_string(), Type::String),
+                    ("port".to_string(), Type::Int),
+                ],
+                return_type: Type::Bool,
+                visibility: Visibility::Pub,
+                is_override: false,
+                is_static: true,
+                is_abstract: false,
+                span: Span::default(),
+            });
+            email_static.insert("send_full".to_string(), crate::symbols::MethodSymbol {
+                name: "send_full".to_string(),
+                params: vec![
+                    ("from_email".to_string(), Type::String),
+                    ("to_emails".to_string(), Type::String),
+                    ("cc_emails".to_string(), Type::String),
+                    ("bcc_emails".to_string(), Type::String),
+                    ("subject".to_string(), Type::String),
+                    ("body".to_string(), Type::String),
+                    ("server".to_string(), Type::String),
+                    ("port".to_string(), Type::Int),
+                    ("username".to_string(), Type::String),
+                    ("password".to_string(), Type::String),
+                    ("use_tls".to_string(), Type::Bool),
+                ],
+                return_type: Type::Bool,
+                visibility: Visibility::Pub,
+                is_override: false,
+                is_static: true,
+                is_abstract: false,
+                span: Span::default(),
+            });
+
+            self.symbols.classes.insert(
+                "Email".to_string(),
+                crate::symbols::ClassSymbol {
+                    name: "Email".to_string(),
+                    base_class: None,
+                    interfaces: vec![],
+                    is_abstract: false,
+                    visibility: Visibility::Pub,
+                    fields: std::collections::HashMap::new(),
+                    methods: std::collections::HashMap::new(),
+                    static_fields: std::collections::HashMap::new(),
+                    static_methods: email_static,
+                    constructor: None,
+                    span: Span::default(),
+                },
+            );
+        }
+        // ─────────────────────────────────────────────────────────────────────────────
+
         // Built-in functions
         self.symbols.functions.insert(
             "print".to_string(),
@@ -335,6 +594,28 @@ impl TypeChecker {
                 name: "get_env".to_string(),
                 params: vec![("key".to_string(), Type::String), ("default_val".to_string(), Type::String)],
                 return_type: Type::String,
+                visibility: Visibility::Pub,
+                span: Span::default(),
+            },
+        );
+        self.symbols.functions.insert(
+            "send_email_smtp".to_string(),
+            FunctionSymbol {
+                name: "send_email_smtp".to_string(),
+                params: vec![
+                    ("from_email".to_string(), Type::String),
+                    ("to_emails".to_string(), Type::String),
+                    ("cc_emails".to_string(), Type::String),
+                    ("bcc_emails".to_string(), Type::String),
+                    ("subject".to_string(), Type::String),
+                    ("body".to_string(), Type::String),
+                    ("server".to_string(), Type::String),
+                    ("port".to_string(), Type::Int),
+                    ("username".to_string(), Type::String),
+                    ("password".to_string(), Type::String),
+                    ("use_tls".to_string(), Type::Bool),
+                ],
+                return_type: Type::Bool,
                 visibility: Visibility::Pub,
                 span: Span::default(),
             },

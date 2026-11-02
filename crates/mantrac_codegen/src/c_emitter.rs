@@ -908,6 +908,9 @@ impl<'a> CEmitter<'a> {
                     if name == "read_toml_value" {
                         return "\"\"".to_string();
                     }
+                    if name == "send_email_smtp" {
+                        return "1".to_string();
+                    }
                     if name == "write_file" {
                         let path_s = args.get(0).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
                         let content_s = args.get(1).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());

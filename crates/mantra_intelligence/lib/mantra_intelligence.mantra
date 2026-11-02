@@ -1,0 +1,44 @@
+# ==============================================================================
+# mantra_intelligence — Native AI Coding Intelligence for Mantra (MVP 2)
+# ==============================================================================
+
+class ErrorExplanation:
+    pub code: String
+    pub title: String
+    pub summary: String
+    pub root_cause: String
+    pub suggested_remedy: String
+
+    def __init__(self, code: String = "", title: String = "", summary: String = "", root_cause: String = "", remedy: String = ""):
+        self.code = code
+        self.title = title
+        self.summary = summary
+        self.root_cause = root_cause
+        self.suggested_remedy = remedy
+
+    pub def describe(self) -> String:
+        return "[" + self.code + "] " + self.title + ": " + self.summary
+
+class CodePatch:
+    pub title: String
+    pub file_path: String
+    pub line: Int
+    pub original: String
+    pub replacement: String
+    pub diff: String
+
+    def __init__(self, title: String = "", file_path: String = "", line: Int = 1, original: String = "", replacement: String = "", diff: String = ""):
+        self.title = title
+        self.file_path = file_path
+        self.line = line
+        self.original = original
+        self.replacement = replacement
+        self.diff = diff
+
+class MantraIntelligence:
+    pub static def explain(code: String, message: String) -> ErrorExplanation:
+        return ErrorExplanation(code, "Diagnostic " + code, message, "Compiler semantic check failure", "Follow Mantra static typing guidelines")
+
+    pub static def describe(feature: String) -> String:
+        return "Mantra Intelligence MVP 2: " + feature
+

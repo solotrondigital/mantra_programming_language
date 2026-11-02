@@ -511,13 +511,34 @@ dependencies = [
 ]
 
 [[package]]
+name = "mantra_email"
+version = "0.7.0"
+dependencies = [
+ "mantrac_vm",
+]
+
+[[package]]
 name = "mantra_graphql"
 version = "0.7.0"
+
+[[package]]
+name = "mantra_intelligence"
+version = "0.7.0"
+dependencies = [
+ "mantra_ai",
+ "mantrac_ast",
+ "mantrac_checker",
+ "mantrac_lexer",
+ "mantrac_parser",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "mantra_lsp"
 version = "0.7.0"
 dependencies = [
+ "mantra_intelligence",
  "mantrac_ast",
  "mantrac_checker",
  "mantrac_lexer",

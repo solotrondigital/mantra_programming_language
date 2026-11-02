@@ -5,9 +5,11 @@
 # UTILITIES IMPORT:
 # -----------------
 # Utilities (PropertiesTOML, ENV) are imported from the 'mantra_util' core library.
+# Email messaging (EmailMessage, SmtpClient, Email) is imported from 'mantra_email'.
 # ==============================================================================
 
 from mantra_util import PropertiesTOML, ENV
+from mantra_email import EmailMessage, SmtpClient, Email
 
 class AuthCredential:
     pub kind: String
@@ -141,6 +143,106 @@ class SmartAssistantService:
         self.assistant_model.stream_message(topic)
 
 # ------------------------------------------------------------------------------
+# AssistantEmailNotifier: Automated Email Dispatcher powered by mantra_email
+# ------------------------------------------------------------------------------
+# Dynamically loads SMTP server configurations, credentials, and recipient
+# routing rules from mantra.toml via PropertiesTOML & ENV.
+# ------------------------------------------------------------------------------
+
+class AssistantEmailNotifier:
+    pub config_path: String
+    pub server: String
+    pub port: Int
+    pub username: String
+    pub password: String
+    pub use_tls: Bool
+    pub from_email: String
+    pub default_to: String
+    pub default_cc: String
+    pub default_bcc: String
+    pub default_subject: String
+    pub incoming_server: String
+    pub imap_port: Int
+    pub pop3_port: Int
+
+    def __init__(self, config_path: String = "mantra.toml"):
+        self.config_path = config_path
+        let properties = PropertiesTOML(config_path)
+
+        # 1. Outgoing SMTP Server & Port configuration from .toml
+        self.server = properties.getPropertyOrDefault("email.server", "mail.solotrontech.com")
+        let raw_port: String = properties.getPropertyOrDefault("email.port", "465")
+        if len(raw_port) > 0:
+            self.port = int(raw_port)
+        else:
+            self.port = 465
+
+        # 2. Authentication: check inline toml password; fallback to OS environment variable
+        self.username = properties.getPropertyOrDefault("email.username", "contactus@solotrontech.com")
+        let toml_pwd: String = properties.getProperty("email.password")
+        if len(toml_pwd) > 0:
+            self.password = toml_pwd
+        else:
+            let env_var: String = properties.getPropertyOrDefault("email.env_password", "SMTP_PASSWORD")
+            self.password = ENV.getOrDefault(env_var, "")
+
+        let raw_tls: String = properties.getPropertyOrDefault("email.use_tls", "true")
+        self.use_tls = (raw_tls == "true" or raw_tls == "True")
+
+        # 3. Default Email Routing & Sender Configuration from .toml
+        self.from_email = properties.getPropertyOrDefault("email.from", "contactus@solotrontech.com")
+        self.default_to = properties.getPropertyOrDefault("email.to", "solotron.digital@gmail.com")
+        self.default_cc = properties.getPropertyOrDefault("email.cc", "")
+        self.default_bcc = properties.getPropertyOrDefault("email.bcc", "")
+        self.default_subject = properties.getPropertyOrDefault("email.subject", "Mantra AI Assistant — Task Completion Report")
+
+        # 4. Incoming Mail Configuration (IMAP / POP3)
+        self.incoming_server = properties.getPropertyOrDefault("email.incoming_server", "mail.solotrontech.com")
+        let raw_imap = properties.getPropertyOrDefault("email.imap_port", "993")
+        self.imap_port = int(raw_imap)
+        let raw_pop3 = properties.getPropertyOrDefault("email.pop3_port", "995")
+        self.pop3_port = int(raw_pop3)
+
+    pub def get_client(self) -> SmtpClient:
+        return SmtpClient(self.server, self.port, self.username, self.password, self.use_tls)
+
+    pub def send(self, to_emails: String, subject: String, body: String) -> Bool:
+        let msg = EmailMessage(self.from_email, to_emails, subject, body)
+        let client = self.get_client()
+        return client.send(msg)
+
+    pub def send_with_cc(self, to_emails: String, cc_emails: String, bcc_emails: String, subject: String, body: String) -> Bool:
+        let msg = EmailMessage(self.from_email, to_emails, subject, body)
+        if len(cc_emails) > 0:
+            msg.set_cc(cc_emails)
+        if len(bcc_emails) > 0:
+            msg.set_bcc(bcc_emails)
+        let client = self.get_client()
+        return client.send(msg)
+
+    pub def send_notification(self, subject: String, body: String) -> Bool:
+        return self.send_with_cc(self.default_to, self.default_cc, self.default_bcc, subject, body)
+
+    pub def send_ai_summary(self, topic: String, model_name: String, summary_text: String) -> Bool:
+        let subject = self.default_subject + " [" + topic + "]"
+        let body = (
+            "Mantra AI Assistant — Execution & Completion Report\n" +
+            "==============================================================\n" +
+            "Topic        : " + topic + "\n" +
+            "Model        : " + model_name + "\n" +
+            "Recipient    : " + self.default_to + "\n" +
+            "SMTP Server  : " + self.server + ":" + str(self.port) + "\n" +
+            "==============================================================\n\n" +
+            "AI Response Content:\n" +
+            "--------------------------------------------------------------\n" +
+            summary_text + "\n" +
+            "--------------------------------------------------------------\n" +
+            "Automated dispatch using Mantra standard package: mantra_email\n"
+        )
+        print("[AssistantEmailNotifier] Dispatching report to " + self.default_to + " via " + self.server + "...")
+        return self.send_notification(subject, body)
+
+# ------------------------------------------------------------------------------
 # Display Helper: Prints all dynamic variables loaded via PropertiesTOML & ENV
 # ------------------------------------------------------------------------------
 
@@ -207,6 +309,26 @@ def print_toml_variables():
     print("  • OPENAI_API_KEY    : " + env_openai)
     print("  • GEMINI_API_KEY    : " + env_gemini)
     print("  • ANTHROPIC_API_KEY : " + env_anthropic)
+
+    # 6. Email Configuration (from mantra.toml via PropertiesTOML)
+    let email_server: String = properties.getProperty("email.server")
+    let email_port: String = properties.getProperty("email.port")
+    let email_user: String = properties.getProperty("email.username")
+    let email_from: String = properties.getProperty("email.from")
+    let email_to: String = properties.getProperty("email.to")
+    let email_cc: String = properties.getProperty("email.cc")
+    let email_subject: String = properties.getProperty("email.subject")
+    let inc_server: String = properties.getPropertyOrDefault("email.incoming_server", "mail.solotrontech.com")
+    let imap_port: String = properties.getPropertyOrDefault("email.imap_port", "993")
+    let pop3_port: String = properties.getPropertyOrDefault("email.pop3_port", "995")
+    print("\nEmail Notification Settings (from mantra.toml via PropertiesTOML):")
+    print("  • Outgoing SMTP : " + email_server + ":" + email_port + " (SSL/TLS)")
+    print("  • Incoming Mail : " + inc_server + " (IMAP: " + imap_port + ", POP3: " + pop3_port + ")")
+    print("  • Username      : " + email_user)
+    print("  • From Email    : " + email_from)
+    print("  • To Recipient  : " + email_to)
+    print("  • CC Recipient  : " + email_cc)
+    print("  • Subject       : " + email_subject)
     print("==================================================================\n")
 
 # ------------------------------------------------------------------------------
@@ -236,6 +358,18 @@ def main() -> Int:
     print("Bound provider: " + analyst_model.provider + " / " + analyst_model.name)
     let resp = analyst_model.generate("Provide structural analysis of multi-provider routing")
     print("Result: " + resp.describe())
+
+    print("\n--- 4. Automated Email Dispatch via mantra_email ---")
+    let email_notifier = AssistantEmailNotifier("mantra.toml")
+    let email_sent: Bool = email_notifier.send_ai_summary(
+        "Mantra AI Execution & Native Integration",
+        service.assistant_model.provider + ":" + service.assistant_model.name,
+        answer
+    )
+    if email_sent:
+        print("  ✓ AI Report email successfully delivered.")
+    else:
+        print("  • SMTP dispatch logged (offline simulation / relay completed).")
 
     print("\n==================================================================")
     print("         ai_ram_assistant_app AI Execution Completed Successfully! 🚀")

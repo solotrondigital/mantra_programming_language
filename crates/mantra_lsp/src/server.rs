@@ -119,6 +119,13 @@ impl LspServer {
             "textDocument/codeAction" => Some(self.handle_code_action(id, params)),
             "textDocument/signatureHelp" => Some(self.handle_signature_help(id, params)),
 
+            // ── Mantra Intelligence (MVP 2) Custom LSP Endpoints ──────────
+            "mantra/aiCompletion" => Some(self.handle_ai_completion(id, params)),
+            "mantra/explainDiagnostic" => Some(self.handle_explain_diagnostic(id, params)),
+            "mantra/suggestFix" => Some(self.handle_suggest_fix(id, params)),
+            "mantra/generateCode" => Some(self.handle_generate_code(id, params)),
+            "mantra/generateTests" => Some(self.handle_generate_tests(id, params)),
+
             _ => {
                 // Unknown request: send method not found only if it has an id
                 if !id.is_null() {
@@ -624,6 +631,85 @@ impl LspServer {
                 })
                 .collect(),
         )
+    }
+
+    // ─── Mantra Intelligence (MVP 2) Custom LSP Handlers ─────────────────────
+
+    fn handle_ai_completion(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+        let uri = params["textDocument"]["uri"].as_str().unwrap_or("");
+        let line = params["position"]["line"].as_u64().unwrap_or(0) as usize;
+        let character = params["position"]["character"].as_u64().unwrap_or(0) as usize;
+        let prefix = params["prefix"].as_str().unwrap_or("");
+        let id_val = id.as_i64().unwrap_or(0);
+
+        let result_json = if let Some(doc) = self.documents.get(uri) {
+            let suggestions = mantra_intelligence::MantraIntelligence::complete(
+                uri,
+                &doc.text,
+                line + 1,
+                character,
+                prefix,
+            );
+            serde_json::to_string(&suggestions).unwrap_or_else(|_| "[]".to_string())
+        } else {
+            "[]".to_string()
+        };
+
+        format!(r#"{{"jsonrpc":"2.0","id":{},"result":{}}}"#, id_val, result_json)
+    }
+
+    fn handle_explain_diagnostic(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+        let code = params["code"].as_str().unwrap_or("");
+        let message = params["message"].as_str().unwrap_or("");
+        let source_line = params["sourceLine"].as_str().unwrap_or("");
+        let id_val = id.as_i64().unwrap_or(0);
+
+        let exp = mantra_intelligence::MantraIntelligence::explain_error(code, message, source_line, None);
+        let result_json = serde_json::to_string(&exp).unwrap_or_else(|_| "{}".to_string());
+        format!(r#"{{"jsonrpc":"2.0","id":{},"result":{}}}"#, id_val, result_json)
+    }
+
+    fn handle_suggest_fix(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+        let uri = params["textDocument"]["uri"].as_str().unwrap_or("");
+        let code = params["code"].as_str().unwrap_or("");
+        let message = params["message"].as_str().unwrap_or("");
+        let line = params["line"].as_u64().unwrap_or(1) as usize;
+        let col = params["character"].as_u64().unwrap_or(1) as usize;
+        let id_val = id.as_i64().unwrap_or(0);
+
+        let result_json = if let Some(doc) = self.documents.get(uri) {
+            let patches = mantra_intelligence::MantraIntelligence::suggest_fixes(uri, &doc.text, code, message, line, col);
+            serde_json::to_string(&patches).unwrap_or_else(|_| "[]".to_string())
+        } else {
+            "[]".to_string()
+        };
+        format!(r#"{{"jsonrpc":"2.0","id":{},"result":{}}}"#, id_val, result_json)
+    }
+
+    fn handle_generate_code(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+        let prompt = params["prompt"].as_str().unwrap_or("");
+        let id_val = id.as_i64().unwrap_or(0);
+
+        let result = match mantra_intelligence::MantraIntelligence::generate_class(prompt) {
+            Ok(code) => serde_json::json!({ "success": true, "code": code }),
+            Err(e) => serde_json::json!({ "success": false, "error": e }),
+        };
+        format!(r#"{{"jsonrpc":"2.0","id":{},"result":{}}}"#, id_val, result)
+    }
+
+    fn handle_generate_tests(&mut self, id: serde_json::Value, params: serde_json::Value) -> String {
+        let uri = params["textDocument"]["uri"].as_str().unwrap_or("");
+        let id_val = id.as_i64().unwrap_or(0);
+
+        let result = if let Some(doc) = self.documents.get(uri) {
+            match mantra_intelligence::MantraIntelligence::generate_tests(uri, &doc.text) {
+                Ok(test_code) => serde_json::json!({ "success": true, "testCode": test_code }),
+                Err(e) => serde_json::json!({ "success": false, "error": e }),
+            }
+        } else {
+            serde_json::json!({ "success": false, "error": "Document not found" })
+        };
+        format!(r#"{{"jsonrpc":"2.0","id":{},"result":{}}}"#, id_val, result)
     }
 }
 

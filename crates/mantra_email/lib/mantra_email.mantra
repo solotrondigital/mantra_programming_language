@@ -1,0 +1,131 @@
+# ==============================================================================
+# mantra_email — Generic Email Package for the Mantra Programming Language
+# Provides RFC 5322 EmailMessage builder, SmtpClient, and high-level Email utilities.
+# ==============================================================================
+
+# ==============================================================================
+# EmailMessage: Encapsulates sender, recipients, subject, and content.
+# Supports To, CC, and BCC recipient distribution lists.
+# ==============================================================================
+class EmailMessage:
+    pub from_email: String
+    pub to: String
+    pub cc: String
+    pub bcc: String
+    pub subject: String
+    pub body: String
+    pub is_html: Bool
+
+    def __init__(self, from_email: String = "", to_emails: String = "", subject: String = "", body: String = ""):
+        self.from_email = from_email
+        self.to = to_emails
+        self.cc = ""
+        self.bcc = ""
+        self.subject = subject
+        self.body = body
+        self.is_html = False
+
+    pub def set_from(self, from_email: String) -> EmailMessage:
+        self.from_email = from_email
+        return self
+
+    pub def get_from(self) -> String:
+        return self.from_email
+
+    pub def set_to(self, to_emails: String) -> EmailMessage:
+        self.to = to_emails
+        return self
+
+    pub def add_to(self, to_email: String) -> EmailMessage:
+        if len(self.to) == 0:
+            self.to = to_email
+        else:
+            self.to = self.to + ", " + to_email
+        return self
+
+    pub def set_cc(self, cc_emails: String) -> EmailMessage:
+        self.cc = cc_emails
+        return self
+
+    pub def add_cc(self, cc_email: String) -> EmailMessage:
+        if len(self.cc) == 0:
+            self.cc = cc_email
+        else:
+            self.cc = self.cc + ", " + cc_email
+        return self
+
+    pub def set_bcc(self, bcc_emails: String) -> EmailMessage:
+        self.bcc = bcc_emails
+        return self
+
+    pub def add_bcc(self, bcc_email: String) -> EmailMessage:
+        if len(self.bcc) == 0:
+            self.bcc = bcc_email
+        else:
+            self.bcc = self.bcc + ", " + bcc_email
+        return self
+
+    pub def set_subject(self, subject: String) -> EmailMessage:
+        self.subject = subject
+        return self
+
+    pub def set_body(self, body: String) -> EmailMessage:
+        self.body = body
+        return self
+
+    pub def set_html(self, is_html: Bool) -> EmailMessage:
+        self.is_html = is_html
+        return self
+
+    pub def describe(self) -> String:
+        return "EmailMessage[From: " + self.from_email + ", To: " + self.to + ", Subject: '" + self.subject + "']"
+
+# ==============================================================================
+# SmtpClient: Client for transmitting email messages over standard SMTP.
+# Configures server, port, credentials, and TLS flags.
+# ==============================================================================
+class SmtpClient:
+    pub server: String
+    pub port: Int
+    pub username: String
+    pub password: String
+    pub use_tls: Bool
+
+    def __init__(self, server: String = "localhost", port: Int = 587, username: String = "", password: String = "", use_tls: Bool = True):
+        self.server = server
+        self.port = port
+        self.username = username
+        self.password = password
+        self.use_tls = use_tls
+
+    pub def send(self, message: EmailMessage) -> Bool:
+        return send_email_smtp(message.from_email, message.to, message.cc, message.bcc, message.subject, message.body, self.server, self.port, self.username, self.password, self.use_tls)
+
+    pub def send_simple(self, from_email: String, to_emails: String, subject: String, body: String) -> Bool:
+        let msg = EmailMessage(from_email, to_emails, subject, body)
+        return self.send(msg)
+
+    pub def send_mail(self, from_email: String, to_emails: String, cc_emails: String, bcc_emails: String, subject: String, body: String) -> Bool:
+        let msg = EmailMessage(from_email, to_emails, subject, body)
+        msg.set_cc(cc_emails)
+        msg.set_bcc(bcc_emails)
+        return self.send(msg)
+
+# ==============================================================================
+# Email: High-level static facade for sending emails.
+# ==============================================================================
+class Email:
+    pub static def message() -> EmailMessage:
+        return EmailMessage()
+
+    pub static def client(server: String = "localhost", port: Int = 587) -> SmtpClient:
+        return SmtpClient(server, port)
+
+    pub static def send(from_email: String, to_emails: String, subject: String, body: String, server: String = "localhost", port: Int = 25) -> Bool:
+        let c = SmtpClient(server, port, "", "", False)
+        return c.send_simple(from_email, to_emails, subject, body)
+
+    pub static def send_full(from_email: String, to_emails: String, cc_emails: String, bcc_emails: String, subject: String, body: String, server: String = "localhost", port: Int = 587, username: String = "", password: String = "", use_tls: Bool = True) -> Bool:
+        let c = SmtpClient(server, port, username, password, use_tls)
+        return c.send_mail(from_email, to_emails, cc_emails, bcc_emails, subject, body)
+
