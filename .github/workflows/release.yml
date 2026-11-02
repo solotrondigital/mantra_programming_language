@@ -103,6 +103,14 @@ jobs:
           cargo build --release
           chmod +x create_installers.sh
           ./create_installers.sh "$VERSION"
+          if [[ "${{ matrix.platform }}" == "windows" ]]; then
+            WINDOWS_PACKAGE="dist/releases/v${VERSION}/mantra-${VERSION}-windows.zip"
+            if [[ ! -s "$WINDOWS_PACKAGE" ]]; then
+              echo "Windows package was not created: $WINDOWS_PACKAGE" >&2
+              exit 1
+            fi
+            echo "Verified Windows release package: $WINDOWS_PACKAGE"
+          fi
           MANTRA_BIN=target/release/mantra
           MANTRAC_BIN=target/release/mantrac
           if [[ -f "${MANTRA_BIN}.exe" ]]; then MANTRA_BIN="${MANTRA_BIN}.exe"; fi

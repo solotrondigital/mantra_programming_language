@@ -509,8 +509,29 @@ EOF
 ZIP_OUTPUT="$TMP_STAGE/mantra-${VERSION}-windows.zip"
 if command -v zip >/dev/null 2>&1; then
     (cd "$WINDOWS_DIR" && zip -r -q "$ZIP_OUTPUT" .)
-    echo "   ✓ Created Windows ZIP bundle: mantra-${VERSION}-windows.zip"
+else
+    # windows-2022 does not guarantee that the Info-ZIP `zip` utility is on PATH.
+    # Python is installed by the release workflow, so use it to create the same
+    # archive with paths relative to the Windows bundle root.
+    "$PYTHON_BIN" - "$WINDOWS_DIR" "$ZIP_OUTPUT" <<'PY'
+import os
+import sys
+import zipfile
+
+source_dir, output_path = sys.argv[1:]
+with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+    for root, directories, files in os.walk(source_dir):
+        directories.sort()
+        for filename in sorted(files):
+            path = os.path.join(root, filename)
+            archive.write(path, os.path.relpath(path, source_dir))
+PY
 fi
+if [ ! -s "$ZIP_OUTPUT" ]; then
+    echo "Error: Windows ZIP bundle was not created: $ZIP_OUTPUT" >&2
+    exit 1
+fi
+echo "   ✓ Created Windows ZIP bundle: mantra-${VERSION}-windows.zip"
 
 # ------------------------------------------------------------------------------
 # 4. GENERATE UNIVERSAL ROOT INSTALLER SCRIPT & README
