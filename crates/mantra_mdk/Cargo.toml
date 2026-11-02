@@ -22,4 +22,5 @@ mantrac_ir = { path = "../mantrac_ir" }
 mantra_mobile = { path = "../mantra_mobile" }
 mantra_ai = { path = "../mantra_ai" }
 mantra_intelligence = { path = "../mantra_intelligence" }
+sha2 = "0.10"
 

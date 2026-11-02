@@ -48,36 +48,36 @@ pub enum TokenKind {
     Ident(String),
 
     // Symbols & Delimiters
-    LParen,     // (
-    RParen,     // )
-    LBracket,   // [
-    RBracket,   // ]
-    LBrace,     // {
-    RBrace,     // }
-    Colon,      // :
-    Comma,      // ,
-    Dot,        // .
-    Semicolon,  // ;
-    At,         // @
-    Arrow,      // ->
+    LParen,    // (
+    RParen,    // )
+    LBracket,  // [
+    RBracket,  // ]
+    LBrace,    // {
+    RBrace,    // }
+    Colon,     // :
+    Comma,     // ,
+    Dot,       // .
+    Semicolon, // ;
+    At,        // @
+    Arrow,     // ->
 
     // Operators
-    Plus,       // +
-    Minus,      // -
-    Star,       // *
-    Slash,      // /
-    Percent,    // %
-    Eq,         // =
-    EqEq,       // ==
-    NotEq,      // !=
-    Lt,         // <
-    Gt,         // >
-    LtEq,       // <=
-    GtEq,       // >=
-    PlusEq,     // +=
-    MinusEq,    // -=
-    StarEq,     // *=
-    SlashEq,    // /=
+    Plus,    // +
+    Minus,   // -
+    Star,    // *
+    Slash,   // /
+    Percent, // %
+    Eq,      // =
+    EqEq,    // ==
+    NotEq,   // !=
+    Lt,      // <
+    Gt,      // >
+    LtEq,    // <=
+    GtEq,    // >=
+    PlusEq,  // +=
+    MinusEq, // -=
+    StarEq,  // *=
+    SlashEq, // /=
 
     // Layout
     Newline,
@@ -176,4 +176,3 @@ impl fmt::Display for TokenKind {
         }
     }
 }
-

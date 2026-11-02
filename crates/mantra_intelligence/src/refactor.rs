@@ -53,7 +53,10 @@ impl RefactoringEngine {
             let mut line_res = String::new();
             let words = line.split_inclusive(|c: char| !c.is_alphanumeric() && c != '_');
             for w in words {
-                if w.starts_with(old_name) && (w.len() == old_name.len() || !w.chars().nth(old_name.len()).unwrap().is_alphanumeric()) {
+                if w.starts_with(old_name)
+                    && (w.len() == old_name.len()
+                        || !w.chars().nth(old_name.len()).unwrap().is_alphanumeric())
+                {
                     let replaced = w.replacen(old_name, new_name, 1);
                     line_res.push_str(&replaced);
                 } else {
@@ -78,4 +81,3 @@ impl RefactoringEngine {
             .replace(&sync_pat_2, &async_rep_2)
     }
 }
-

@@ -306,7 +306,9 @@ fn find_in_stmt(word: &str, uri: &str, stmt: &mantrac_ast::Stmt) -> Option<Locat
                 });
             }
         }
-        mantrac_ast::Stmt::For { var, span, body, .. } => {
+        mantrac_ast::Stmt::For {
+            var, span, body, ..
+        } => {
             if var == word {
                 return Some(Location {
                     uri: uri.to_string(),
@@ -351,35 +353,59 @@ fn find_in_analysis(word: &str, uri: &str, analysis: &AnalysisResult) -> Option<
     let st = analysis.symbol_table.as_ref()?;
 
     if let Some(cls) = st.classes.get(word) {
-        return Some(Location { uri: uri.to_string(), range: span_to_lsp_range(cls.span) });
+        return Some(Location {
+            uri: uri.to_string(),
+            range: span_to_lsp_range(cls.span),
+        });
     }
     if let Some(iface) = st.interfaces.get(word) {
-        return Some(Location { uri: uri.to_string(), range: span_to_lsp_range(iface.span) });
+        return Some(Location {
+            uri: uri.to_string(),
+            range: span_to_lsp_range(iface.span),
+        });
     }
     if let Some(func) = st.functions.get(word) {
-        return Some(Location { uri: uri.to_string(), range: span_to_lsp_range(func.span) });
+        return Some(Location {
+            uri: uri.to_string(),
+            range: span_to_lsp_range(func.span),
+        });
     }
 
     // Check class methods and fields
     for cls in st.classes.values() {
         if let Some(method) = cls.methods.get(word) {
-            return Some(Location { uri: uri.to_string(), range: span_to_lsp_range(method.span) });
+            return Some(Location {
+                uri: uri.to_string(),
+                range: span_to_lsp_range(method.span),
+            });
         }
         if let Some(method) = cls.static_methods.get(word) {
-            return Some(Location { uri: uri.to_string(), range: span_to_lsp_range(method.span) });
+            return Some(Location {
+                uri: uri.to_string(),
+                range: span_to_lsp_range(method.span),
+            });
         }
         if let Some(field) = cls.fields.get(word) {
-            return Some(Location { uri: uri.to_string(), range: span_to_lsp_range(field.span) });
+            return Some(Location {
+                uri: uri.to_string(),
+                range: span_to_lsp_range(field.span),
+            });
         }
         if let Some(field) = cls.static_fields.get(word) {
-            return Some(Location { uri: uri.to_string(), range: span_to_lsp_range(field.span) });
+            return Some(Location {
+                uri: uri.to_string(),
+                range: span_to_lsp_range(field.span),
+            });
         }
     }
 
     // Also scan interface methods
     for iface in st.interfaces.values() {
         if let Some(method) = iface.methods.get(word) {
-            return Some(Location { uri: uri.to_string(), range: span_to_lsp_range(method.span) });
+            return Some(Location {
+                uri: uri.to_string(),
+                range: span_to_lsp_range(method.span),
+            });
         }
     }
 
@@ -413,7 +439,10 @@ fn find_all_references(word: &str, all_documents: &HashMap<String, Document>) ->
                         line_idx as u32,
                         (abs_pos + word.len()) as u32,
                     );
-                    locs.push(Location { uri: uri.clone(), range });
+                    locs.push(Location {
+                        uri: uri.clone(),
+                        range,
+                    });
                 }
                 search_from = abs_pos + 1;
             }
@@ -421,4 +450,3 @@ fn find_all_references(word: &str, all_documents: &HashMap<String, Document>) ->
     }
     locs
 }
-

@@ -23,8 +23,14 @@ fn test_lexer_and_parser() {
 #[test]
 fn test_schema_builder_and_sdl() {
     let mut user_fields = HashMap::new();
-    user_fields.insert("id".to_string(), FieldDefinition::new("id", GraphQLType::non_null(GraphQLType::named("ID"))));
-    user_fields.insert("name".to_string(), FieldDefinition::new("name", GraphQLType::named("String")));
+    user_fields.insert(
+        "id".to_string(),
+        FieldDefinition::new("id", GraphQLType::non_null(GraphQLType::named("ID"))),
+    );
+    user_fields.insert(
+        "name".to_string(),
+        FieldDefinition::new("name", GraphQLType::named("String")),
+    );
 
     let mut query_fields = HashMap::new();
     query_fields.insert(
@@ -58,8 +64,14 @@ fn test_schema_builder_and_sdl() {
 #[test]
 fn test_engine_query_execution() {
     let mut user_fields = HashMap::new();
-    user_fields.insert("id".to_string(), FieldDefinition::new("id", GraphQLType::named("ID")));
-    user_fields.insert("name".to_string(), FieldDefinition::new("name", GraphQLType::named("String")));
+    user_fields.insert(
+        "id".to_string(),
+        FieldDefinition::new("id", GraphQLType::named("ID")),
+    );
+    user_fields.insert(
+        "name".to_string(),
+        FieldDefinition::new("name", GraphQLType::named("String")),
+    );
 
     let mut query_fields = HashMap::new();
     query_fields.insert(
@@ -67,7 +79,10 @@ fn test_engine_query_execution() {
         FieldDefinition::new("user", GraphQLType::named("User"))
             .with_arg("id", GraphQLType::named("ID")),
     );
-    query_fields.insert("version".to_string(), FieldDefinition::new("version", GraphQLType::named("String")));
+    query_fields.insert(
+        "version".to_string(),
+        FieldDefinition::new("version", GraphQLType::named("String")),
+    );
 
     let schema = SchemaBuilder::new("Query")
         .add_object(ObjectType {
@@ -89,7 +104,10 @@ fn test_engine_query_execution() {
             let id = ctx.get_arg_str("id").unwrap_or("0");
             let mut user_map = HashMap::new();
             user_map.insert("id".to_string(), GraphQLValue::String(id.to_string()));
-            user_map.insert("name".to_string(), GraphQLValue::String(format!("User_{}", id)));
+            user_map.insert(
+                "name".to_string(),
+                GraphQLValue::String(format!("User_{}", id)),
+            );
             Ok(GraphQLValue::Object(user_map))
         })
         .build();
@@ -120,8 +138,14 @@ fn test_engine_query_execution() {
 #[test]
 fn test_mutation_execution() {
     let mut user_fields = HashMap::new();
-    user_fields.insert("id".to_string(), FieldDefinition::new("id", GraphQLType::named("ID")));
-    user_fields.insert("name".to_string(), FieldDefinition::new("name", GraphQLType::named("String")));
+    user_fields.insert(
+        "id".to_string(),
+        FieldDefinition::new("id", GraphQLType::named("ID")),
+    );
+    user_fields.insert(
+        "name".to_string(),
+        FieldDefinition::new("name", GraphQLType::named("String")),
+    );
 
     let mut mutation_fields = HashMap::new();
     mutation_fields.insert(
@@ -161,7 +185,10 @@ fn test_mutation_execution() {
 
     let engine = GraphQLEngine::new(schema);
     let mut vars = HashMap::new();
-    vars.insert("uName".to_string(), GraphQLValue::String("Alice".to_string()));
+    vars.insert(
+        "uName".to_string(),
+        GraphQLValue::String("Alice".to_string()),
+    );
 
     let query = r#"
         mutation AddUser($uName: String!) {
@@ -211,12 +238,20 @@ fn test_introspection_query() {
 
 #[test]
 fn test_custom_scalars() {
-    assert!(DateTimeScalar.parse_value(&GraphQLValue::String("2026-10-29T21:00:00Z".to_string())).is_ok());
-    assert!(DateTimeScalar.parse_value(&GraphQLValue::String("invalid".to_string())).is_err());
+    assert!(DateTimeScalar
+        .parse_value(&GraphQLValue::String("2026-10-29T21:00:00Z".to_string()))
+        .is_ok());
+    assert!(DateTimeScalar
+        .parse_value(&GraphQLValue::String("invalid".to_string()))
+        .is_err());
 
     let uuid_str = "123e4567-e89b-12d3-a456-426614174000";
-    assert!(UuidScalar.parse_value(&GraphQLValue::String(uuid_str.to_string())).is_ok());
-    assert!(UuidScalar.parse_value(&GraphQLValue::String("bad-uuid".to_string())).is_err());
+    assert!(UuidScalar
+        .parse_value(&GraphQLValue::String(uuid_str.to_string()))
+        .is_ok());
+    assert!(UuidScalar
+        .parse_value(&GraphQLValue::String("bad-uuid".to_string()))
+        .is_err());
 }
 
 #[test]
@@ -234,6 +269,7 @@ fn test_validation_errors() {
     let query = "{ nonExistentField }";
     let response = engine.execute(query, None, None, None);
     assert!(!response.errors.is_empty());
-    assert!(response.errors[0].message.contains("Field 'nonExistentField' does not exist"));
+    assert!(response.errors[0]
+        .message
+        .contains("Field 'nonExistentField' does not exist"));
 }
-

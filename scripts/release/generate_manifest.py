@@ -12,6 +12,8 @@ import os
 import sys
 import json
 import hashlib
+import tomllib
+import re
 from datetime import datetime, timezone
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -22,17 +24,12 @@ if hasattr(sys.stderr, "reconfigure"):
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 def get_version():
-    if len(sys.argv) > 1 and sys.argv[1] and not sys.argv[1].startswith("-"):
+    if len(sys.argv) > 1 and re.fullmatch(r"v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", sys.argv[1]):
         v = sys.argv[1]
         return v.lstrip("vV")
-    cargo_path = os.path.join(REPO_ROOT, "Cargo.toml")
-    if os.path.exists(cargo_path):
-        with open(cargo_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("version") and "=" in line:
-                    return line.split("=", 1)[1].strip().strip('"').strip("'")
-    return "0.5.0"
+    cargo_path = os.path.join(REPO_ROOT, "crates", "mantrac", "Cargo.toml")
+    with open(cargo_path, "rb") as f:
+        return tomllib.load(f)["package"]["version"]
 
 VERSION = get_version()
 DIST_DIR = os.path.join(REPO_ROOT, f"dist/releases/v{VERSION}")
@@ -55,110 +52,37 @@ def sha512_file(filepath):
             h.update(chunk)
     return h.hexdigest()
 
-def resolve_file(name, candidate_paths):
-    for p in candidate_paths:
-        if os.path.exists(p):
-            return p
-    return None
+def get_workspace_crates():
+    with open(os.path.join(REPO_ROOT, "Cargo.toml"), "rb") as f:
+        workspace = tomllib.load(f)["workspace"]
+    crates = []
+    for member in workspace["members"]:
+        manifest = os.path.join(REPO_ROOT, member, "Cargo.toml")
+        with open(manifest, "rb") as f:
+            crates.append(tomllib.load(f)["package"]["name"])
+    return sorted(crates)
 
 def main():
     os.makedirs(DIST_DIR, exist_ok=True)
     manifest_path = os.path.join(DIST_DIR, "release.json")
 
-    installer_dir = os.path.join(REPO_ROOT, "installer")
-
-    artifact_specs = [
-        {
-            "name": f"Mantra-{VERSION}-macOS.dmg",
-            "platform": "darwin",
-            "arch": ["x86_64", "arm64"],
-            "type": "installer_dmg",
-            "candidates": [
-                os.path.join(DIST_DIR, f"Mantra-{VERSION}-macOS.dmg"),
-                os.path.join(REPO_ROOT, "dist", f"Mantra-{VERSION}-macOS.dmg"),
-                os.path.join(installer_dir, "macos", f"Mantra-{VERSION}-macOS.dmg"),
-            ]
-        },
-        {
-            "name": f"mantra-{VERSION}-linux.tar.gz",
-            "platform": "linux",
-            "arch": ["x86_64", "aarch64"],
-            "type": "tarball",
-            "candidates": [
-                os.path.join(DIST_DIR, f"mantra-{VERSION}-linux.tar.gz"),
-                os.path.join(installer_dir, "linux", f"mantra-{VERSION}-linux.tar.gz"),
-            ]
-        },
-        {
-            "name": "mantra-installer-linux.sh",
-            "platform": "linux",
-            "arch": ["x86_64", "aarch64"],
-            "type": "self_extracting_shell",
-            "candidates": [
-                os.path.join(DIST_DIR, "mantra-installer-linux.sh"),
-                os.path.join(installer_dir, "linux", "mantra-installer-linux.sh"),
-            ]
-        },
-        {
-            "name": f"mantra-{VERSION}-windows.zip",
-            "platform": "windows",
-            "arch": ["x86_64"],
-            "type": "zip_bundle",
-            "candidates": [
-                os.path.join(DIST_DIR, f"mantra-{VERSION}-windows.zip"),
-                os.path.join(installer_dir, "windows", f"mantra-{VERSION}-windows.zip"),
-            ]
-        },
-        {
-            "name": f"mantra.{VERSION}.nupkg",
-            "platform": "windows",
-            "arch": ["x86_64"],
-            "type": "chocolatey_package",
-            "candidates": [
-                os.path.join(DIST_DIR, f"mantra.{VERSION}.nupkg"),
-                os.path.join(REPO_ROOT, "distribution/choco-mantra", f"mantra.{VERSION}.nupkg"),
-            ]
-        },
-        {
-            "name": "mantra.rb",
-            "platform": "multi",
-            "arch": ["x86_64", "arm64"],
-            "type": "homebrew_formula",
-            "candidates": [
-                os.path.join(DIST_DIR, "mantra.rb"),
-                os.path.join(REPO_ROOT, "distribution/homebrew-tap/Formula/mantra.rb"),
-            ]
-        }
-    ]
+    metadata_files = {"release.json", "sbom-spdx.json", "sbom-cyclonedx.json",
+                      "SHA256SUMS", "SHA512SUMS", "SHA256SUMS.sig"}
+    if not os.path.isdir(DIST_DIR):
+        raise SystemExit(f"Release artifact directory does not exist: {DIST_DIR}")
+    artifact_paths = [os.path.join(DIST_DIR, name) for name in sorted(os.listdir(DIST_DIR))
+                      if name not in metadata_files and os.path.isfile(os.path.join(DIST_DIR, name))]
+    if not artifact_paths:
+        raise SystemExit("No release artifacts found; refusing to generate a manifest with placeholder hashes")
 
     artifacts = []
-    for spec in artifact_specs:
-        found_path = resolve_file(spec["name"], spec["candidates"])
-        if found_path and os.path.exists(found_path):
-            size = os.path.getsize(found_path)
-            s256 = sha256_file(found_path)
-            s512 = sha512_file(found_path)
-            # Copy to DIST_DIR if not already there
-            dest_in_dist = os.path.join(DIST_DIR, spec["name"])
-            if found_path != dest_in_dist and not os.path.exists(dest_in_dist):
-                try:
-                    import shutil
-                    shutil.copy2(found_path, dest_in_dist)
-                except Exception:
-                    pass
-        else:
-            size = 1048576
-            s256 = hashlib.sha256(f"mantra-{VERSION}-{spec['name']}".encode()).hexdigest()
-            s512 = hashlib.sha512(f"mantra-{VERSION}-{spec['name']}".encode()).hexdigest()
-
+    for path in artifact_paths:
+        name = os.path.basename(path)
         artifacts.append({
-            "name": spec["name"],
-            "platform": spec["platform"],
-            "arch": spec["arch"],
-            "type": spec["type"],
-            "size_bytes": size,
-            "sha256": s256,
-            "sha512": s512
+            "name": name,
+            "size_bytes": os.path.getsize(path),
+            "sha256": sha256_file(path),
+            "sha512": sha512_file(path),
         })
 
     manifest = {
@@ -166,7 +90,8 @@ def main():
         "release": {
             "name": "mantra_programming_languague",
             "version": VERSION,
-            "edition": "2021",
+            "edition": "2026",
+            "rust_edition": "2021",
             "channel": "stable",
             "tag": f"v{VERSION}",
             "release_date": datetime.now(timezone.utc).isoformat(),
@@ -190,13 +115,7 @@ def main():
             "source_edition": "2021",
             "abi_stability": "STABLE_V1"
         },
-        "crates_included": [
-            "mantrac", "mantrac_lexer", "mantrac_parser", "mantrac_ast",
-            "mantrac_checker", "mantrac_ir", "mantrac_codegen", "mantrac_vm",
-            "mantra_bootstrap", "mantra_mdk", "mantra_lsp", "mantra_debugger",
-            "mantra_web", "mantra_rest", "mantra_graphql", "mantra_mobile",
-            "mantra_sql_orm"
-        ],
+        "crates_included": get_workspace_crates(),
         "artifacts": artifacts
     }
 

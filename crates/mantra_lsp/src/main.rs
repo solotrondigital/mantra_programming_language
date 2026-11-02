@@ -136,34 +136,70 @@ fn run_self_test() {
 
     // 1. Initialize
     let init_req = r#"{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"rootUri":null}}"#;
-    let resp = server.handle_message(init_req).expect("LSP initialize failed");
-    assert!(resp.contains("\"capabilities\""), "initialize must return capabilities");
-    assert!(resp.contains("completionProvider"), "must advertise completionProvider");
-    assert!(resp.contains("hoverProvider"), "must advertise hoverProvider");
-    assert!(resp.contains("definitionProvider"), "must advertise definitionProvider");
-    assert!(resp.contains("renameProvider"), "must advertise renameProvider");
-    assert!(resp.contains("semanticTokensProvider"), "must advertise semanticTokensProvider");
+    let resp = server
+        .handle_message(init_req)
+        .expect("LSP initialize failed");
+    assert!(
+        resp.contains("\"capabilities\""),
+        "initialize must return capabilities"
+    );
+    assert!(
+        resp.contains("completionProvider"),
+        "must advertise completionProvider"
+    );
+    assert!(
+        resp.contains("hoverProvider"),
+        "must advertise hoverProvider"
+    );
+    assert!(
+        resp.contains("definitionProvider"),
+        "must advertise definitionProvider"
+    );
+    assert!(
+        resp.contains("renameProvider"),
+        "must advertise renameProvider"
+    );
+    assert!(
+        resp.contains("semanticTokensProvider"),
+        "must advertise semanticTokensProvider"
+    );
     eprintln!("  ✓ LSP initialization handshake: PASS");
 
     // 2. Open valid document
     let uri = "file:///sample.mantra";
     let valid_src = "def main() -> Int:\n    print(\"Hello LSP\")\n    return 0\n";
     let diags = server.open_document(uri.to_string(), valid_src.to_string());
-    assert!(diags.is_empty(), "Valid source produced errors: {:?}", diags);
+    assert!(
+        diags.is_empty(),
+        "Valid source produced errors: {:?}",
+        diags
+    );
     eprintln!("  ✓ Diagnostic analysis on valid source: PASS (0 errors)");
 
     // 3. Type error detection
     let invalid_src = "def main() -> Int:\n    let x: Int = \"invalid\"\n    return 0\n";
     let err_diags = server.update_document(uri, invalid_src.to_string());
     assert!(!err_diags.is_empty(), "Type error was not detected");
-    eprintln!("  ✓ Type mismatch diagnostic: PASS ({} error(s))", err_diags.len());
+    eprintln!(
+        "  ✓ Type mismatch diagnostic: PASS ({} error(s))",
+        err_diags.len()
+    );
 
     // 4. Completions
     let comps = server.get_completions(uri, &mantra_lsp::LspPosition::new(0, 0));
     assert!(!comps.is_empty(), "Completions list is empty");
-    assert!(comps.iter().any(|i| i.label == "def"), "Missing keyword 'def'");
-    assert!(comps.iter().any(|i| i.label == "class"), "Missing keyword 'class'");
-    assert!(comps.iter().any(|i| i.label == "print"), "Missing builtin 'print'");
+    assert!(
+        comps.iter().any(|i| i.label == "def"),
+        "Missing keyword 'def'"
+    );
+    assert!(
+        comps.iter().any(|i| i.label == "class"),
+        "Missing keyword 'class'"
+    );
+    assert!(
+        comps.iter().any(|i| i.label == "print"),
+        "Missing builtin 'print'"
+    );
     eprintln!("  ✓ Code completion: PASS ({} items)", comps.len());
 
     // 5. Hover
@@ -172,8 +208,10 @@ fn run_self_test() {
     eprintln!("  ✓ Hover documentation: PASS");
 
     // 6. Formatting
-    server.open_document("file:///fmt.mantra".to_string(),
-        "def main() -> Int:\n  print(1)  \n".to_string());
+    server.open_document(
+        "file:///fmt.mantra".to_string(),
+        "def main() -> Int:\n  print(1)  \n".to_string(),
+    );
     let fmt_edits = server.format_document("file:///fmt.mantra");
     assert!(fmt_edits.is_some(), "Document formatting failed");
     eprintln!("  ✓ Document formatting: PASS");
@@ -184,7 +222,10 @@ fn run_self_test() {
         uri
     );
     let sym_resp = server.handle_message(&sym_msg).unwrap();
-    assert!(sym_resp.contains("\"result\""), "documentSymbol must return result");
+    assert!(
+        sym_resp.contains("\"result\""),
+        "documentSymbol must return result"
+    );
     eprintln!("  ✓ Document symbols: PASS");
 
     // 8. Semantic tokens
@@ -193,7 +234,10 @@ fn run_self_test() {
         uri
     );
     let sem_resp = server.handle_message(&sem_msg).unwrap();
-    assert!(sem_resp.contains("\"data\""), "Semantic tokens must contain data");
+    assert!(
+        sem_resp.contains("\"data\""),
+        "Semantic tokens must contain data"
+    );
     eprintln!("  ✓ Semantic tokens: PASS");
 
     eprintln!("\nmantra-lsp self-test PASSED ✓");

@@ -4,6 +4,7 @@
 
 use crate::security::{Capability, SecurityPolicy};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 /// Result status for bridge operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -42,18 +43,35 @@ pub struct BridgeRequest {
 impl BridgeRequest {
     /// Parses a raw JSON string into a BridgeRequest.
     pub fn parse(json_str: &str) -> Result<Self, String> {
-        let trimmed = json_str.trim();
-        if !trimmed.starts_with('{') || !trimmed.ends_with('}') {
-            return Err("Bridge payload must be a JSON object".to_string());
-        }
+        let value: serde_json::Value =
+            serde_json::from_str(json_str).map_err(|err| format!("Invalid bridge JSON: {err}"))?;
+        let object = value
+            .as_object()
+            .ok_or_else(|| "Bridge payload must be a JSON object".to_string())?;
 
-        let id = extract_json_string(trimmed, "id").unwrap_or_else(|| "anonymous".to_string());
-        let action = extract_json_string(trimmed, "action")
-            .ok_or_else(|| "Missing required 'action' in bridge request".to_string())?;
-        let origin = extract_json_string(trimmed, "origin")
-            .unwrap_or_else(|| "file://".to_string());
-        let payload = extract_json_raw_field(trimmed, "payload").unwrap_or_else(|| "{}".to_string());
-        let timestamp = extract_json_number(trimmed, "timestamp").unwrap_or(0);
+        let id = object
+            .get("id")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("anonymous")
+            .to_string();
+        let action = object
+            .get("action")
+            .and_then(serde_json::Value::as_str)
+            .ok_or_else(|| "Missing required string 'action' in bridge request".to_string())?
+            .to_string();
+        let origin = object
+            .get("origin")
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("file://")
+            .to_string();
+        let payload = object
+            .get("payload")
+            .map(serde_json::Value::to_string)
+            .unwrap_or_else(|| "{}".to_string());
+        let timestamp = object
+            .get("timestamp")
+            .and_then(serde_json::Value::as_u64)
+            .unwrap_or(0);
 
         Ok(BridgeRequest {
             id,
@@ -98,27 +116,19 @@ impl BridgeResponse {
 
     /// Serializes response to standard JSON for injection into WebView.
     pub fn to_json(&self) -> String {
-        let mut out = String::from("{");
-        out.push_str(&format!(r#""id":"{}","#, escape_json(&self.id)));
-        out.push_str(&format!(r#""success":{},"#, self.success));
-
-        if let Some(ref data) = self.data {
-            out.push_str(&format!(r#""data":{},"#, data));
-        } else {
-            out.push_str(r#""data":null,"#);
-        }
-
-        if let Some(ref err) = self.error_code {
-            out.push_str(&format!(r#""errorCode":"{}","#, err.as_str()));
-            out.push_str(&format!(
-                r#""errorMessage":"{}""#,
-                escape_json(self.error_message.as_deref().unwrap_or(""))
-            ));
-        } else {
-            out.push_str(r#""errorCode":null,"errorMessage":null"#);
-        }
-        out.push('}');
-        out
+        let data = self
+            .data
+            .as_deref()
+            .and_then(|raw| serde_json::from_str::<serde_json::Value>(raw).ok())
+            .unwrap_or(serde_json::Value::Null);
+        serde_json::json!({
+            "id": self.id,
+            "success": self.success,
+            "data": data,
+            "errorCode": self.error_code.as_ref().map(BridgeErrorCode::as_str),
+            "errorMessage": self.error_message,
+        })
+        .to_string()
     }
 
     /// Formats JavaScript evaluation snippet to deliver callback to window.MantraBridge.
@@ -132,7 +142,7 @@ impl BridgeResponse {
 }
 
 /// Action handler signature.
-pub type ActionHandler = fn(&BridgeRequest) -> Result<String, String>;
+pub type ActionHandler = Arc<dyn Fn(&BridgeRequest) -> Result<String, String> + Send + Sync>;
 
 /// Bridge Router mapping actions to capabilities and native handlers.
 pub struct BridgeRouter {
@@ -149,8 +159,12 @@ impl BridgeRouter {
     }
 
     /// Registers an action with its required security capability.
-    pub fn register(&mut self, action: &str, required_cap: Capability, handler: ActionHandler) {
-        self.handlers.insert(action.to_string(), (required_cap, handler));
+    pub fn register<F>(&mut self, action: &str, required_cap: Capability, handler: F)
+    where
+        F: Fn(&BridgeRequest) -> Result<String, String> + Send + Sync + 'static,
+    {
+        self.handlers
+            .insert(action.to_string(), (required_cap, Arc::new(handler)));
     }
 
     /// Dispatches an incoming raw JSON message string and returns serialized response.
@@ -160,8 +174,13 @@ impl BridgeRouter {
             return BridgeResponse::error(
                 "unknown".to_string(),
                 BridgeErrorCode::PayloadTooLarge,
-                &format!("Payload size {} exceeds maximum allowed {}", raw_json.len(), self.policy.max_payload_bytes),
-            ).to_json();
+                &format!(
+                    "Payload size {} exceeds maximum allowed {}",
+                    raw_json.len(),
+                    self.policy.max_payload_bytes
+                ),
+            )
+            .to_json();
         }
 
         let req = match BridgeRequest::parse(raw_json) {
@@ -171,7 +190,8 @@ impl BridgeRouter {
                     "unknown".to_string(),
                     BridgeErrorCode::InvalidPayload,
                     &e,
-                ).to_json();
+                )
+                .to_json();
             }
         };
 
@@ -186,7 +206,10 @@ impl BridgeRouter {
             return BridgeResponse::error(
                 req.id.clone(),
                 BridgeErrorCode::UnauthorizedOrigin,
-                &format!("Origin '{}' is not permitted by mobile security policy", req.origin),
+                &format!(
+                    "Origin '{}' is not permitted by mobile security policy",
+                    req.origin
+                ),
             );
         }
 
@@ -207,82 +230,20 @@ impl BridgeRouter {
             return BridgeResponse::error(
                 req.id.clone(),
                 BridgeErrorCode::PermissionDenied,
-                &format!("Action '{}' requires capability '{}' which has not been granted", req.action, required_cap.as_str()),
+                &format!(
+                    "Action '{}' requires capability '{}' which has not been granted",
+                    req.action,
+                    required_cap.as_str()
+                ),
             );
         }
 
         // 4. Execution
         match handler(req) {
             Ok(json_data) => BridgeResponse::success(req.id.clone(), &json_data),
-            Err(err_msg) => BridgeResponse::error(
-                req.id.clone(),
-                BridgeErrorCode::ExecutionFailed,
-                &err_msg,
-            ),
-        }
-    }
-}
-
-// Minimal zero-dependency JSON extraction helpers
-fn extract_json_string(json: &str, key: &str) -> Option<String> {
-    let pattern = format!(r#""{}""#, key);
-    let key_pos = json.find(&pattern)?;
-    let after_key = &json[key_pos + pattern.len()..];
-    let colon_pos = after_key.find(':')?;
-    let after_colon = after_key[colon_pos + 1..].trim_start();
-
-    if !after_colon.starts_with('"') {
-        return None;
-    }
-    let content = &after_colon[1..];
-    let end_quote = content.find('"')?;
-    Some(content[..end_quote].to_string())
-}
-
-fn extract_json_number(json: &str, key: &str) -> Option<u64> {
-    let pattern = format!(r#""{}""#, key);
-    let key_pos = json.find(&pattern)?;
-    let after_key = &json[key_pos + pattern.len()..];
-    let colon_pos = after_key.find(':')?;
-    let after_colon = after_key[colon_pos + 1..].trim_start();
-
-    let num_str: String = after_colon.chars().take_while(|c| c.is_ascii_digit()).collect();
-    num_str.parse::<u64>().ok()
-}
-
-fn extract_json_raw_field(json: &str, key: &str) -> Option<String> {
-    let pattern = format!(r#""{}""#, key);
-    let key_pos = json.find(&pattern)?;
-    let after_key = &json[key_pos + pattern.len()..];
-    let colon_pos = after_key.find(':')?;
-    let after_colon = after_key[colon_pos + 1..].trim_start();
-
-    if after_colon.starts_with('{') {
-        let mut depth = 0;
-        let mut end = 0;
-        for (i, c) in after_colon.char_indices() {
-            if c == '{' {
-                depth += 1;
-            } else if c == '}' {
-                depth -= 1;
-                if depth == 0 {
-                    end = i + 1;
-                    break;
-                }
+            Err(err_msg) => {
+                BridgeResponse::error(req.id.clone(), BridgeErrorCode::ExecutionFailed, &err_msg)
             }
         }
-        if end > 0 {
-            return Some(after_colon[..end].to_string());
-        }
     }
-    None
 }
-
-fn escape_json(s: &str) -> String {
-    s.replace('\\', "\\\\")
-        .replace('"', "\\\"")
-        .replace('\n', "\\n")
-        .replace('\r', "\\r")
-        .replace('\t', "\\t")
-}
-

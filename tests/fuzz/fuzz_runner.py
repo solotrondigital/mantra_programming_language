@@ -14,6 +14,7 @@ import subprocess
 import random
 import string
 import tempfile
+import argparse
 
 # Force UTF-8 output so Windows cp1252 stdout does not choke on Unicode symbols
 if hasattr(sys.stdout, "reconfigure"):
@@ -103,8 +104,15 @@ def run_fuzz_iteration(iter_num):
             os.remove(temp_path)
 
 def main():
-    total_iters = int(sys.argv[1]) if len(sys.argv) > 1 else 250
-    print(f">> Running Mantra Compiler Fuzzing Suite ({total_iters} iterations)...")
+    parser = argparse.ArgumentParser(description="Bounded randomized robustness checks for mantrac")
+    parser.add_argument("iterations", nargs="?", type=int, default=250)
+    parser.add_argument("--seed", type=int, default=0, help="reproducible random seed (default: 0)")
+    args = parser.parse_args()
+    if args.iterations < 1:
+        parser.error("iterations must be positive")
+    random.seed(args.seed)
+    total_iters = args.iterations
+    print(f">> Running Mantra Compiler Fuzzing Suite ({total_iters} iterations, seed={args.seed})...")
     
     passed = 0
     for i in range(1, total_iters + 1):

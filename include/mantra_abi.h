@@ -19,6 +19,17 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+/* Keep the public header usable from both C11 and C++11 consumers. */
+#ifdef __cplusplus
+    #include <atomic>
+    typedef std::atomic<uint32_t> MantraAtomicU32;
+    #define MANTRA_STATIC_ASSERT(condition, message) static_assert(condition, message)
+#else
+    #include <stdatomic.h>
+    typedef _Atomic uint32_t MantraAtomicU32;
+    #define MANTRA_STATIC_ASSERT(condition, message) _Static_assert(condition, message)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -67,7 +78,7 @@ typedef struct MantraTypeInfo MantraTypeInfo;
 typedef struct MantraHeader {
     uint64_t            magic;       /* Verification magic constant */
     const MantraVTable* vtable;      /* Pointer to type's virtual table */
-    _Atomic uint32_t    refcount;    /* Thread-safe atomic reference count */
+    MantraAtomicU32     refcount;    /* Thread-safe atomic reference count */
     uint32_t            flags;       /* GC/ARC flags (0x1 = pinned, 0x2 = finalizer) */
 } MantraHeader;
 
@@ -130,6 +141,11 @@ MANTRA_API MantraString  MANTRA_CALL mantra_string_from_utf8(const char* cstr, s
 
 /* --- Dynamic FFI Loader Protocol --- */
 typedef MantraResult (MANTRA_CALL *MantraFfiEntryPoint)(const MantraList* args);
+
+/* These ABI v1 layout assertions are part of the supported 64-bit targets. */
+MANTRA_STATIC_ASSERT(sizeof(MantraString) == 24, "MantraString ABI v1 size changed");
+MANTRA_STATIC_ASSERT(offsetof(MantraHeader, flags) == 20, "MantraHeader ABI v1 layout changed");
+MANTRA_STATIC_ASSERT(sizeof(MantraHeader) == 24, "MantraHeader ABI v1 size changed");
 
 #ifdef __cplusplus
 }

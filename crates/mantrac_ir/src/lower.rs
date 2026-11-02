@@ -71,7 +71,12 @@ impl AstLowering {
         }
     }
 
-    fn lower_stmt(&mut self, stmt: &Stmt, instrs: &mut Vec<IrInstruction>, locals: &mut Vec<(String, IrType)>) {
+    fn lower_stmt(
+        &mut self,
+        stmt: &Stmt,
+        instrs: &mut Vec<IrInstruction>,
+        locals: &mut Vec<(String, IrType)>,
+    ) {
         match stmt {
             Stmt::Let { name, ty, init, .. } | Stmt::Mut { name, ty, init, .. } => {
                 let init_reg = self.lower_expr(init, instrs);
@@ -97,7 +102,9 @@ impl AstLowering {
             Stmt::Expr(expr) => {
                 self.lower_expr(expr, instrs);
             }
-            Stmt::While { condition, body, .. } => {
+            Stmt::While {
+                condition, body, ..
+            } => {
                 let loop_start = instrs.len();
                 let cond_reg = self.lower_expr(condition, instrs);
                 let branch_idx = instrs.len();
@@ -114,11 +121,21 @@ impl AstLowering {
                 instrs.push(IrInstruction::Jump { target: loop_start });
 
                 let loop_end = instrs.len();
-                if let IrInstruction::Branch { ref mut false_target, .. } = instrs[branch_idx] {
+                if let IrInstruction::Branch {
+                    ref mut false_target,
+                    ..
+                } = instrs[branch_idx]
+                {
                     *false_target = loop_end;
                 }
             }
-            Stmt::If { condition, then_branch, elif_branches, else_branch, .. } => {
+            Stmt::If {
+                condition,
+                then_branch,
+                elif_branches,
+                else_branch,
+                ..
+            } => {
                 let cond_reg = self.lower_expr(condition, instrs);
                 let branch_idx = instrs.len();
                 instrs.push(IrInstruction::Branch {
@@ -135,7 +152,11 @@ impl AstLowering {
                 instrs.push(IrInstruction::Jump { target: 0 });
 
                 let false_target = instrs.len();
-                if let IrInstruction::Branch { false_target: ref mut ft, .. } = instrs[branch_idx] {
+                if let IrInstruction::Branch {
+                    false_target: ref mut ft,
+                    ..
+                } = instrs[branch_idx]
+                {
                     *ft = false_target;
                 }
 
@@ -203,7 +224,9 @@ impl AstLowering {
                 dest
             }
             Expr::Ident(name, _) => name.clone(),
-            Expr::Binary { op, left, right, .. } => {
+            Expr::Binary {
+                op, left, right, ..
+            } => {
                 let l_reg = self.lower_expr(left, instrs);
                 let r_reg = self.lower_expr(right, instrs);
                 let dest = self.new_temp();
@@ -251,7 +274,8 @@ impl AstLowering {
                         return dest;
                     }
 
-                    let arg_regs: Vec<String> = args.iter().map(|a| self.lower_expr(a, instrs)).collect();
+                    let arg_regs: Vec<String> =
+                        args.iter().map(|a| self.lower_expr(a, instrs)).collect();
                     let dest = self.new_temp();
                     instrs.push(IrInstruction::Call {
                         dest: Some(dest.clone()),

@@ -61,7 +61,8 @@ fn test_layout_row_and_column() {
     let row = Row::new(vec![
         Box::new(Text::new("Left")),
         Box::new(Text::new("Right")),
-    ]).with_gap(16.0);
+    ])
+    .with_gap(16.0);
 
     let ctx = BuildContext::root(false);
     let html = row.render(&ctx);
@@ -103,4 +104,3 @@ fn test_loaders() {
     let prog_html = prog.render(&ctx);
     assert!(prog_html.contains("width:75%;"));
 }
-

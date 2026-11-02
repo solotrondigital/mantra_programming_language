@@ -1,7 +1,7 @@
 //! Authentication and Secret Management for AI providers.
 
-use std::env;
 use crate::error::{AIError, AIResult};
+use std::env;
 
 /// Represents an API authentication credential.
 #[derive(Debug, Clone, PartialEq)]
@@ -20,14 +20,18 @@ impl AuthCredential {
         match self {
             AuthCredential::ApiKey(key) => {
                 if key.trim().is_empty() {
-                    Err(AIError::AuthenticationError("API key cannot be empty".to_string()))
+                    Err(AIError::AuthenticationError(
+                        "API key cannot be empty".to_string(),
+                    ))
                 } else {
                     Ok(key.clone())
                 }
             }
             AuthCredential::BearerToken(token) => {
                 if token.trim().is_empty() {
-                    Err(AIError::AuthenticationError("Bearer token cannot be empty".to_string()))
+                    Err(AIError::AuthenticationError(
+                        "Bearer token cannot be empty".to_string(),
+                    ))
                 } else {
                     Ok(token.clone())
                 }
@@ -37,7 +41,8 @@ impl AuthCredential {
                 // (e.g. starts with "sk-", "AIza", or is a long key string)
                 if var_name.starts_with("sk-")
                     || var_name.starts_with("AIza")
-                    || (var_name.len() > 30 && !var_name.chars().all(|c| c.is_ascii_uppercase() || c == '_'))
+                    || (var_name.len() > 30
+                        && !var_name.chars().all(|c| c.is_ascii_uppercase() || c == '_'))
                 {
                     return Ok(var_name.clone());
                 }
@@ -65,4 +70,3 @@ impl AuthCredential {
         }
     }
 }
-

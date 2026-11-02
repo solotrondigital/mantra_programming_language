@@ -1,4 +1,6 @@
-use super::{AdapterKind, Cursor, CursorDirection, DatabaseAdapter, ProcedureParam, ProcedureResult};
+use super::{
+    AdapterKind, Cursor, CursorDirection, DatabaseAdapter, ProcedureParam, ProcedureResult,
+};
 use crate::model::{FieldValue, Row};
 use std::collections::HashMap;
 
@@ -57,7 +59,11 @@ impl DatabaseAdapter for OracleAdapter {
         self.connected
     }
 
-    fn execute_procedure(&self, name: &str, params: &[ProcedureParam]) -> Result<ProcedureResult, String> {
+    fn execute_procedure(
+        &self,
+        name: &str,
+        params: &[ProcedureParam],
+    ) -> Result<ProcedureResult, String> {
         if !self.connected {
             return Err("Oracle adapter: Not connected to database".to_string());
         }
@@ -71,7 +77,10 @@ impl DatabaseAdapter for OracleAdapter {
                 }
                 super::ParamDirection::Out => {
                     plsql_args.push(format!(":{} => OUT", p.name));
-                    output_params.insert(p.name.clone(), FieldValue::Text("ORACLE_OUT_VAL".to_string()));
+                    output_params.insert(
+                        p.name.clone(),
+                        FieldValue::Text("ORACLE_OUT_VAL".to_string()),
+                    );
                 }
                 super::ParamDirection::InOut => {
                     plsql_args.push(format!(":{} => IN OUT", p.name));
@@ -82,7 +91,10 @@ impl DatabaseAdapter for OracleAdapter {
 
         let mut row = Row::new();
         row.insert("PROCEDURE", FieldValue::Text(name.to_string()));
-        row.insert("PLSQL", FieldValue::Text(format!("BEGIN {}({}); END;", name, plsql_args.join(", "))));
+        row.insert(
+            "PLSQL",
+            FieldValue::Text(format!("BEGIN {}({}); END;", name, plsql_args.join(", "))),
+        );
 
         Ok(ProcedureResult {
             status: 0,
@@ -99,7 +111,12 @@ impl DatabaseAdapter for OracleAdapter {
         let mut row = Row::new();
         row.insert("CURSOR_NAME", FieldValue::Text(name.to_string()));
         row.insert("QUERY", FieldValue::Text(query.to_string()));
-        Ok(Cursor::new(name, query, vec![row], CursorDirection::ForwardOnly))
+        Ok(Cursor::new(
+            name,
+            query,
+            vec![row],
+            CursorDirection::ForwardOnly,
+        ))
     }
 
     fn close_cursor(&self, _name: &str) -> Result<(), String> {
@@ -114,7 +131,10 @@ impl DatabaseAdapter for OracleAdapter {
             return Err("Oracle adapter: Not connected to database".to_string());
         }
         let sql = if materialized {
-            format!("CREATE MATERIALIZED VIEW {} BUILD IMMEDIATE REFRESH COMPLETE AS {}", name, query)
+            format!(
+                "CREATE MATERIALIZED VIEW {} BUILD IMMEDIATE REFRESH COMPLETE AS {}",
+                name, query
+            )
         } else {
             format!("CREATE OR REPLACE VIEW {} AS {}", name, query)
         };
@@ -147,12 +167,23 @@ impl DatabaseAdapter for OracleAdapter {
         Ok(format!("BEGIN DBMS_MVIEW.REFRESH('{}'); END;", name))
     }
 
-    fn execute_scalar_function(&self, name: &str, args: &[FieldValue]) -> Result<FieldValue, String> {
+    fn execute_scalar_function(
+        &self,
+        name: &str,
+        args: &[FieldValue],
+    ) -> Result<FieldValue, String> {
         if !self.connected {
             return Err("Oracle adapter: Not connected to database".to_string());
         }
-        let args_str = args.iter().map(|a| a.to_string()).collect::<Vec<_>>().join(", ");
-        Ok(FieldValue::Text(format!("ORACLE_FN_RESULT({}({}))", name, args_str)))
+        let args_str = args
+            .iter()
+            .map(|a| a.to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
+        Ok(FieldValue::Text(format!(
+            "ORACLE_FN_RESULT({}({}))",
+            name, args_str
+        )))
     }
 
     fn execute_table_function(&self, name: &str, args: &[FieldValue]) -> Result<Vec<Row>, String> {
@@ -165,4 +196,3 @@ impl DatabaseAdapter for OracleAdapter {
         Ok(vec![row])
     }
 }
-

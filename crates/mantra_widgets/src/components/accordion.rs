@@ -64,4 +64,3 @@ fn uuid_simple() -> u32 {
     static COUNTER: AtomicU32 = AtomicU32::new(12000);
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
-

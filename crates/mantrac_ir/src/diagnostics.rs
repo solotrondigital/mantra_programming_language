@@ -19,10 +19,13 @@ impl PipelineProfiler {
         println!("  Type Checker      : {:>8.2?}", self.typechecking);
         println!("  IR Lowering       : {:>8.2?}", self.ir_lowering);
         println!("  Backend / Runtime : {:>8.2?}", self.execution_or_codegen);
-        let total = self.lexing + self.parsing + self.typechecking + self.ir_lowering + self.execution_or_codegen;
+        let total = self.lexing
+            + self.parsing
+            + self.typechecking
+            + self.ir_lowering
+            + self.execution_or_codegen;
         println!("--------------------------------------------------");
         println!("  Total Pipeline    : {:>8.2?}", total);
         println!("==================================================");
     }
 }
-

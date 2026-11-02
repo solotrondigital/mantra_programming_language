@@ -69,12 +69,18 @@ impl ErrorIntelligenceEngine {
         }
 
         // ── E0012: Type mismatch (e.g. expected Int, found String) ──
-        if code == "E0012" || message.contains("Type mismatch") || message.contains("Cannot assign") {
+        if code == "E0012" || message.contains("Type mismatch") || message.contains("Cannot assign")
+        {
             let (expected, found) = Self::extract_mismatched_types(message);
             let patch = if expected == "Int" && found == "String" {
-                Some("Wrap the expression with int(...) to parse the string to integer.".to_string())
+                Some(
+                    "Wrap the expression with int(...) to parse the string to integer.".to_string(),
+                )
             } else if expected == "String" && (found == "Int" || found == "Float") {
-                Some("Wrap the expression with str(...) to convert the number to string.".to_string())
+                Some(
+                    "Wrap the expression with str(...) to convert the number to string."
+                        .to_string(),
+                )
             } else {
                 None
             };
@@ -91,23 +97,36 @@ impl ErrorIntelligenceEngine {
         }
 
         // ── E0010: Undefined Symbol / Missing Import ──
-        if code == "E0010" || message.contains("Undefined symbol") || message.contains("undefined variable") {
+        if code == "E0010"
+            || message.contains("Undefined symbol")
+            || message.contains("undefined variable")
+        {
             let sym = message
                 .split('\'')
                 .nth(1)
                 .unwrap_or_else(|| message.split_whitespace().last().unwrap_or(""));
 
             let (package_hint, import_stmt) = match sym {
-                "PropertiesTOML" | "ENV" => ("mantra_util", "from mantra_util import PropertiesTOML, ENV"),
-                "EmailMessage" | "SmtpClient" | "Email" => ("mantra_email", "from mantra_email import EmailMessage, SmtpClient, Email"),
-                "AI" | "ModelHandle" | "Prompt" => ("mantra_ai", "from mantra_ai import AI, ModelHandle, Prompt"),
+                "PropertiesTOML" | "ENV" => {
+                    ("mantra_util", "from mantra_util import PropertiesTOML, ENV")
+                }
+                "EmailMessage" | "SmtpClient" | "Email" => (
+                    "mantra_email",
+                    "from mantra_email import EmailMessage, SmtpClient, Email",
+                ),
+                "AI" | "ModelHandle" | "Prompt" => {
+                    ("mantra_ai", "from mantra_ai import AI, ModelHandle, Prompt")
+                }
                 _ => ("", ""),
             };
 
             let remedy = if !package_hint.is_empty() {
                 format!("Symbol '{}' is provided by standard package '{}'. Add '{}' at the top of your file.", sym, package_hint, import_stmt)
             } else {
-                format!("Check for spelling typos or ensure '{}' is declared and in scope.", sym)
+                format!(
+                    "Check for spelling typos or ensure '{}' is declared and in scope.",
+                    sym
+                )
             };
 
             return Some(ErrorExplanation {
@@ -163,10 +182,14 @@ impl ErrorIntelligenceEngine {
         }
         if let Some(found_pos) = msg.find("found ") {
             let rest = &msg[found_pos + 6..];
-            found = rest.split_whitespace().next().unwrap_or("ActualType").trim_end_matches('.').to_string();
+            found = rest
+                .split_whitespace()
+                .next()
+                .unwrap_or("ActualType")
+                .trim_end_matches('.')
+                .to_string();
         }
 
         (expected, found)
     }
 }
-

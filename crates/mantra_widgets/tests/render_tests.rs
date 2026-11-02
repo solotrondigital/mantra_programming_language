@@ -18,7 +18,9 @@ fn test_html_element_builder() {
 
 #[test]
 fn test_widget_tree_full_document_generation() {
-    let tree = WidgetTree::new(Box::new(Container::new().with_child(Heading::h1("Mantra App"))));
+    let tree = WidgetTree::new(Box::new(
+        Container::new().with_child(Heading::h1("Mantra App")),
+    ));
 
     assert_eq!(tree.count_nodes(), 2);
 
@@ -36,4 +38,3 @@ fn test_platform_bridge_script() {
     assert!(script.contains("MantraAndroidBridge"));
     assert!(script.contains("webkit.messageHandlers.mantraBridge"));
 }
-

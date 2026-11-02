@@ -1,6 +1,5 @@
 //! High-level unified AI Client and Model Invocation Handle.
 
-use std::sync::Arc;
 use crate::auth::AuthCredential;
 use crate::config::AIConfig;
 use crate::error::AIResult;
@@ -11,6 +10,7 @@ use crate::registry::{ModelRegistry, ModelSpec};
 use crate::schema::{JsonValue, StructuredSchema};
 use crate::streaming::StreamReceiver;
 use crate::tokens::TokenManager;
+use std::sync::Arc;
 
 /// Model invocation handle returned by `AI.model(...)`.
 #[derive(Clone)]
@@ -21,7 +21,11 @@ pub struct AIModelHandle {
 }
 
 impl AIModelHandle {
-    pub fn new(spec: ModelSpec, provider_mgr: Arc<ProviderManager>, token_mgr: Arc<TokenManager>) -> Self {
+    pub fn new(
+        spec: ModelSpec,
+        provider_mgr: Arc<ProviderManager>,
+        token_mgr: Arc<TokenManager>,
+    ) -> Self {
         Self {
             spec,
             provider_mgr,
@@ -53,7 +57,11 @@ impl AIModelHandle {
     }
 
     /// Request a structured response validated against a typed schema (User Story AI-005).
-    pub fn generate_structured(&self, prompt: impl Into<String>, schema: &StructuredSchema) -> AIResult<AIResponse> {
+    pub fn generate_structured(
+        &self,
+        prompt: impl Into<String>,
+        schema: &StructuredSchema,
+    ) -> AIResult<AIResponse> {
         let mut p = Prompt::new(prompt);
         let schema_instruction = format!(
             "You MUST output valid JSON conforming exactly to the schema '{}'.",
@@ -126,7 +134,11 @@ impl AI {
     /// e.g. `AI.get("assistant")`
     pub fn get(&self, alias: &str) -> AIResult<AIModelHandle> {
         let spec = self.registry.get(alias)?.clone();
-        Ok(AIModelHandle::new(spec, self.providers.clone(), self.tokens.clone()))
+        Ok(AIModelHandle::new(
+            spec,
+            self.providers.clone(),
+            self.tokens.clone(),
+        ))
     }
 
     /// Register a model specification into the active registry.

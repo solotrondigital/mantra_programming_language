@@ -56,7 +56,10 @@ pub fn get_hover(
             let fields = cls.fields.len() + cls.static_fields.len();
             let methods = cls.methods.len() + cls.static_methods.len();
             md.push_str(&format!("\n\n*{} fields, {} methods*", fields, methods));
-            return Some(HoverResult { markdown: md, range });
+            return Some(HoverResult {
+                markdown: md,
+                range,
+            });
         }
 
         if let Some(iface) = st.interfaces.get(&word) {
@@ -65,7 +68,10 @@ pub fn get_hover(
                 iface.name,
                 iface.methods.len()
             );
-            return Some(HoverResult { markdown: md, range });
+            return Some(HoverResult {
+                markdown: md,
+                range,
+            });
         }
 
         if let Some(func) = st.functions.get(&word) {
@@ -80,7 +86,10 @@ pub fn get_hover(
                 params.join(", "),
                 func.return_type
             );
-            return Some(HoverResult { markdown: md, range });
+            return Some(HoverResult {
+                markdown: md,
+                range,
+            });
         }
 
         // Check class methods by scanning all classes
@@ -93,9 +102,15 @@ pub fn get_hover(
                     .collect();
                 let modifiers = {
                     let mut m = String::new();
-                    if method.is_static { m.push_str("static "); }
-                    if method.is_abstract { m.push_str("abstract "); }
-                    if method.is_override { m.push_str("override "); }
+                    if method.is_static {
+                        m.push_str("static ");
+                    }
+                    if method.is_abstract {
+                        m.push_str("abstract ");
+                    }
+                    if method.is_override {
+                        m.push_str("override ");
+                    }
                     m
                 };
                 let md = format!(
@@ -106,7 +121,10 @@ pub fn get_hover(
                     method.return_type,
                     _cls_name
                 );
-                return Some(HoverResult { markdown: md, range });
+                return Some(HoverResult {
+                    markdown: md,
+                    range,
+                });
             }
         }
     }
@@ -114,19 +132,28 @@ pub fn get_hover(
     // 2. Built-in functions
     let builtin_hover = builtin_hover(&word);
     if let Some(md) = builtin_hover {
-        return Some(HoverResult { markdown: md, range });
+        return Some(HoverResult {
+            markdown: md,
+            range,
+        });
     }
 
     // 3. Keywords
     let kw_hover = keyword_hover(&word);
     if let Some(md) = kw_hover {
-        return Some(HoverResult { markdown: md, range });
+        return Some(HoverResult {
+            markdown: md,
+            range,
+        });
     }
 
     // 4. Built-in types
     let type_hover = type_hover(&word);
     if let Some(md) = type_hover {
-        return Some(HoverResult { markdown: md, range });
+        return Some(HoverResult {
+            markdown: md,
+            range,
+        });
     }
 
     None
@@ -187,13 +214,26 @@ fn type_hover(word: &str) -> Option<String> {
         "Bool" => Some("```mantra\nBool\n```\nBoolean type (`True` / `False`).".to_string()),
         "String" => Some("```mantra\nString\n```\nUTF-8 string type.".to_string()),
         "Byte" => Some("```mantra\nByte\n```\n8-bit unsigned byte.".to_string()),
-        "Unit" => Some("```mantra\nUnit\n```\nThe unit type — indicates no meaningful return value.".to_string()),
+        "Unit" => Some(
+            "```mantra\nUnit\n```\nThe unit type — indicates no meaningful return value."
+                .to_string(),
+        ),
         "Any" => Some("```mantra\nAny\n```\nDynamic type — accepts any value.".to_string()),
-        "Option" => Some("```mantra\nOption<T>\n```\nRepresents an optional value (`Some(T)` or `None`).".to_string()),
-        "Result" => Some("```mantra\nResult<T, E>\n```\nRepresents success (`Ok(T)`) or failure (`Err(E)`).".to_string()),
-        "List" => Some("```mantra\nList<T>\n```\nOrdered dynamic array of elements of type `T`.".to_string()),
-        "Map" => Some("```mantra\nMap<K, V>\n```\nHash map from keys of type `K` to values of type `V`.".to_string()),
+        "Option" => Some(
+            "```mantra\nOption<T>\n```\nRepresents an optional value (`Some(T)` or `None`)."
+                .to_string(),
+        ),
+        "Result" => Some(
+            "```mantra\nResult<T, E>\n```\nRepresents success (`Ok(T)`) or failure (`Err(E)`)."
+                .to_string(),
+        ),
+        "List" => Some(
+            "```mantra\nList<T>\n```\nOrdered dynamic array of elements of type `T`.".to_string(),
+        ),
+        "Map" => Some(
+            "```mantra\nMap<K, V>\n```\nHash map from keys of type `K` to values of type `V`."
+                .to_string(),
+        ),
         _ => None,
     }
 }
-

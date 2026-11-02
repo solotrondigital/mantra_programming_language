@@ -59,4 +59,3 @@ impl ScopeStack {
         None
     }
 }
-

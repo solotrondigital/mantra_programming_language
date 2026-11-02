@@ -12,7 +12,12 @@ pub struct BorderRadius {
 }
 
 impl BorderRadius {
-    pub const ZERO: BorderRadius = BorderRadius { top_left: 0.0, top_right: 0.0, bottom_right: 0.0, bottom_left: 0.0 };
+    pub const ZERO: BorderRadius = BorderRadius {
+        top_left: 0.0,
+        top_right: 0.0,
+        bottom_right: 0.0,
+        bottom_left: 0.0,
+    };
 
     pub fn all(radius: f64) -> Self {
         Self {
@@ -28,7 +33,12 @@ impl BorderRadius {
     }
 
     pub fn only(top_left: f64, top_right: f64, bottom_right: f64, bottom_left: f64) -> Self {
-        Self { top_left, top_right, bottom_right, bottom_left }
+        Self {
+            top_left,
+            top_right,
+            bottom_right,
+            bottom_left,
+        }
     }
 
     pub fn pill() -> Self {
@@ -36,10 +46,16 @@ impl BorderRadius {
     }
 
     pub fn to_css(&self) -> String {
-        if self.top_left == self.top_right && self.top_left == self.bottom_right && self.top_left == self.bottom_left {
+        if self.top_left == self.top_right
+            && self.top_left == self.bottom_right
+            && self.top_left == self.bottom_left
+        {
             format!("{}px", self.top_left)
         } else {
-            format!("{}px {}px {}px {}px", self.top_left, self.top_right, self.bottom_right, self.bottom_left)
+            format!(
+                "{}px {}px {}px {}px",
+                self.top_left, self.top_right, self.bottom_right, self.bottom_left
+            )
         }
     }
 }
@@ -74,19 +90,30 @@ pub struct BorderSide {
 
 impl BorderSide {
     pub fn solid(width: f64, color: Color) -> Self {
-        Self { width, color, style: "solid" }
+        Self {
+            width,
+            color,
+            style: "solid",
+        }
     }
 
     pub fn dashed(width: f64, color: Color) -> Self {
-        Self { width, color, style: "dashed" }
+        Self {
+            width,
+            color,
+            style: "dashed",
+        }
     }
 
     pub fn dotted(width: f64, color: Color) -> Self {
-        Self { width, color, style: "dotted" }
+        Self {
+            width,
+            color,
+            style: "dotted",
+        }
     }
 
     pub fn to_css(&self) -> String {
         format!("{}px {} {}", self.width, self.style, self.color.to_css())
     }
 }
-

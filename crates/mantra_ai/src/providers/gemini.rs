@@ -57,10 +57,17 @@ impl AIProvider for GeminiProvider {
         "gemini"
     }
 
-    fn generate(&self, model: &str, prompt: &Prompt, auth: &AuthCredential) -> AIResult<AIResponse> {
+    fn generate(
+        &self,
+        model: &str,
+        prompt: &Prompt,
+        auth: &AuthCredential,
+    ) -> AIResult<AIResponse> {
         let key = auth.resolve()?;
         if key.is_empty() {
-            return Err(AIError::AuthenticationError("Gemini API key is empty".to_string()));
+            return Err(AIError::AuthenticationError(
+                "Gemini API key is empty".to_string(),
+            ));
         }
 
         // Build contents array; Gemini uses a single "contents" with role "user"
@@ -145,18 +152,26 @@ impl AIProvider for GeminiProvider {
                 (pt, ct)
             });
 
-        let usage = TokenUsage::new(prompt_tokens, completion_tokens)
-            .with_rates(0.0005, 0.0015);
+        let usage = TokenUsage::new(prompt_tokens, completion_tokens).with_rates(0.0005, 0.0015);
 
         let mut res = AIResponse::new(model, self.name(), text);
         res.usage = usage;
         Ok(res)
     }
 
-    fn stream(&self, model: &str, prompt: &Prompt, auth: &AuthCredential) -> AIResult<StreamReceiver> {
+    fn stream(
+        &self,
+        model: &str,
+        prompt: &Prompt,
+        auth: &AuthCredential,
+    ) -> AIResult<StreamReceiver> {
         // Delegate to generate and split into word chunks
         let resp = self.generate(model, prompt, auth)?;
-        let words: Vec<String> = resp.text.split_whitespace().map(|w| format!("{} ", w)).collect();
+        let words: Vec<String> = resp
+            .text
+            .split_whitespace()
+            .map(|w| format!("{} ", w))
+            .collect();
         let mut chunks: Vec<StreamChunk> = words.into_iter().map(StreamChunk::new).collect();
         if let Some(last) = chunks.last_mut() {
             last.finish_reason = Some("stop".to_string());
@@ -167,4 +182,3 @@ impl AIProvider for GeminiProvider {
         Ok(StreamReceiver::new(chunks))
     }
 }
-

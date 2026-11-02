@@ -105,7 +105,9 @@ impl<'a> CEmitter<'a> {
         self.write_line("");
         self.write_line("static inline void mantra_print_str(const char* s) { printf(\"%s\\n\", s ? s : \"None\"); }");
         self.write_line("static inline void mantra_print_int(MantraInt i) { printf(\"%lld\\n\", (long long)i); }");
-        self.write_line("static inline void mantra_print_float(MantraFloat f) { printf(\"%g\\n\", f); }");
+        self.write_line(
+            "static inline void mantra_print_float(MantraFloat f) { printf(\"%g\\n\", f); }",
+        );
         self.write_line("static inline void mantra_print_bool(MantraBool b) { printf(\"%s\\n\", b ? \"True\" : \"False\"); }");
         self.write_line("");
         self.write_line("static inline char* mantra_read_file(const char* path) {");
@@ -121,7 +123,9 @@ impl<'a> CEmitter<'a> {
         self.write_line("    return buf;");
         self.write_line("}");
         self.write_line("");
-        self.write_line("static inline MantraBool mantra_write_file(const char* path, const char* content) {");
+        self.write_line(
+            "static inline MantraBool mantra_write_file(const char* path, const char* content) {",
+        );
         self.write_line("    FILE* f = fopen(path, \"wb\");");
         self.write_line("    if (!f) return false;");
         self.write_line("    if (content) {");
@@ -137,7 +141,9 @@ impl<'a> CEmitter<'a> {
         self.write_line("    return (MantraInt)system(cmd);");
         self.write_line("}");
         self.write_line("");
-        self.write_line("static inline char* mantra_get_env(const char* key, const char* default_val) {");
+        self.write_line(
+            "static inline char* mantra_get_env(const char* key, const char* default_val) {",
+        );
         self.write_line("    char* v = getenv(key);");
         self.write_line("    if (!v) return (char*)(default_val ? default_val : \"\");");
         self.write_line("    return v;");
@@ -157,7 +163,9 @@ impl<'a> CEmitter<'a> {
         self.write_line("    l->data = (void**)malloc(l->cap * sizeof(void*));");
         self.write_line("    return l;");
         self.write_line("}");
-        self.write_line("static inline MantraInt mantra_list_len(MantraList* l) { return l ? l->len : 0; }");
+        self.write_line(
+            "static inline MantraInt mantra_list_len(MantraList* l) { return l ? l->len : 0; }",
+        );
         self.write_line("static inline void mantra_list_append(MantraList* l, void* item) {");
         self.write_line("    if (!l) return;");
         self.write_line("    if (l->len >= l->cap) {");
@@ -183,9 +191,17 @@ impl<'a> CEmitter<'a> {
         self.write_line("/* Forward Declarations */");
 
         // Collect all class names defined in this program for deduplication.
-        let local_classes: HashSet<String> = program.declarations.iter().filter_map(|d| {
-            if let Declaration::Class(cls) = d { Some(cls.name.clone()) } else { None }
-        }).collect();
+        let local_classes: HashSet<String> = program
+            .declarations
+            .iter()
+            .filter_map(|d| {
+                if let Declaration::Class(cls) = d {
+                    Some(cls.name.clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
 
         // Emit opaque void typedefs for imported stdlib/framework symbols
         // (e.g. Database, WebApp, Router from mantra.sql_orm / mantra.web).
@@ -220,7 +236,10 @@ impl<'a> CEmitter<'a> {
         for member in &cls.members {
             if let ClassMember::Field(f) = member {
                 if seen.insert(f.name.clone()) {
-                    fields.push((f.name.clone(), self.type_to_c(&f.ty.clone().unwrap_or(Type::Any))));
+                    fields.push((
+                        f.name.clone(),
+                        self.type_to_c(&f.ty.clone().unwrap_or(Type::Any)),
+                    ));
                 }
             }
         }
@@ -231,20 +250,37 @@ impl<'a> CEmitter<'a> {
                 if m.name == "__init__" {
                     let mut param_types: HashMap<String, String> = HashMap::new();
                     for p in &m.params {
-                        param_types.insert(p.name.clone(), self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)));
+                        param_types.insert(
+                            p.name.clone(),
+                            self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)),
+                        );
                     }
 
                     for stmt in &m.body {
                         if let Stmt::Assign { target, value, .. } = stmt {
-                            if let Expr::FieldAccess { receiver, field, .. } = target {
+                            if let Expr::FieldAccess {
+                                receiver, field, ..
+                            } = target
+                            {
                                 if let Expr::Ident(ref recv_name, _) = **receiver {
                                     if recv_name == "self" && seen.insert(field.clone()) {
                                         let field_ty = match value {
-                                            Expr::Ident(p_name, _) => param_types.get(p_name).cloned().unwrap_or_else(|| "void*".to_string()),
-                                            Expr::Literal(Literal::Integer(_), _) => "MantraInt".to_string(),
-                                            Expr::Literal(Literal::Float(_), _) => "MantraFloat".to_string(),
-                                            Expr::Literal(Literal::String(_), _) => "char*".to_string(),
-                                            Expr::Literal(Literal::Bool(_), _) => "MantraBool".to_string(),
+                                            Expr::Ident(p_name, _) => param_types
+                                                .get(p_name)
+                                                .cloned()
+                                                .unwrap_or_else(|| "void*".to_string()),
+                                            Expr::Literal(Literal::Integer(_), _) => {
+                                                "MantraInt".to_string()
+                                            }
+                                            Expr::Literal(Literal::Float(_), _) => {
+                                                "MantraFloat".to_string()
+                                            }
+                                            Expr::Literal(Literal::String(_), _) => {
+                                                "char*".to_string()
+                                            }
+                                            Expr::Literal(Literal::Bool(_), _) => {
+                                                "MantraBool".to_string()
+                                            }
                                             Expr::List(_, _) => "MantraList*".to_string(),
                                             _ => "void*".to_string(),
                                         };
@@ -355,7 +391,13 @@ impl<'a> CEmitter<'a> {
                         .params
                         .iter()
                         .filter(|p| p.name != "self")
-                        .map(|p| format!("{} {}", self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)), p.name))
+                        .map(|p| {
+                            format!(
+                                "{} {}",
+                                self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)),
+                                p.name
+                            )
+                        })
                         .collect();
                     param_str = non_self.join(", ");
                 }
@@ -365,23 +407,47 @@ impl<'a> CEmitter<'a> {
                 for member in &cls.members {
                     match member {
                         ClassMember::Method(m) => {
-                            let ret_ty = self.type_to_c(&m.return_type.clone().unwrap_or(Type::Unit));
+                            let ret_ty =
+                                self.type_to_c(&m.return_type.clone().unwrap_or(Type::Unit));
                             let mut params = vec![format!("{}* self", cls.name)];
                             for p in &m.params {
                                 if p.name != "self" {
-                                    params.push(format!("{} {}", self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)), p.name));
+                                    params.push(format!(
+                                        "{} {}",
+                                        self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)),
+                                        p.name
+                                    ));
                                 }
                             }
-                            self.write_line(&format!("{} {}_{}({});", ret_ty, cls.name, m.name, params.join(", ")));
+                            self.write_line(&format!(
+                                "{} {}_{}({});",
+                                ret_ty,
+                                cls.name,
+                                m.name,
+                                params.join(", ")
+                            ));
                         }
                         ClassMember::StaticMethod(sm) => {
-                            let ret_ty = self.type_to_c(&sm.return_type.clone().unwrap_or(Type::Unit));
+                            let ret_ty =
+                                self.type_to_c(&sm.return_type.clone().unwrap_or(Type::Unit));
                             let params: Vec<String> = sm
                                 .params
                                 .iter()
-                                .map(|p| format!("{} {}", self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)), p.name))
+                                .map(|p| {
+                                    format!(
+                                        "{} {}",
+                                        self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)),
+                                        p.name
+                                    )
+                                })
                                 .collect();
-                            self.write_line(&format!("{} {}_{}({});", ret_ty, cls.name, sm.name, params.join(", ")));
+                            self.write_line(&format!(
+                                "{} {}_{}({});",
+                                ret_ty,
+                                cls.name,
+                                sm.name,
+                                params.join(", ")
+                            ));
                         }
                         _ => {}
                     }
@@ -391,9 +457,19 @@ impl<'a> CEmitter<'a> {
                 let params: Vec<String> = f
                     .params
                     .iter()
-                    .map(|p| format!("{} {}", self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)), p.name))
+                    .map(|p| {
+                        format!(
+                            "{} {}",
+                            self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)),
+                            p.name
+                        )
+                    })
                     .collect();
-                let fn_name = if f.name == "main" { "user_main".to_string() } else { f.name.clone() };
+                let fn_name = if f.name == "main" {
+                    "user_main".to_string()
+                } else {
+                    f.name.clone()
+                };
                 self.write_line(&format!("{} {}({});", ret_ty, fn_name, params.join(", ")));
             }
         }
@@ -421,7 +497,10 @@ impl<'a> CEmitter<'a> {
                             ClassMember::StaticField(sf) => {
                                 let ty = self.type_to_c(&sf.ty.clone().unwrap_or(Type::Any));
                                 let val_str = self.expr_to_c(&sf.default);
-                                self.write_line(&format!("static {} {}_{} = {};", ty, cls.name, sf.name, val_str));
+                                self.write_line(&format!(
+                                    "static {} {}_{} = {};",
+                                    ty, cls.name, sf.name, val_str
+                                ));
                             }
                             ClassMember::Property(p) => {
                                 self.write_method(cls, &p.getter);
@@ -455,15 +534,31 @@ impl<'a> CEmitter<'a> {
                 .params
                 .iter()
                 .filter(|p| p.name != "self")
-                .map(|p| format!("{} {}", self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)), p.name))
+                .map(|p| {
+                    format!(
+                        "{} {}",
+                        self.type_to_c(&p.ty.clone().unwrap_or(Type::Any)),
+                        p.name
+                    )
+                })
                 .collect();
             param_str = non_self.join(", ");
         }
 
-        self.write_line(&format!("{cls}* {cls}_new({params}) {{", cls = cls.name, params = param_str));
+        self.write_line(&format!(
+            "{cls}* {cls}_new({params}) {{",
+            cls = cls.name,
+            params = param_str
+        ));
         self.indent();
-        self.write_line(&format!("{cls}* self = ({cls}*)calloc(1, sizeof({cls}));", cls = cls.name));
-        self.write_line(&format!("((MantraObject*)self)->__class_name = \"{}\";", cls.name));
+        self.write_line(&format!(
+            "{cls}* self = ({cls}*)calloc(1, sizeof({cls}));",
+            cls = cls.name
+        ));
+        self.write_line(&format!(
+            "((MantraObject*)self)->__class_name = \"{}\";",
+            cls.name
+        ));
 
         if let Some(init) = init_method {
             let arg_names: Vec<String> = init
@@ -474,7 +569,12 @@ impl<'a> CEmitter<'a> {
                 .collect();
             let mut all_args = vec!["self".to_string()];
             all_args.extend(arg_names);
-            self.write_line(&format!("{}_{}({});", cls.name, "__init__", all_args.join(", ")));
+            self.write_line(&format!(
+                "{}_{}({});",
+                cls.name,
+                "__init__",
+                all_args.join(", ")
+            ));
         }
 
         self.write_line("return self;");
@@ -489,7 +589,8 @@ impl<'a> CEmitter<'a> {
 
         let ret_ty = self.type_to_c(&m.return_type.clone().unwrap_or(Type::Unit));
         let mut params = vec![format!("{}* self", cls.name)];
-        self.var_types.insert("self".to_string(), format!("{}*", cls.name));
+        self.var_types
+            .insert("self".to_string(), format!("{}*", cls.name));
         self.declared_vars.insert("self".to_string());
 
         // Pre-register field types so infer_expr_c_type works for self.field
@@ -498,7 +599,8 @@ impl<'a> CEmitter<'a> {
             // Store as a pseudo-var "self.field" isn't possible; instead we register
             // them in a field_types side-table looked up during FieldAccess inference.
             // We repurpose var_types with a prefixed key for field lookups.
-            self.var_types.insert(format!("__field_{}__{}", cls.name, fname), fty.clone());
+            self.var_types
+                .insert(format!("__field_{}__{}", cls.name, fname), fty.clone());
         }
 
         for p in &m.params {
@@ -510,7 +612,13 @@ impl<'a> CEmitter<'a> {
             }
         }
 
-        self.write_line(&format!("{} {}_{}({}) {{", ret_ty, cls.name, m.name, params.join(", ")));
+        self.write_line(&format!(
+            "{} {}_{}({}) {{",
+            ret_ty,
+            cls.name,
+            m.name,
+            params.join(", ")
+        ));
         self.indent();
 
         for stmt in &m.body {
@@ -538,7 +646,13 @@ impl<'a> CEmitter<'a> {
             self.declared_vars.insert(p.name.clone());
         }
 
-        self.write_line(&format!("{} {}_{}({}) {{", ret_ty, cls.name, sm.name, params.join(", ")));
+        self.write_line(&format!(
+            "{} {}_{}({}) {{",
+            ret_ty,
+            cls.name,
+            sm.name,
+            params.join(", ")
+        ));
         self.indent();
 
         for stmt in &sm.body {
@@ -566,7 +680,11 @@ impl<'a> CEmitter<'a> {
             self.declared_vars.insert(p.name.clone());
         }
 
-        let fn_name = if f.name == "main" { "user_main".to_string() } else { f.name.clone() };
+        let fn_name = if f.name == "main" {
+            "user_main".to_string()
+        } else {
+            f.name.clone()
+        };
 
         self.write_line(&format!("{} {}({}) {{", ret_ty, fn_name, params.join(", ")));
         self.indent();
@@ -589,10 +707,18 @@ impl<'a> CEmitter<'a> {
             Expr::Literal(Literal::Float(_), _) => "MantraFloat".to_string(),
             Expr::Literal(Literal::String(_), _) => "char*".to_string(),
             Expr::Literal(Literal::Bool(_), _) => "MantraBool".to_string(),
-            Expr::Ident(name, _) => self.var_types.get(name).cloned().unwrap_or_else(|| "void*".to_string()),
+            Expr::Ident(name, _) => self
+                .var_types
+                .get(name)
+                .cloned()
+                .unwrap_or_else(|| "void*".to_string()),
             Expr::Call { callee, .. } => {
                 if let Expr::Ident(ref name, _) = **callee {
-                    if name == "str" || name == "read_file" || name == "get_env" || name == "read_toml_value" {
+                    if name == "str"
+                        || name == "read_file"
+                        || name == "get_env"
+                        || name == "read_toml_value"
+                    {
                         return "char*".to_string();
                     }
                     if name == "int" || name == "len" {
@@ -617,10 +743,14 @@ impl<'a> CEmitter<'a> {
                 }
                 "void*".to_string()
             }
-            Expr::MethodCall { receiver, method, .. } => {
+            Expr::MethodCall {
+                receiver, method, ..
+            } => {
                 if let Expr::Ident(ref cls_name, _) = **receiver {
                     // ENV methods return String (char*)
-                    if cls_name == "ENV" && (method == "getKey" || method == "get" || method == "getOrDefault") {
+                    if cls_name == "ENV"
+                        && (method == "getKey" || method == "get" || method == "getOrDefault")
+                    {
                         return "char*".to_string();
                     }
                     if cls_name == "ENV" && method == "has" {
@@ -653,7 +783,9 @@ impl<'a> CEmitter<'a> {
                 }
                 "void*".to_string()
             }
-            Expr::FieldAccess { receiver, field, .. } => {
+            Expr::FieldAccess {
+                receiver, field, ..
+            } => {
                 if let Expr::Ident(ref cls_name, _) = **receiver {
                     if let Some(cls) = self.symbols.classes.get(cls_name) {
                         if let Some(sf) = cls.static_fields.get(field) {
@@ -711,7 +843,9 @@ impl<'a> CEmitter<'a> {
                 let rhs = self.expr_to_c(value);
                 self.write_line(&format!("{} = {};", lhs, rhs));
             }
-            Stmt::AugAssign { target, op, value, .. } => {
+            Stmt::AugAssign {
+                target, op, value, ..
+            } => {
                 let lhs = self.expr_to_c(target);
                 let rhs = self.expr_to_c(value);
                 let op_str = match op {
@@ -723,7 +857,13 @@ impl<'a> CEmitter<'a> {
                 };
                 self.write_line(&format!("{} {} {};", lhs, op_str, rhs));
             }
-            Stmt::If { condition, then_branch, elif_branches, else_branch, .. } => {
+            Stmt::If {
+                condition,
+                then_branch,
+                elif_branches,
+                else_branch,
+                ..
+            } => {
                 let cond_str = self.expr_to_c(condition);
                 self.write_line(&format!("if ({}) {{", cond_str));
                 self.indent();
@@ -752,7 +892,9 @@ impl<'a> CEmitter<'a> {
                 }
                 self.write_line("}");
             }
-            Stmt::While { condition, body, .. } => {
+            Stmt::While {
+                condition, body, ..
+            } => {
                 let cond_str = self.expr_to_c(condition);
                 self.write_line(&format!("while ({}) {{", cond_str));
                 self.indent();
@@ -762,9 +904,17 @@ impl<'a> CEmitter<'a> {
                 self.dedent();
                 self.write_line("}");
             }
-            Stmt::For { var, iterable, body, .. } => {
+            Stmt::For {
+                var,
+                iterable,
+                body,
+                ..
+            } => {
                 let limit = self.expr_to_c(iterable);
-                self.write_line(&format!("for (MantraInt {} = 0; {} < {}; {}++) {{", var, var, limit, var));
+                self.write_line(&format!(
+                    "for (MantraInt {} = 0; {} < {}; {}++) {{",
+                    var, var, limit, var
+                ));
                 self.indent();
                 for s in body {
                     self.write_stmt(s);
@@ -808,7 +958,13 @@ impl<'a> CEmitter<'a> {
                     }
                     format!("\"{}\"", escaped)
                 }
-                Literal::Bool(b) => if *b { "true".to_string() } else { "false".to_string() },
+                Literal::Bool(b) => {
+                    if *b {
+                        "true".to_string()
+                    } else {
+                        "false".to_string()
+                    }
+                }
                 Literal::None => "NULL".to_string(),
             },
             Expr::Ident(name, _) => {
@@ -818,11 +974,15 @@ impl<'a> CEmitter<'a> {
                     name.clone()
                 }
             }
-            Expr::Binary { op, left, right, .. } => {
+            Expr::Binary {
+                op, left, right, ..
+            } => {
                 let l_str = self.expr_to_c(left);
                 let r_str = self.expr_to_c(right);
-                let is_str_l = matches!(&**left, Expr::Literal(Literal::String(_), _)) || self.infer_expr_c_type(left) == "char*";
-                let is_str_r = matches!(&**right, Expr::Literal(Literal::String(_), _)) || self.infer_expr_c_type(right) == "char*";
+                let is_str_l = matches!(&**left, Expr::Literal(Literal::String(_), _))
+                    || self.infer_expr_c_type(left) == "char*";
+                let is_str_r = matches!(&**right, Expr::Literal(Literal::String(_), _))
+                    || self.infer_expr_c_type(right) == "char*";
 
                 if *op == BinaryOp::Add && (is_str_l || is_str_r) {
                     return format!("mantra_str_concat({}, {})", l_str, r_str);
@@ -830,7 +990,11 @@ impl<'a> CEmitter<'a> {
 
                 if (*op == BinaryOp::Eq || *op == BinaryOp::NotEq) && (is_str_l || is_str_r) {
                     let cmp = format!("(strcmp({}, {}) == 0)", l_str, r_str);
-                    return if *op == BinaryOp::Eq { cmp } else { format!("!{}", cmp) };
+                    return if *op == BinaryOp::Eq {
+                        cmp
+                    } else {
+                        format!("!{}", cmp)
+                    };
                 }
 
                 match op {
@@ -902,7 +1066,10 @@ impl<'a> CEmitter<'a> {
                         }
                     }
                     if name == "read_file" {
-                        let path_s = args.first().map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
+                        let path_s = args
+                            .first()
+                            .map(|a| self.expr_to_c(a))
+                            .unwrap_or_else(|| "\"\"".to_string());
                         return format!("mantra_read_file({})", path_s);
                     }
                     if name == "read_toml_value" {
@@ -912,21 +1079,37 @@ impl<'a> CEmitter<'a> {
                         return "1".to_string();
                     }
                     if name == "write_file" {
-                        let path_s = args.get(0).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
-                        let content_s = args.get(1).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
+                        let path_s = args
+                            .get(0)
+                            .map(|a| self.expr_to_c(a))
+                            .unwrap_or_else(|| "\"\"".to_string());
+                        let content_s = args
+                            .get(1)
+                            .map(|a| self.expr_to_c(a))
+                            .unwrap_or_else(|| "\"\"".to_string());
                         return format!("mantra_write_file({}, {})", path_s, content_s);
                     }
                     if name == "system_exec" {
-                        let cmd_s = args.first().map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
+                        let cmd_s = args
+                            .first()
+                            .map(|a| self.expr_to_c(a))
+                            .unwrap_or_else(|| "\"\"".to_string());
                         return format!("mantra_system_exec({})", cmd_s);
                     }
                     if name == "get_env" {
-                        let key_s = args.get(0).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
-                        let def_s = args.get(1).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
+                        let key_s = args
+                            .get(0)
+                            .map(|a| self.expr_to_c(a))
+                            .unwrap_or_else(|| "\"\"".to_string());
+                        let def_s = args
+                            .get(1)
+                            .map(|a| self.expr_to_c(a))
+                            .unwrap_or_else(|| "\"\"".to_string());
                         return format!("mantra_get_env({}, {})", key_s, def_s);
                     }
                     if self.symbols.classes.contains_key(name) {
-                        let arg_strs: Vec<String> = args.iter().map(|a| self.expr_to_c(a)).collect();
+                        let arg_strs: Vec<String> =
+                            args.iter().map(|a| self.expr_to_c(a)).collect();
                         return format!("{}_new({})", name, arg_strs.join(", "));
                     }
                     // `len(x)` free-function: dispatch based on argument type
@@ -953,13 +1136,24 @@ impl<'a> CEmitter<'a> {
                 let arg_strs: Vec<String> = args.iter().map(|a| self.expr_to_c(a)).collect();
                 format!("{}({})", callee_s, arg_strs.join(", "))
             }
-            Expr::MethodCall { receiver, method, args, .. } => {
+            Expr::MethodCall {
+                receiver,
+                method,
+                args,
+                ..
+            } => {
                 // Static method call check e.g. MathUtils.square(5)
                 if let Expr::Ident(ref cls_name, _) = **receiver {
                     // ── Built-in static class: ENV (OS Environment Variables) ────────────
                     if cls_name == "ENV" && !self.symbols.classes.contains_key("ENV") {
-                        let key_s = args.first().map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
-                        let def_s = args.get(1).map(|a| self.expr_to_c(a)).unwrap_or_else(|| "\"\"".to_string());
+                        let key_s = args
+                            .first()
+                            .map(|a| self.expr_to_c(a))
+                            .unwrap_or_else(|| "\"\"".to_string());
+                        let def_s = args
+                            .get(1)
+                            .map(|a| self.expr_to_c(a))
+                            .unwrap_or_else(|| "\"\"".to_string());
                         if method == "get" || method == "getKey" || method == "getOrDefault" {
                             return format!("mantra_get_env({}, {})", key_s, def_s);
                         } else if method == "has" {
@@ -968,7 +1162,8 @@ impl<'a> CEmitter<'a> {
                     }
                     // ─────────────────────────────────────────────────────────────────────
                     if self.symbols.classes.contains_key(cls_name) {
-                        let arg_strs: Vec<String> = args.iter().map(|a| self.expr_to_c(a)).collect();
+                        let arg_strs: Vec<String> =
+                            args.iter().map(|a| self.expr_to_c(a)).collect();
                         return format!("{}_{}({})", cls_name, method, arg_strs.join(", "));
                     }
                     // Imported stdlib type (e.g. Database.connect) — return opaque NULL stub
@@ -984,8 +1179,14 @@ impl<'a> CEmitter<'a> {
                 if recv_ty == "MantraList*" {
                     match method.as_str() {
                         "append" => {
-                            let item_str = args.first().map(|a| self.expr_to_c(a)).unwrap_or_else(|| "NULL".to_string());
-                            return format!("mantra_list_append({}, (void*)(intptr_t)({}))", recv_str, item_str);
+                            let item_str = args
+                                .first()
+                                .map(|a| self.expr_to_c(a))
+                                .unwrap_or_else(|| "NULL".to_string());
+                            return format!(
+                                "mantra_list_append({}, (void*)(intptr_t)({}))",
+                                recv_str, item_str
+                            );
                         }
                         "len" => {
                             return format!("mantra_list_len({})", recv_str);
@@ -1012,7 +1213,12 @@ impl<'a> CEmitter<'a> {
                         for a in args {
                             iface_args.push(self.expr_to_c(a));
                         }
-                        return format!("mantra_dispatch_{}_{}({})", class_name, method, iface_args.join(", "));
+                        return format!(
+                            "mantra_dispatch_{}_{}({})",
+                            class_name,
+                            method,
+                            iface_args.join(", ")
+                        );
                     }
                 }
 
@@ -1030,18 +1236,24 @@ impl<'a> CEmitter<'a> {
                     }
                 }
 
-                let is_abstract_in_target = if let Some(cls) = self.symbols.classes.get(&target_class) {
-                    cls.methods.get(method).map_or(false, |m| m.is_abstract)
-                } else {
-                    false
-                };
+                let is_abstract_in_target =
+                    if let Some(cls) = self.symbols.classes.get(&target_class) {
+                        cls.methods.get(method).map_or(false, |m| m.is_abstract)
+                    } else {
+                        false
+                    };
 
                 if is_abstract_in_target {
                     let mut iface_args = vec![format!("(MantraObject*){}", recv_str)];
                     for a in args {
                         iface_args.push(self.expr_to_c(a));
                     }
-                    return format!("mantra_dispatch_{}_{}({})", target_class, method, iface_args.join(", "));
+                    return format!(
+                        "mantra_dispatch_{}_{}({})",
+                        target_class,
+                        method,
+                        iface_args.join(", ")
+                    );
                 }
 
                 let cast_recv = if target_class != class_name {
@@ -1058,7 +1270,8 @@ impl<'a> CEmitter<'a> {
                 if self.symbols.classes.contains_key(&target_class) {
                     format!("{}_{}({})", target_class, method, arg_strs.join(", "))
                 } else if self.symbols.imported_symbols.contains(&target_class)
-                    || target_class == "void" {
+                    || target_class == "void"
+                {
                     // Method call on an imported opaque type — stub as NULL
                     "NULL /* imported-type instance-method stub */".to_string()
                 } else if let Some(ref cur) = self.current_class {
@@ -1067,7 +1280,9 @@ impl<'a> CEmitter<'a> {
                     format!("{}({})", method, arg_strs.join(", "))
                 }
             }
-            Expr::FieldAccess { receiver, field, .. } => {
+            Expr::FieldAccess {
+                receiver, field, ..
+            } => {
                 // Static access check
                 if let Expr::Ident(ref cls_name, _) = **receiver {
                     if self.symbols.classes.contains_key(cls_name) {
@@ -1109,7 +1324,8 @@ impl<'a> CEmitter<'a> {
                 if let Some(ref cur) = self.current_class {
                     if let Some(cls) = self.symbols.classes.get(cur) {
                         if let Some(ref base) = cls.base_class {
-                            let arg_strs: Vec<String> = args.iter().map(|a| self.expr_to_c(a)).collect();
+                            let arg_strs: Vec<String> =
+                                args.iter().map(|a| self.expr_to_c(a)).collect();
                             let mut all = vec![format!("({}*)self", base)];
                             all.extend(arg_strs);
                             return format!("{}_{}({})", base, "__init__", all.join(", "));
@@ -1122,7 +1338,8 @@ impl<'a> CEmitter<'a> {
                 if let Some(ref cur) = self.current_class {
                     if let Some(cls) = self.symbols.classes.get(cur) {
                         if let Some(ref base) = cls.base_class {
-                            let arg_strs: Vec<String> = args.iter().map(|a| self.expr_to_c(a)).collect();
+                            let arg_strs: Vec<String> =
+                                args.iter().map(|a| self.expr_to_c(a)).collect();
                             let mut all = vec![format!("({}*)self", base)];
                             all.extend(arg_strs);
                             return format!("{}_{}({})", base, method, all.join(", "));
@@ -1131,7 +1348,9 @@ impl<'a> CEmitter<'a> {
                 }
                 format!("{}(self)", method)
             }
-            Expr::Index { receiver, index, .. } => {
+            Expr::Index {
+                receiver, index, ..
+            } => {
                 let r_s = self.expr_to_c(receiver);
                 let i_s = self.expr_to_c(index);
                 // MantraList uses mantra_list_get; otherwise raw bracket
@@ -1159,7 +1378,10 @@ impl<'a> CEmitter<'a> {
                     let mut parts = vec!["MantraList* _tmp_list = mantra_list_new()".to_string()];
                     for item in items {
                         let item_str = self.expr_to_c(item);
-                        parts.push(format!("mantra_list_append(_tmp_list, (void*)(intptr_t)({}))", item_str));
+                        parts.push(format!(
+                            "mantra_list_append(_tmp_list, (void*)(intptr_t)({}))",
+                            item_str
+                        ));
                     }
                     parts.push("_tmp_list".to_string());
                     format!("({{ {}; }})", parts.join("; "))

@@ -53,9 +53,14 @@ impl GraphQLEngine {
         }
 
         let target_op = if let Some(op_name) = operation_name {
-            match operations.iter().find(|op| op.name.as_deref() == Some(op_name)) {
+            match operations
+                .iter()
+                .find(|op| op.name.as_deref() == Some(op_name))
+            {
                 Some(op) => *op,
-                None => return GraphQLResponse::error(&format!("Operation '{}' not found", op_name)),
+                None => {
+                    return GraphQLResponse::error(&format!("Operation '{}' not found", op_name))
+                }
             }
         } else if operations.len() == 1 {
             operations[0]
@@ -110,10 +115,7 @@ impl GraphQLEngine {
         );
 
         if !errors.is_empty() && result == GraphQLValue::Null {
-            GraphQLResponse {
-                data: None,
-                errors,
-            }
+            GraphQLResponse { data: None, errors }
         } else {
             GraphQLResponse {
                 data: Some(result),
@@ -268,26 +270,27 @@ impl GraphQLEngine {
         }
 
         // Try registered resolver
-        let raw_value = if let Some(resolver) = self.schema.resolvers.get(current_type_name, &field.name) {
-            let ctx = ResolveContext {
-                parent,
-                args: resolved_args,
-                field_name: field.name.clone(),
-                user_context: Arc::clone(context),
-            };
-            match resolver(&ctx) {
-                Ok(val) => val,
-                Err(err) => {
-                    errors.push(GraphQLError::with_path(&err, path.clone()));
-                    GraphQLValue::Null
+        let raw_value =
+            if let Some(resolver) = self.schema.resolvers.get(current_type_name, &field.name) {
+                let ctx = ResolveContext {
+                    parent,
+                    args: resolved_args,
+                    field_name: field.name.clone(),
+                    user_context: Arc::clone(context),
+                };
+                match resolver(&ctx) {
+                    Ok(val) => val,
+                    Err(err) => {
+                        errors.push(GraphQLError::with_path(&err, path.clone()));
+                        GraphQLValue::Null
+                    }
                 }
-            }
-        } else if let Some(GraphQLValue::Object(map)) = parent {
-            // Default property extraction from parent object
-            map.get(&field.name).cloned().unwrap_or(GraphQLValue::Null)
-        } else {
-            GraphQLValue::Null
-        };
+            } else if let Some(GraphQLValue::Object(map)) = parent {
+                // Default property extraction from parent object
+                map.get(&field.name).cloned().unwrap_or(GraphQLValue::Null)
+            } else {
+                GraphQLValue::Null
+            };
 
         let target_field_type = self.get_field_type_name(current_type_name, &field.name);
 
@@ -321,14 +324,7 @@ impl GraphQLEngine {
                 for (idx, item) in list.iter().enumerate() {
                     path.push(idx.to_string());
                     let resolved = self.resolve_subselections(
-                        type_name,
-                        item,
-                        field,
-                        variables,
-                        fragments,
-                        context,
-                        path,
-                        errors,
+                        type_name, item, field, variables, fragments, context, path, errors,
                     );
                     resolved_list.push(resolved);
                     path.pop();
@@ -375,7 +371,11 @@ impl GraphQLEngine {
         }
     }
 
-    fn should_include(&self, directives: &[Directive], variables: &HashMap<String, GraphQLValue>) -> bool {
+    fn should_include(
+        &self,
+        directives: &[Directive],
+        variables: &HashMap<String, GraphQLValue>,
+    ) -> bool {
         for dir in directives {
             if dir.name == "include" {
                 if let Some(arg) = dir.arguments.iter().find(|a| a.name == "if") {

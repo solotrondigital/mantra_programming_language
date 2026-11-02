@@ -57,7 +57,7 @@ Project Management & Scaffolding:
                               --org <DOMAIN>                           Organisation domain (default: com.example)
                               --platforms <LIST>                       Frontend platforms (ios,android,web)
                               --description <DESC>                     Project description in mantra.toml
-    new <NAME> [OPTIONS]    Create a new application or package
+    new <NAME> [OPTIONS]    Create a new package
     run [OPTIONS]           Build and run development target
                             Flags:
                               -d, --device-id <ID>   Target: android, ios, chrome, web, native
@@ -227,7 +227,10 @@ fn main() {
                         }
                     }
                     opt if opt.starts_with("--web-port=") => {
-                        web_port = opt.trim_start_matches("--web-port=").parse().unwrap_or(8080);
+                        web_port = opt
+                            .trim_start_matches("--web-port=")
+                            .parse()
+                            .unwrap_or(8080);
                     }
                     "--mantra-define-from-file" => {
                         i += 1;
@@ -236,7 +239,10 @@ fn main() {
                         }
                     }
                     opt if opt.starts_with("--mantra-define-from-file=") => {
-                        defines_file = Some(opt.trim_start_matches("--mantra-define-from-file=").to_string());
+                        defines_file = Some(
+                            opt.trim_start_matches("--mantra-define-from-file=")
+                                .to_string(),
+                        );
                     }
                     arg if !arg.starts_with('-') && target.is_none() => {
                         target = Some(arg.to_string());
@@ -333,7 +339,10 @@ fn main() {
                         }
                     }
                     opt if opt.starts_with("--mantra-define-from-file=") => {
-                        defines_file = Some(opt.trim_start_matches("--mantra-define-from-file=").to_string());
+                        defines_file = Some(
+                            opt.trim_start_matches("--mantra-define-from-file=")
+                                .to_string(),
+                        );
                     }
                     "-o" => {
                         i += 1;
@@ -353,19 +362,30 @@ fn main() {
 
             match subtarget.as_str() {
                 "web" => {
-                    if let Err(e) = Runner::build_web(target_file.as_deref(), release, custom_out.as_deref(), defines_file.as_deref()) {
+                    if let Err(e) = Runner::build_web(
+                        target_file.as_deref(),
+                        release,
+                        custom_out.as_deref(),
+                        defines_file.as_deref(),
+                    ) {
                         eprintln!("Web build error: {}", e);
                         exit(1);
                     }
                 }
                 "apk" | "android" => {
-                    if let Err(e) = MobileBuilder::build_apk(Path::new("."), release, defines_file.as_deref()) {
+                    if let Err(e) =
+                        MobileBuilder::build_apk(Path::new("."), release, defines_file.as_deref())
+                    {
                         eprintln!("APK build error: {}", e);
                         exit(1);
                     }
                 }
                 "appbundle" | "aab" => {
-                    if let Err(e) = MobileBuilder::build_appbundle(Path::new("."), release, defines_file.as_deref()) {
+                    if let Err(e) = MobileBuilder::build_appbundle(
+                        Path::new("."),
+                        release,
+                        defines_file.as_deref(),
+                    ) {
                         eprintln!("App Bundle build error: {}", e);
                         exit(1);
                     }
@@ -389,7 +409,11 @@ fn main() {
                             }
                         }
                     }
-                    match Runner::build_target(target_file.as_deref(), release, custom_out.as_deref()) {
+                    match Runner::build_target(
+                        target_file.as_deref(),
+                        release,
+                        custom_out.as_deref(),
+                    ) {
                         Ok(path) => {
                             println!("Build succeeded: {}", path.display());
                         }
@@ -402,7 +426,11 @@ fn main() {
             }
         }
         "check" => {
-            let target = if args.len() > 2 { Some(args[2].as_str()) } else { None };
+            let target = if args.len() > 2 {
+                Some(args[2].as_str())
+            } else {
+                None
+            };
             if let Err(e) = Runner::check_target(target) {
                 eprintln!("Check error: {}", e);
                 exit(1);
@@ -474,9 +502,13 @@ fn main() {
             let workspace = env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf());
             let workspace_binary = workspace.join("target/release/mantra-lsp");
 
-            let lsp_path = sibling_binary
-                .filter(|p| p.exists())
-                .or_else(|| if workspace_binary.exists() { Some(workspace_binary) } else { None });
+            let lsp_path = sibling_binary.filter(|p| p.exists()).or_else(|| {
+                if workspace_binary.exists() {
+                    Some(workspace_binary)
+                } else {
+                    None
+                }
+            });
 
             let mut cmd = match lsp_path {
                 Some(p) => std::process::Command::new(p),
@@ -500,12 +532,21 @@ fn main() {
             let cwd = env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf());
             match PackageManifest::load_from_dir(&cwd) {
                 Ok(manifest) => {
-                    let lockfile = Lockfile::from_manifest(&manifest);
+                    let lockfile = match Lockfile::from_manifest_with_cache(&manifest, &cwd) {
+                        Ok(lockfile) => lockfile,
+                        Err(e) => {
+                            eprintln!("Error resolving package checksums: {}", e);
+                            exit(1);
+                        }
+                    };
                     if let Err(e) = lockfile.save_to_dir(&cwd) {
                         eprintln!("Error saving mantra.lock: {}", e);
                         exit(1);
                     }
-                    println!("Generated mantra.lock ({} dependencies locked with integrity hashes).", lockfile.packages.len());
+                    println!(
+                        "Generated mantra.lock with {} dependency entries. Checksums remain empty until exact package archives are resolved.",
+                        lockfile.packages.len()
+                    );
                 }
                 Err(e) => {
                     eprintln!("Error: {}", e);
@@ -518,7 +559,10 @@ fn main() {
             let workspace = env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf());
             let mantrac = workspace.join("target/release/mantrac");
             if !mantrac.exists() {
-                eprintln!("Error: Bootstrap compiler not found at {}.", mantrac.display());
+                eprintln!(
+                    "Error: Bootstrap compiler not found at {}.",
+                    mantrac.display()
+                );
                 eprintln!("Run 'cargo build --release' first.");
                 exit(1);
             }
@@ -538,7 +582,10 @@ fn main() {
             let workspace = env::current_dir().unwrap_or_else(|_| Path::new(".").to_path_buf());
             let mantrac = workspace.join("target/release/mantrac");
             if !mantrac.exists() {
-                eprintln!("Error: Bootstrap compiler not found at {}.", mantrac.display());
+                eprintln!(
+                    "Error: Bootstrap compiler not found at {}.",
+                    mantrac.display()
+                );
                 eprintln!("Run 'cargo build --release' first.");
                 exit(1);
             }
@@ -737,11 +784,18 @@ fn handle_publish() {
             let tar_path = dist_dir.join(&tar_name);
 
             // Create archive payload
-            let dummy_content = format!("Mantra Package Archive: {} v{}\nEdition: {}\n", m.name, m.version, m.edition);
+            let dummy_content = format!(
+                "Mantra Package Archive: {} v{}\nEdition: {}\n",
+                m.name, m.version, m.edition
+            );
             let _ = fs::write(&tar_path, dummy_content.as_bytes());
 
             // Compute pseudo SHA-256 for integrity verification
-            let sha = format!("{:016x}{:016x}", m.name.len() * 104729 + 17, m.version.len() * 1299709 + 31);
+            let sha = format!(
+                "{:016x}{:016x}",
+                m.name.len() * 104729 + 17,
+                m.version.len() * 1299709 + 31
+            );
             let sha_path = dist_dir.join(format!("{}-{}.sha256", m.name, m.version));
             let _ = fs::write(&sha_path, format!("{}  {}\n", sha, tar_name));
 
@@ -758,5 +812,3 @@ fn handle_publish() {
         }
     }
 }
-
-

@@ -41,18 +41,5 @@ pub fn send_email_simple(
     server: &str,
     port: u16,
 ) -> Result<String, String> {
-    send_email_full(
-        from,
-        to,
-        "",
-        "",
-        subject,
-        body,
-        server,
-        port,
-        "",
-        "",
-        true,
-    )
+    send_email_full(from, to, "", "", subject, body, server, port, "", "", true)
 }
-

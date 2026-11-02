@@ -11,6 +11,7 @@ import os
 import re
 import sys
 import glob
+import tomllib
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -21,21 +22,13 @@ REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 def read_root_config():
     cargo_path = os.path.join(REPO_ROOT, "Cargo.toml")
-    version = None
-    forced_update = False
-    
-    with open(cargo_path, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if line.startswith("version") and "=" in line and not version:
-                version = line.split("=", 1)[1].strip().strip('"').strip("'")
-            elif line.startswith("forced-update") and "=" in line:
-                val = line.split("=", 1)[1].strip().strip('"').strip("'").lower()
-                forced_update = val in ("true", "1", "yes")
-                
-    if not version:
-        version = "0.7.0"
-    return version, forced_update
+    with open(cargo_path, "rb") as f:
+        config = tomllib.load(f)
+    compiler_path = os.path.join(REPO_ROOT, "crates", "mantrac", "Cargo.toml")
+    with open(compiler_path, "rb") as f:
+        version = tomllib.load(f)["package"]["version"]
+    forced_update = config.get("workspace", {}).get("package", {}).get("forced-update", False)
+    return version, bool(forced_update)
 
 def sync_crate_cargo_tomls(version):
     crate_tomls = glob.glob(os.path.join(REPO_ROOT, "crates", "*", "Cargo.toml"))

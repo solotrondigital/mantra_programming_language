@@ -26,7 +26,11 @@ impl CodeAuditor {
             let trimmed = line.trim();
 
             // ── 1. Security: Hardcoded API keys or Secrets ──────────────────
-            if (trimmed.contains("sk-proj-") || trimmed.contains("sk-ant-") || trimmed.contains("AIzaSy")) && !trimmed.starts_with('#') {
+            if (trimmed.contains("sk-proj-")
+                || trimmed.contains("sk-ant-")
+                || trimmed.contains("AIzaSy"))
+                && !trimmed.starts_with('#')
+            {
                 issues.push(AuditIssue {
                     severity: "error".to_string(),
                     category: "Security".to_string(),
@@ -36,18 +40,26 @@ impl CodeAuditor {
                 });
             }
 
-            if trimmed.contains("password = \"") && !trimmed.contains("\"\"") && !trimmed.starts_with('#') {
+            if trimmed.contains("password = \"")
+                && !trimmed.contains("\"\"")
+                && !trimmed.starts_with('#')
+            {
                 issues.push(AuditIssue {
                     severity: "warning".to_string(),
                     category: "Security".to_string(),
                     message: "Hardcoded password string detected.".to_string(),
                     line: line_num,
-                    suggestion: "Use ENV.getOrDefault(\"SMTP_PASSWORD\", \"\") or external secrets manager.".to_string(),
+                    suggestion:
+                        "Use ENV.getOrDefault(\"SMTP_PASSWORD\", \"\") or external secrets manager."
+                            .to_string(),
                 });
             }
 
             // ── 2. Performance: Inefficient String Accumulation in Loops ────
-            if (trimmed.contains("self.") || trimmed.contains("let ")) && trimmed.contains(" + ") && (trimmed.contains("len(") || trimmed.contains("for ")) {
+            if (trimmed.contains("self.") || trimmed.contains("let "))
+                && trimmed.contains(" + ")
+                && (trimmed.contains("len(") || trimmed.contains("for "))
+            {
                 issues.push(AuditIssue {
                     severity: "warning".to_string(),
                     category: "Performance".to_string(),
@@ -62,9 +74,11 @@ impl CodeAuditor {
                 issues.push(AuditIssue {
                     severity: "info".to_string(),
                     category: "CodeQuality".to_string(),
-                    message: "Direct 'panic()' call terminates the runtime process ungracefully.".to_string(),
+                    message: "Direct 'panic()' call terminates the runtime process ungracefully."
+                        .to_string(),
                     line: line_num,
-                    suggestion: "Consider returning a Result type or gracefully logging the error.".to_string(),
+                    suggestion: "Consider returning a Result type or gracefully logging the error."
+                        .to_string(),
                 });
             }
         }
@@ -72,4 +86,3 @@ impl CodeAuditor {
         issues
     }
 }
-

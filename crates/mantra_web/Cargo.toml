@@ -8,3 +8,4 @@ license = "MIT"
 [dependencies]
 mantrac_vm = { path = "../mantrac_vm" }
 mantra_sql_orm = { path = "../mantra_sql_orm" }
+serde_json = "1"

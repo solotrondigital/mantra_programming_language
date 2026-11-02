@@ -66,14 +66,13 @@ pub fn format_range(document: &Document, range: &LspRange) -> Vec<TextEdit> {
         return vec![];
     }
 
-    let end_col = document.lines.get(end_line).map(|l| l.len() as u32).unwrap_or(0);
+    let end_col = document
+        .lines
+        .get(end_line)
+        .map(|l| l.len() as u32)
+        .unwrap_or(0);
     vec![TextEdit {
-        range: LspRange::new(
-            start_line as u32,
-            0,
-            end_line as u32,
-            end_col,
-        ),
+        range: LspRange::new(start_line as u32, 0, end_line as u32, end_col),
         new_text: formatted,
     }]
 }
@@ -99,7 +98,11 @@ fn format_source(source: &str) -> String {
 
         // Ensure at most 1 blank line between declarations; 2 between top-level
         if blank_count > 0 {
-            let max_blanks = if is_top_level && prev_was_top_level { 2 } else { 1 };
+            let max_blanks = if is_top_level && prev_was_top_level {
+                2
+            } else {
+                1
+            };
             let blanks = blank_count.min(max_blanks);
             for _ in 0..blanks {
                 result.push('\n');
@@ -210,8 +213,12 @@ fn normalize_line(line: &str) -> String {
             continue;
         }
 
-        if ch == '=' && (i == 0 || chars[i - 1] != '!' && chars[i - 1] != '<'
-            && chars[i - 1] != '>' && chars[i - 1] != '=')
+        if ch == '='
+            && (i == 0
+                || chars[i - 1] != '!'
+                    && chars[i - 1] != '<'
+                    && chars[i - 1] != '>'
+                    && chars[i - 1] != '=')
             && (i + 1 >= len || chars[i + 1] != '=')
         {
             // plain `=` assignment
@@ -232,4 +239,3 @@ fn normalize_line(line: &str) -> String {
 
     out
 }
-

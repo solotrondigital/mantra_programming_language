@@ -57,6 +57,9 @@ impl ScreenSize {
     }
 
     pub fn is_desktop(&self) -> bool {
-        matches!(self.category(), ScreenCategory::Desktop | ScreenCategory::WideScreen)
+        matches!(
+            self.category(),
+            ScreenCategory::Desktop | ScreenCategory::WideScreen
+        )
     }
 }

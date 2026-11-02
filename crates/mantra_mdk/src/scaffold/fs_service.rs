@@ -27,4 +27,3 @@ impl FilesystemService {
         path.exists()
     }
 }
-

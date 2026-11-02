@@ -71,7 +71,12 @@ impl<'a> Lexer<'a> {
                 } else if ch == '\t' {
                     return Err(LexerError {
                         message: "Tabs in indentation are rejected. Use spaces.".to_string(),
-                        span: Span::new(self.line, self.col, line_start_pos, self.current_pos() + 1),
+                        span: Span::new(
+                            self.line,
+                            self.col,
+                            line_start_pos,
+                            self.current_pos() + 1,
+                        ),
                         code: "E0001",
                     });
                 } else if ch == '#' {
@@ -181,106 +186,184 @@ impl<'a> Lexer<'a> {
             '(' => {
                 self.advance();
                 self.paren_depth += 1;
-                return Ok(Token::new(TokenKind::LParen, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::LParen,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             ')' => {
                 self.advance();
-                if self.paren_depth > 0 { self.paren_depth -= 1; }
-                return Ok(Token::new(TokenKind::RParen, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                if self.paren_depth > 0 {
+                    self.paren_depth -= 1;
+                }
+                return Ok(Token::new(
+                    TokenKind::RParen,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '[' => {
                 self.advance();
                 self.paren_depth += 1;
-                return Ok(Token::new(TokenKind::LBracket, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::LBracket,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             ']' => {
                 self.advance();
-                if self.paren_depth > 0 { self.paren_depth -= 1; }
-                return Ok(Token::new(TokenKind::RBracket, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                if self.paren_depth > 0 {
+                    self.paren_depth -= 1;
+                }
+                return Ok(Token::new(
+                    TokenKind::RBracket,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '{' => {
                 self.advance();
                 self.paren_depth += 1;
-                return Ok(Token::new(TokenKind::LBrace, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::LBrace,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '}' => {
                 self.advance();
-                if self.paren_depth > 0 { self.paren_depth -= 1; }
-                return Ok(Token::new(TokenKind::RBrace, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                if self.paren_depth > 0 {
+                    self.paren_depth -= 1;
+                }
+                return Ok(Token::new(
+                    TokenKind::RBrace,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             ':' => {
                 self.advance();
-                return Ok(Token::new(TokenKind::Colon, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Colon,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             ',' => {
                 self.advance();
-                return Ok(Token::new(TokenKind::Comma, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Comma,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '.' => {
                 self.advance();
-                return Ok(Token::new(TokenKind::Dot, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Dot,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             ';' => {
                 self.advance();
-                return Ok(Token::new(TokenKind::Semicolon, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Semicolon,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '@' => {
                 self.advance();
-                return Ok(Token::new(TokenKind::At, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::At,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '+' => {
                 self.advance();
                 if self.cursor < self.chars.len() && self.chars[self.cursor].1 == '=' {
                     self.advance();
-                    return Ok(Token::new(TokenKind::PlusEq, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                    return Ok(Token::new(
+                        TokenKind::PlusEq,
+                        Span::new(start_line, start_col, start_pos, self.current_pos()),
+                    ));
                 }
-                return Ok(Token::new(TokenKind::Plus, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Plus,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '-' => {
                 self.advance();
                 if self.cursor < self.chars.len() && self.chars[self.cursor].1 == '>' {
                     self.advance();
-                    return Ok(Token::new(TokenKind::Arrow, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                    return Ok(Token::new(
+                        TokenKind::Arrow,
+                        Span::new(start_line, start_col, start_pos, self.current_pos()),
+                    ));
                 }
                 if self.cursor < self.chars.len() && self.chars[self.cursor].1 == '=' {
                     self.advance();
-                    return Ok(Token::new(TokenKind::MinusEq, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                    return Ok(Token::new(
+                        TokenKind::MinusEq,
+                        Span::new(start_line, start_col, start_pos, self.current_pos()),
+                    ));
                 }
-                return Ok(Token::new(TokenKind::Minus, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Minus,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '*' => {
                 self.advance();
                 if self.cursor < self.chars.len() && self.chars[self.cursor].1 == '=' {
                     self.advance();
-                    return Ok(Token::new(TokenKind::StarEq, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                    return Ok(Token::new(
+                        TokenKind::StarEq,
+                        Span::new(start_line, start_col, start_pos, self.current_pos()),
+                    ));
                 }
-                return Ok(Token::new(TokenKind::Star, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Star,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '/' => {
                 self.advance();
                 if self.cursor < self.chars.len() && self.chars[self.cursor].1 == '=' {
                     self.advance();
-                    return Ok(Token::new(TokenKind::SlashEq, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                    return Ok(Token::new(
+                        TokenKind::SlashEq,
+                        Span::new(start_line, start_col, start_pos, self.current_pos()),
+                    ));
                 }
-                return Ok(Token::new(TokenKind::Slash, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Slash,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '%' => {
                 self.advance();
-                return Ok(Token::new(TokenKind::Percent, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Percent,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '=' => {
                 self.advance();
                 if self.cursor < self.chars.len() && self.chars[self.cursor].1 == '=' {
                     self.advance();
-                    return Ok(Token::new(TokenKind::EqEq, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                    return Ok(Token::new(
+                        TokenKind::EqEq,
+                        Span::new(start_line, start_col, start_pos, self.current_pos()),
+                    ));
                 }
-                return Ok(Token::new(TokenKind::Eq, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Eq,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '!' => {
                 self.advance();
                 if self.cursor < self.chars.len() && self.chars[self.cursor].1 == '=' {
                     self.advance();
-                    return Ok(Token::new(TokenKind::NotEq, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                    return Ok(Token::new(
+                        TokenKind::NotEq,
+                        Span::new(start_line, start_col, start_pos, self.current_pos()),
+                    ));
                 }
                 return Err(LexerError {
                     message: "Unexpected character '!'. Did you mean '!='?".to_string(),
@@ -292,17 +375,29 @@ impl<'a> Lexer<'a> {
                 self.advance();
                 if self.cursor < self.chars.len() && self.chars[self.cursor].1 == '=' {
                     self.advance();
-                    return Ok(Token::new(TokenKind::LtEq, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                    return Ok(Token::new(
+                        TokenKind::LtEq,
+                        Span::new(start_line, start_col, start_pos, self.current_pos()),
+                    ));
                 }
-                return Ok(Token::new(TokenKind::Lt, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Lt,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '>' => {
                 self.advance();
                 if self.cursor < self.chars.len() && self.chars[self.cursor].1 == '=' {
                     self.advance();
-                    return Ok(Token::new(TokenKind::GtEq, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                    return Ok(Token::new(
+                        TokenKind::GtEq,
+                        Span::new(start_line, start_col, start_pos, self.current_pos()),
+                    ));
                 }
-                return Ok(Token::new(TokenKind::Gt, Span::new(start_line, start_col, start_pos, self.current_pos())));
+                return Ok(Token::new(
+                    TokenKind::Gt,
+                    Span::new(start_line, start_col, start_pos, self.current_pos()),
+                ));
             }
             '"' => {
                 return self.read_string();
@@ -392,7 +487,10 @@ impl<'a> Lexer<'a> {
             if ch.is_ascii_digit() {
                 num_str.push(ch);
                 self.advance();
-            } else if ch == '.' && !is_float && self.peek_char().map_or(false, |c| c.is_ascii_digit()) {
+            } else if ch == '.'
+                && !is_float
+                && self.peek_char().map_or(false, |c| c.is_ascii_digit())
+            {
                 is_float = true;
                 num_str.push(ch);
                 self.advance();
@@ -517,4 +615,3 @@ impl<'a> Lexer<'a> {
         }
     }
 }
-

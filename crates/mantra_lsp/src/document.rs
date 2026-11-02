@@ -17,7 +17,12 @@ pub struct Document {
 impl Document {
     pub fn new(uri: String, text: String, version: i64) -> Self {
         let lines = split_lines(&text);
-        Document { uri, text, version, lines }
+        Document {
+            uri,
+            text,
+            version,
+            lines,
+        }
     }
 
     pub fn update(&mut self, text: String, version: i64) {
@@ -127,14 +132,21 @@ impl Document {
 
     /// Return text from line start up to (not including) the cursor column.
     pub fn line_prefix(&self, line: u32, character: u32) -> &str {
-        let ln = self.lines.get(line as usize).map(|s| s.as_str()).unwrap_or("");
+        let ln = self
+            .lines
+            .get(line as usize)
+            .map(|s| s.as_str())
+            .unwrap_or("");
         let end = (character as usize).min(ln.len());
         &ln[..end]
     }
 
     /// Return full text of a line (0-based).
     pub fn line_text(&self, line: u32) -> &str {
-        self.lines.get(line as usize).map(|s| s.as_str()).unwrap_or("")
+        self.lines
+            .get(line as usize)
+            .map(|s| s.as_str())
+            .unwrap_or("")
     }
 }
 
@@ -150,7 +162,8 @@ impl DocumentManager {
     }
 
     pub fn open(&mut self, uri: String, text: String, version: i64) {
-        self.documents.insert(uri.clone(), Document::new(uri, text, version));
+        self.documents
+            .insert(uri.clone(), Document::new(uri, text, version));
     }
 
     pub fn close(&mut self, uri: &str) {
@@ -180,4 +193,3 @@ fn split_lines(text: &str) -> Vec<String> {
     }
     lines
 }
-

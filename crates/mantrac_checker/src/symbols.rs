@@ -60,4 +60,3 @@ pub struct GlobalSymbolTable {
     pub functions: HashMap<String, FunctionSymbol>,
     pub imported_symbols: HashSet<String>,
 }
-

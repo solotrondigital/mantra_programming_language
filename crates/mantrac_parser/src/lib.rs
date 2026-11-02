@@ -12,7 +12,11 @@ pub struct ParserError {
 
 impl fmt::Display for ParserError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "[{}] at {}:{}: {}", self.code, self.span.line, self.span.col, self.message)
+        write!(
+            f,
+            "[{}] at {}:{}: {}",
+            self.code, self.span.line, self.span.col, self.message
+        )
     }
 }
 
@@ -95,7 +99,8 @@ impl Parser {
             while self.match_token(&TokenKind::Dot) {
                 if self.match_token(&TokenKind::LBrace) {
                     while !self.check(&TokenKind::RBrace) && !self.is_eof() {
-                        let symbol = self.consume_ident("Expected symbol name inside import list")?;
+                        let symbol =
+                            self.consume_ident("Expected symbol name inside import list")?;
                         parts.push(symbol);
                         if !self.match_token(&TokenKind::Comma) {
                             break;
@@ -129,7 +134,10 @@ impl Parser {
             while self.match_token(&TokenKind::Dot) {
                 parts.push(self.consume_ident("Expected identifier in module path")?);
             }
-            self.consume(&TokenKind::Import, "Expected 'import' after module path in from-import")?;
+            self.consume(
+                &TokenKind::Import,
+                "Expected 'import' after module path in from-import",
+            )?;
             if self.match_token(&TokenKind::Star) {
                 parts.push("*".to_string());
             } else if self.match_token(&TokenKind::LBrace) {
@@ -163,7 +171,9 @@ impl Parser {
         }
 
         if self.match_token(&TokenKind::Class) {
-            return Ok(Declaration::Class(self.parse_class(visibility, is_abstract)?));
+            return Ok(Declaration::Class(
+                self.parse_class(visibility, is_abstract)?,
+            ));
         }
 
         if self.match_token(&TokenKind::Interface) {
@@ -171,7 +181,14 @@ impl Parser {
         }
 
         if self.match_token(&TokenKind::Def) {
-            let func = self.parse_function(visibility, is_override, false, is_abstract, is_async, decorator)?;
+            let func = self.parse_function(
+                visibility,
+                is_override,
+                false,
+                is_abstract,
+                is_async,
+                decorator,
+            )?;
             return Ok(Declaration::Function(func));
         }
 
@@ -241,7 +258,11 @@ impl Parser {
         Ok(Declaration::Stmt(stmt))
     }
 
-    fn parse_class(&mut self, visibility: Visibility, is_abstract: bool) -> Result<ClassDecl, ParserError> {
+    fn parse_class(
+        &mut self,
+        visibility: Visibility,
+        is_abstract: bool,
+    ) -> Result<ClassDecl, ParserError> {
         let start_span = self.previous().span;
         let name = self.consume_ident("Expected class name")?;
 
@@ -341,7 +362,14 @@ impl Parser {
         }
 
         if self.match_token(&TokenKind::Def) {
-            let func = self.parse_function(visibility, is_override, is_static, is_abstract, is_async, decorator.clone())?;
+            let func = self.parse_function(
+                visibility,
+                is_override,
+                is_static,
+                is_abstract,
+                is_async,
+                decorator.clone(),
+            )?;
             if let Some(dec) = decorator {
                 if dec == "property" {
                     return Ok(ClassMember::Property(PropertyDecl {
@@ -410,11 +438,17 @@ impl Parser {
             Vec::new()
         };
 
-        self.consume(&TokenKind::Colon, "Expected ':' after interface declaration")?;
+        self.consume(
+            &TokenKind::Colon,
+            "Expected ':' after interface declaration",
+        )?;
         self.consume_newline_or_eof()?;
 
         let mut methods = Vec::new();
-        self.consume(&TokenKind::Indent, "Expected indented block for interface body")?;
+        self.consume(
+            &TokenKind::Indent,
+            "Expected indented block for interface body",
+        )?;
 
         while !self.check(&TokenKind::Dedent) && !self.is_eof() {
             self.skip_newlines();
@@ -426,7 +460,10 @@ impl Parser {
             if self.match_token(&TokenKind::Async) {
                 is_async = true;
             }
-            self.consume(&TokenKind::Def, "Expected 'def' in interface method specification")?;
+            self.consume(
+                &TokenKind::Def,
+                "Expected 'def' in interface method specification",
+            )?;
             let m_name = self.consume_ident("Expected method name")?;
             self.consume(&TokenKind::LParen, "Expected '(' after method name")?;
             let params = self.parse_param_list()?;
@@ -688,7 +725,10 @@ impl Parser {
 
         if self.match_token(&TokenKind::Return) {
             let start_span = self.previous().span;
-            let value = if self.check(&TokenKind::Newline) || self.check(&TokenKind::Eof) || self.check(&TokenKind::Dedent) {
+            let value = if self.check(&TokenKind::Newline)
+                || self.check(&TokenKind::Eof)
+                || self.check(&TokenKind::Dedent)
+            {
                 None
             } else {
                 Some(self.parse_expr()?)
@@ -924,7 +964,10 @@ impl Parser {
 
     fn parse_factor(&mut self) -> Result<Expr, ParserError> {
         let mut left = self.parse_unary()?;
-        while self.check(&TokenKind::Star) || self.check(&TokenKind::Slash) || self.check(&TokenKind::Percent) {
+        while self.check(&TokenKind::Star)
+            || self.check(&TokenKind::Slash)
+            || self.check(&TokenKind::Percent)
+        {
             let op = if self.match_token(&TokenKind::Star) {
                 BinaryOp::Mul
             } else if self.match_token(&TokenKind::Slash) {
@@ -1079,7 +1122,10 @@ impl Parser {
                 let method = self.consume_ident_or_dunder("Expected method name after super().")?;
                 self.consume(&TokenKind::LParen, "Expected '(' after super method")?;
                 let args = self.parse_arg_list()?;
-                self.consume(&TokenKind::RParen, "Expected ')' after super call arguments")?;
+                self.consume(
+                    &TokenKind::RParen,
+                    "Expected ')' after super call arguments",
+                )?;
                 let span = tok.span.merge(self.previous().span);
                 if method == "__init__" {
                     Ok(Expr::SuperInitCall { args, span })
@@ -1094,7 +1140,10 @@ impl Parser {
             TokenKind::LParen => {
                 self.advance();
                 let expr = self.parse_expr()?;
-                self.consume(&TokenKind::RParen, "Expected ')' after parenthesized expression")?;
+                self.consume(
+                    &TokenKind::RParen,
+                    "Expected ')' after parenthesized expression",
+                )?;
                 Ok(expr)
             }
             TokenKind::LBracket => {
@@ -1155,7 +1204,10 @@ impl Parser {
                 };
                 if let Some(close_tok) = closing {
                     let inner = self.parse_type()?;
-                    self.consume(&close_tok, "Expected closing bracket after Option type parameter")?;
+                    self.consume(
+                        &close_tok,
+                        "Expected closing bracket after Option type parameter",
+                    )?;
                     Ok(Type::Option(Box::new(inner)))
                 } else {
                     Ok(Type::Option(Box::new(Type::Any)))
@@ -1173,7 +1225,10 @@ impl Parser {
                     let ok = self.parse_type()?;
                     self.consume(&TokenKind::Comma, "Expected ',' in Result type")?;
                     let err = self.parse_type()?;
-                    self.consume(&close_tok, "Expected closing bracket after Result type parameters")?;
+                    self.consume(
+                        &close_tok,
+                        "Expected closing bracket after Result type parameters",
+                    )?;
                     Ok(Type::Result(Box::new(ok), Box::new(err)))
                 } else {
                     Ok(Type::Result(Box::new(Type::Any), Box::new(Type::Any)))
@@ -1186,7 +1241,10 @@ impl Parser {
                     Ok(Type::List(Box::new(elem)))
                 } else if self.match_token(&TokenKind::LBracket) {
                     let elem = self.parse_type()?;
-                    self.consume(&TokenKind::RBracket, "Expected ']' after List type parameter")?;
+                    self.consume(
+                        &TokenKind::RBracket,
+                        "Expected ']' after List type parameter",
+                    )?;
                     Ok(Type::List(Box::new(elem)))
                 } else {
                     Ok(Type::List(Box::new(Type::Any)))
@@ -1204,7 +1262,10 @@ impl Parser {
                     let k = self.parse_type()?;
                     self.consume(&TokenKind::Comma, "Expected ',' in Map type")?;
                     let v = self.parse_type()?;
-                    self.consume(&close_tok, "Expected closing bracket after Map type parameters")?;
+                    self.consume(
+                        &close_tok,
+                        "Expected closing bracket after Map type parameters",
+                    )?;
                     Ok(Type::Map(Box::new(k), Box::new(v)))
                 } else {
                     Ok(Type::Map(Box::new(Type::Any), Box::new(Type::Any)))
@@ -1349,10 +1410,12 @@ impl Parser {
             return Ok(());
         }
         Err(ParserError {
-            message: format!("Expected newline after statement, found '{}'", self.peek().kind),
+            message: format!(
+                "Expected newline after statement, found '{}'",
+                self.peek().kind
+            ),
             span: self.peek().span,
             code: "E0023",
         })
     }
 }
-

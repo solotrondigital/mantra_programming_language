@@ -80,12 +80,24 @@ impl Widget for MantraImage {
     }
 
     fn render(&self, _ctx: &BuildContext) -> String {
-        let width_css = self.width.map(|w| format!("width:{}px;", w)).unwrap_or_else(|| "width:100%;".to_string());
-        let height_css = self.height.map(|h| format!("height:{}px;", h)).unwrap_or_else(|| "height:auto;".to_string());
+        let width_css = self
+            .width
+            .map(|w| format!("width:{}px;", w))
+            .unwrap_or_else(|| "width:100%;".to_string());
+        let height_css = self
+            .height
+            .map(|h| format!("height:{}px;", h))
+            .unwrap_or_else(|| "height:auto;".to_string());
 
         format!(
             r#"<img id="{}" src="{}" alt="{}" style="{}{};object-fit:{};border-radius:{};display:block;" loading="lazy"/>"#,
-            self.id, self.src, self.alt, width_css, height_css, self.fit.to_css(), self.radius.to_css()
+            self.id,
+            self.src,
+            self.alt,
+            width_css,
+            height_css,
+            self.fit.to_css(),
+            self.radius.to_css()
         )
     }
 }
@@ -101,4 +113,3 @@ fn uuid_simple() -> u32 {
     static COUNTER: AtomicU32 = AtomicU32::new(5000);
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
-

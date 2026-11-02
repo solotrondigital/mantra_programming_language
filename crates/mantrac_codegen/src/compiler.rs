@@ -5,7 +5,11 @@ use std::process::Command;
 pub struct NativeCompiler;
 
 impl NativeCompiler {
-    pub fn compile_c_to_binary(c_code: &str, output_path: &Path, optimize: bool) -> Result<PathBuf, String> {
+    pub fn compile_c_to_binary(
+        c_code: &str,
+        output_path: &Path,
+        optimize: bool,
+    ) -> Result<PathBuf, String> {
         let temp_dir = std::env::temp_dir();
         let temp_c_file = temp_dir.join(format!("mantrac_build_{}.c", std::process::id()));
 
@@ -44,7 +48,9 @@ impl NativeCompiler {
             cmd.arg("-lm");
         }
 
-        let output = cmd.output().map_err(|e| format!("Failed to execute compiler {}: {}", compiler, e))?;
+        let output = cmd
+            .output()
+            .map_err(|e| format!("Failed to execute compiler {}: {}", compiler, e))?;
 
         // Clean up temp C file
         let _ = fs::remove_file(&temp_c_file);
@@ -57,4 +63,3 @@ impl NativeCompiler {
         Ok(output_path.to_path_buf())
     }
 }
-

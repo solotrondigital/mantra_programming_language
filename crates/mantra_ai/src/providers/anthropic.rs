@@ -45,15 +45,20 @@ impl AIProvider for AnthropicProvider {
         "anthropic"
     }
 
-    fn generate(&self, model: &str, prompt: &Prompt, auth: &AuthCredential) -> AIResult<AIResponse> {
+    fn generate(
+        &self,
+        model: &str,
+        prompt: &Prompt,
+        auth: &AuthCredential,
+    ) -> AIResult<AIResponse> {
         let key = auth.resolve()?;
         if key.is_empty() {
-            return Err(AIError::AuthenticationError("Anthropic API key is empty".to_string()));
+            return Err(AIError::AuthenticationError(
+                "Anthropic API key is empty".to_string(),
+            ));
         }
 
-        let messages = vec![
-            serde_json::json!({ "role": "user", "content": &prompt.user_prompt })
-        ];
+        let messages = vec![serde_json::json!({ "role": "user", "content": &prompt.user_prompt })];
 
         let mut body = serde_json::json!({
             "model": model,
@@ -111,18 +116,26 @@ impl AIProvider for AnthropicProvider {
                 (pt, ct)
             });
 
-        let usage = TokenUsage::new(prompt_tokens, completion_tokens)
-            .with_rates(0.003, 0.015);
+        let usage = TokenUsage::new(prompt_tokens, completion_tokens).with_rates(0.003, 0.015);
 
         let mut res = AIResponse::new(model, self.name(), text);
         res.usage = usage;
         Ok(res)
     }
 
-    fn stream(&self, model: &str, prompt: &Prompt, auth: &AuthCredential) -> AIResult<StreamReceiver> {
+    fn stream(
+        &self,
+        model: &str,
+        prompt: &Prompt,
+        auth: &AuthCredential,
+    ) -> AIResult<StreamReceiver> {
         // Delegate to generate and split into word chunks
         let resp = self.generate(model, prompt, auth)?;
-        let words: Vec<String> = resp.text.split_whitespace().map(|w| format!("{} ", w)).collect();
+        let words: Vec<String> = resp
+            .text
+            .split_whitespace()
+            .map(|w| format!("{} ", w))
+            .collect();
         let mut chunks: Vec<StreamChunk> = words.into_iter().map(StreamChunk::new).collect();
         if let Some(last) = chunks.last_mut() {
             last.finish_reason = Some("stop".to_string());
@@ -133,4 +146,3 @@ impl AIProvider for AnthropicProvider {
         Ok(StreamReceiver::new(chunks))
     }
 }
-

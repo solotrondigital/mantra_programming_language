@@ -84,7 +84,11 @@ impl ProjectGraph {
                 for entry in entries.flatten() {
                     let path = entry.path();
                     let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                    if name.starts_with('.') || name == "target" || name == "build" || name == "dist" {
+                    if name.starts_with('.')
+                        || name == "target"
+                        || name == "build"
+                        || name == "dist"
+                    {
                         continue;
                     }
                     if path.is_dir() {
@@ -96,7 +100,11 @@ impl ProjectGraph {
             }
         }
 
-        let search_dirs = [project_dir.join("src"), project_dir.join("lib"), project_dir.join("tests")];
+        let search_dirs = [
+            project_dir.join("src"),
+            project_dir.join("lib"),
+            project_dir.join("tests"),
+        ];
         for d in &search_dirs {
             if d.exists() {
                 scan_dir(d, &mut files);
@@ -105,7 +113,11 @@ impl ProjectGraph {
 
         for f in files {
             if let Ok(content) = fs::read_to_string(&f) {
-                let mod_name = f.file_stem().and_then(|s| s.to_str()).unwrap_or("module").to_string();
+                let mod_name = f
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or("module")
+                    .to_string();
                 let mut classes = Vec::new();
                 let mut functions = Vec::new();
                 let mut imports = Vec::new();
@@ -113,10 +125,20 @@ impl ProjectGraph {
                 for line in content.lines() {
                     let trimmed = line.trim();
                     if trimmed.starts_with("class ") {
-                        let cname = trimmed.split_whitespace().nth(1).unwrap_or("").trim_end_matches(':');
+                        let cname = trimmed
+                            .split_whitespace()
+                            .nth(1)
+                            .unwrap_or("")
+                            .trim_end_matches(':');
                         classes.push(cname.to_string());
                     } else if trimmed.starts_with("def ") && !trimmed.contains("def __") {
-                        let fname = trimmed.split_whitespace().nth(1).unwrap_or("").split('(').next().unwrap_or("");
+                        let fname = trimmed
+                            .split_whitespace()
+                            .nth(1)
+                            .unwrap_or("")
+                            .split('(')
+                            .next()
+                            .unwrap_or("");
                         functions.push(fname.to_string());
                     } else if trimmed.starts_with("from ") || trimmed.starts_with("import ") {
                         imports.push(trimmed.to_string());
@@ -145,4 +167,3 @@ impl ProjectGraph {
         })
     }
 }
-

@@ -49,7 +49,9 @@ pub fn detect_service_and_port(target_path: Option<&str>) -> Option<(String, u16
                                 is_web = true;
                             } else if val.eq_ignore_ascii_case("backend") {
                                 is_backend = true;
-                            } else if val.eq_ignore_ascii_case("standalone") || val.eq_ignore_ascii_case("ai") {
+                            } else if val.eq_ignore_ascii_case("standalone")
+                                || val.eq_ignore_ascii_case("ai")
+                            {
                                 is_standalone = true;
                             }
                         }
@@ -81,7 +83,11 @@ pub fn detect_service_and_port(target_path: Option<&str>) -> Option<(String, u16
             }
 
             if is_backend {
-                let default_port = if service_type == "graphql" { 1672 } else { 1671 };
+                let default_port = if service_type == "graphql" {
+                    1672
+                } else {
+                    1671
+                };
                 return Some((host, port.unwrap_or(default_port), service_type));
             }
 
@@ -95,7 +101,11 @@ pub fn detect_service_and_port(target_path: Option<&str>) -> Option<(String, u16
 
     // Heuristic fallback based on current directory or source inspection
     let cwd = std::env::current_dir().unwrap_or_default();
-    let dir_name = cwd.file_name().unwrap_or_default().to_string_lossy().to_string();
+    let dir_name = cwd
+        .file_name()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .to_string();
 
     if dir_name.contains("rest") {
         Some(("0.0.0.0".to_string(), 1671, "rest".to_string()))
@@ -218,13 +228,26 @@ fn handle_rest_request(stream: &mut TcpStream, method: &str, path: &str, _body: 
             send_json(stream, 200, json);
         }
         ("GET", p) if p.starts_with("/api/movies/") => {
-            let id = p.trim_start_matches("/api/movies/").parse::<i32>().unwrap_or(1);
+            let id = p
+                .trim_start_matches("/api/movies/")
+                .parse::<i32>()
+                .unwrap_or(1);
             let json = match id {
-                2 => r#"{"id":2,"title":"The Dark Knight","genre":"Action / Crime","release_year":2008,"director":"Christopher Nolan","synopsis":"Batman raises the stakes in his war on crime against the Joker.","reviews":[{"id":2,"movie_id":2,"username":"raghav","rating":9.9,"body":"Heath Ledger delivers an iconic performance."}]}"#,
-                3 => r#"{"id":3,"title":"Interstellar","genre":"Sci-Fi / Adventure","release_year":2014,"director":"Christopher Nolan","synopsis":"Explorers travel through a wormhole in search of a new home for humanity.","reviews":[{"id":3,"movie_id":3,"username":"admin","rating":9.1,"body":"Breathtaking journey across spacetime."}]}"#,
-                4 => r#"{"id":4,"title":"Parasite","genre":"Thriller / Drama","release_year":2019,"director":"Bong Joon-ho","synopsis":"Greed and class discrimination threaten the relationship between two families.","reviews":[{"id":4,"movie_id":4,"username":"admin","rating":9.6,"body":"Remarkable social commentary and dark humor."}]}"#,
-                5 => r#"{"id":5,"title":"The Shawshank Redemption","genre":"Drama","release_year":1994,"director":"Frank Darabont","synopsis":"Two convicts form an enduring bond, seeking solace and eventual redemption.","reviews":[{"id":5,"movie_id":5,"username":"raghav","rating":9.8,"body":"An enduring testament to hope and friendship."}]}"#,
-                _ => r#"{"id":1,"title":"Inception","genre":"Sci-Fi / Thriller","release_year":2010,"director":"Christopher Nolan","synopsis":"A thief who steals corporate secrets through dream-sharing technology.","reviews":[{"id":1,"movie_id":1,"username":"raghav","rating":9.4,"body":"Mind-bending cinematic masterpiece."}]}"#,
+                2 => {
+                    r#"{"id":2,"title":"The Dark Knight","genre":"Action / Crime","release_year":2008,"director":"Christopher Nolan","synopsis":"Batman raises the stakes in his war on crime against the Joker.","reviews":[{"id":2,"movie_id":2,"username":"raghav","rating":9.9,"body":"Heath Ledger delivers an iconic performance."}]}"#
+                }
+                3 => {
+                    r#"{"id":3,"title":"Interstellar","genre":"Sci-Fi / Adventure","release_year":2014,"director":"Christopher Nolan","synopsis":"Explorers travel through a wormhole in search of a new home for humanity.","reviews":[{"id":3,"movie_id":3,"username":"admin","rating":9.1,"body":"Breathtaking journey across spacetime."}]}"#
+                }
+                4 => {
+                    r#"{"id":4,"title":"Parasite","genre":"Thriller / Drama","release_year":2019,"director":"Bong Joon-ho","synopsis":"Greed and class discrimination threaten the relationship between two families.","reviews":[{"id":4,"movie_id":4,"username":"admin","rating":9.6,"body":"Remarkable social commentary and dark humor."}]}"#
+                }
+                5 => {
+                    r#"{"id":5,"title":"The Shawshank Redemption","genre":"Drama","release_year":1994,"director":"Frank Darabont","synopsis":"Two convicts form an enduring bond, seeking solace and eventual redemption.","reviews":[{"id":5,"movie_id":5,"username":"raghav","rating":9.8,"body":"An enduring testament to hope and friendship."}]}"#
+                }
+                _ => {
+                    r#"{"id":1,"title":"Inception","genre":"Sci-Fi / Thriller","release_year":2010,"director":"Christopher Nolan","synopsis":"A thief who steals corporate secrets through dream-sharing technology.","reviews":[{"id":1,"movie_id":1,"username":"raghav","rating":9.4,"body":"Mind-bending cinematic masterpiece."}]}"#
+                }
             };
             send_json(stream, 200, json);
         }
@@ -237,7 +260,8 @@ fn handle_rest_request(stream: &mut TcpStream, method: &str, path: &str, _body: 
             send_json(stream, 200, json);
         }
         ("GET", "/") => {
-            let html = format!(r#"<!DOCTYPE html>
+            let html = format!(
+                r#"<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -268,11 +292,17 @@ fn handle_rest_request(stream: &mut TcpStream, method: &str, path: &str, _body: 
   </div>
   <p style="color:#8b949e;font-size:.85rem;">Server running on port {} with SQLite3 persistence.</p>
 </body>
-</html>"#, port, port);
+</html>"#,
+                port, port
+            );
             send_html(stream, 200, &html);
         }
         _ => {
-            send_json(stream, 404, r#"{"error":"Endpoint not found","status":404}"#);
+            send_json(
+                stream,
+                404,
+                r#"{"error":"Endpoint not found","status":404}"#,
+            );
         }
     }
 }
@@ -282,7 +312,8 @@ fn handle_rest_request(stream: &mut TcpStream, method: &str, path: &str, _body: 
 // -----------------------------------------------------------------------------
 fn handle_graphql_request(stream: &mut TcpStream, method: &str, path: &str, body: &str, port: u16) {
     if method == "GET" && (path == "/" || path == "/graphql" || path == "/graphql/playground") {
-        let html = format!(r#"<!DOCTYPE html>
+        let html = format!(
+            r#"<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -341,13 +372,18 @@ fn handle_graphql_request(stream: &mut TcpStream, method: &str, path: &str, body
     runQuery();
   </script>
 </body>
-</html>"#, port);
+</html>"#,
+            port
+        );
         send_html(stream, 200, &html);
         return;
     }
 
     if method == "GET" && path == "/health" {
-        let json = format!(r#"{{"status":"ok","engine":"mantra-0.5.0","service":"movie_gql_service","port":{}}}"#, port);
+        let json = format!(
+            r#"{{"status":"ok","engine":"mantra-0.5.0","service":"movie_gql_service","port":{}}}"#,
+            port
+        );
         send_json(stream, 200, &json);
         return;
     }
@@ -371,7 +407,11 @@ fn handle_graphql_request(stream: &mut TcpStream, method: &str, path: &str, body
         return;
     }
 
-    send_json(stream, 404, r#"{"error":"GraphQL endpoint is /graphql","status":404}"#);
+    send_json(
+        stream,
+        404,
+        r#"{"error":"GraphQL endpoint is /graphql","status":404}"#,
+    );
 }
 
 // -----------------------------------------------------------------------------
@@ -435,7 +475,12 @@ fn mime_for_path(path: &Path) -> &'static str {
 // HTTP Response Utilities
 // -----------------------------------------------------------------------------
 fn send_json(stream: &mut TcpStream, status: u16, json: &str) {
-    send_bytes(stream, status, "application/json; charset=utf-8", json.as_bytes());
+    send_bytes(
+        stream,
+        status,
+        "application/json; charset=utf-8",
+        json.as_bytes(),
+    );
 }
 
 fn send_html(stream: &mut TcpStream, status: u16, html: &str) {

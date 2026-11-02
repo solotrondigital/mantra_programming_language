@@ -1,7 +1,7 @@
-use mantra_debugger::DebugSession;
-use mantra_bootstrap::version::{CompilerVersion, BootstrapStage};
-use mantra_bootstrap::regression::RegressionSuite;
 use mantra_bootstrap::bootstrap::BootstrapPipeline;
+use mantra_bootstrap::regression::RegressionSuite;
+use mantra_bootstrap::version::{BootstrapStage, CompilerVersion};
+use mantra_debugger::DebugSession;
 use mantrac_checker::TypeChecker;
 use mantrac_codegen::{CEmitter, NativeCompiler};
 use mantrac_ir::{AstLowering, JitEngine, PipelineProfiler, WasmEmitter};
@@ -123,7 +123,10 @@ fn main() {
                         "wat" => emit_wat = true,
                         "c" => emit_c = true,
                         other => {
-                            eprintln!("Error: Unknown emit target '{}'. Supported: wasm, wat, c", other);
+                            eprintln!(
+                                "Error: Unknown emit target '{}'. Supported: wasm, wat, c",
+                                other
+                            );
                             exit(1);
                         }
                     }
@@ -243,7 +246,10 @@ fn main() {
     let tokens = match lexer.tokenize() {
         Ok(t) => t,
         Err(e) => {
-            eprintln!("Lexer error [{}]: {} at {}:{}", e.code, e.message, e.span.line, e.span.col);
+            eprintln!(
+                "Lexer error [{}]: {} at {}:{}",
+                e.code, e.message, e.span.line, e.span.col
+            );
             exit(1);
         }
     };
@@ -328,10 +334,18 @@ fn main() {
         };
 
         if let Err(e) = fs::write(&out_path, &wasm_bytes) {
-            eprintln!("Failed to write WebAssembly output to '{}': {}", out_path.display(), e);
+            eprintln!(
+                "Failed to write WebAssembly output to '{}': {}",
+                out_path.display(),
+                e
+            );
             exit(1);
         }
-        println!("Compiled WebAssembly module: {} ({} bytes)", out_path.display(), wasm_bytes.len());
+        println!(
+            "Compiled WebAssembly module: {} ({} bytes)",
+            out_path.display(),
+            wasm_bytes.len()
+        );
         if show_profile {
             profiler.print_report();
         }
@@ -344,7 +358,10 @@ fn main() {
         if force_interpret && !use_jit {
             let mut interpreter = Interpreter::new();
             if let Err(e) = interpreter.execute_program(&program) {
-                eprintln!("Runtime error: {} at {}:{}", e.message, e.span.line, e.span.col);
+                eprintln!(
+                    "Runtime error: {} at {}:{}",
+                    e.message, e.span.line, e.span.col
+                );
                 exit(1);
             }
         } else {
@@ -450,7 +467,10 @@ fn main() {
 fn load_env_defines(file_path_str: &str) {
     let path = Path::new(file_path_str);
     if !path.exists() {
-        eprintln!("Warning: Environment file '{}' does not exist.", file_path_str);
+        eprintln!(
+            "Warning: Environment file '{}' does not exist.",
+            file_path_str
+        );
         return;
     }
 
@@ -464,7 +484,9 @@ fn load_env_defines(file_path_str: &str) {
             if let Some((raw_key, raw_val)) = trimmed.split_once('=') {
                 let key = raw_key.trim();
                 let mut val = raw_val.trim();
-                if (val.starts_with('"') && val.ends_with('"')) || (val.starts_with('\'') && val.ends_with('\'')) {
+                if (val.starts_with('"') && val.ends_with('"'))
+                    || (val.starts_with('\'') && val.ends_with('\''))
+                {
                     if val.len() >= 2 {
                         val = &val[1..val.len() - 1];
                     }
@@ -473,7 +495,9 @@ fn load_env_defines(file_path_str: &str) {
                 count += 1;
             }
         }
-        println!("Loaded defines from '{}' ({} variables)", file_path_str, count);
+        println!(
+            "Loaded defines from '{}' ({} variables)",
+            file_path_str, count
+        );
     }
 }
-

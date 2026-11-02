@@ -1,5 +1,7 @@
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fs;
+use std::io::Read;
 use std::path::Path;
 
 #[derive(Debug, Clone)]
@@ -38,8 +40,8 @@ impl PackageManifest {
             return Err(format!("Manifest file not found: {}", path.display()));
         }
 
-        let content = fs::read_to_string(&path)
-            .map_err(|e| format!("Failed to read mantra.toml: {}", e))?;
+        let content =
+            fs::read_to_string(&path).map_err(|e| format!("Failed to read mantra.toml: {}", e))?;
 
         Self::parse(&content)
     }
@@ -136,18 +138,163 @@ impl Lockfile {
     pub fn from_manifest(manifest: &PackageManifest) -> Self {
         let mut packages = HashMap::new();
         for (pkg_name, ver) in &manifest.dependencies {
-            let checksum = format!("{:016x}{:016x}", pkg_name.len() * 104729, ver.len() * 1299709);
-            packages.insert(pkg_name.clone(), LockedPackage {
-                name: pkg_name.clone(),
-                version: ver.clone(),
-                checksum,
-                source: "registry+https://github.com/solotrondigital/mantra_programming_language".to_string(),
-            });
+            packages.insert(
+                pkg_name.clone(),
+                LockedPackage {
+                    name: pkg_name.clone(),
+                    version: ver.clone(),
+                    // A checksum must come from the exact package archive. Do
+                    // not synthesize a digest from the package name/version.
+                    checksum: String::new(),
+                    source:
+                        "registry+https://github.com/solotrondigital/mantra_programming_language"
+                            .to_string(),
+                },
+            );
         }
         Lockfile {
             version: 1,
             packages,
         }
+    }
+
+    /// Resolves archive digests from `vendor/cache/<name>-<version>.tar.gz`.
+    /// Missing archives remain unhashed so audit can fail closed instead of
+    /// manufacturing integrity metadata.
+    pub fn from_manifest_with_cache(
+        manifest: &PackageManifest,
+        root: &Path,
+    ) -> Result<Self, String> {
+        let mut lockfile = Self::from_manifest(manifest);
+        let cache_dir = root.join("vendor").join("cache");
+        for package in lockfile.packages.values_mut() {
+            let safe_name: String = package
+                .name
+                .chars()
+                .map(|ch| {
+                    if ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.') {
+                        ch
+                    } else {
+                        '_'
+                    }
+                })
+                .collect();
+            let safe_version: String = package
+                .version
+                .chars()
+                .map(|ch| {
+                    if ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.') {
+                        ch
+                    } else {
+                        '_'
+                    }
+                })
+                .collect();
+            let archive = cache_dir.join(format!("{}-{}.tar.gz", safe_name, safe_version));
+            if !archive.exists() {
+                continue;
+            }
+            package.checksum = sha256_file(&archive)?;
+        }
+        Ok(lockfile)
+    }
+
+    pub fn verify_archive_checksum(&self, package_name: &str, root: &Path) -> Result<bool, String> {
+        let Some(package) = self.packages.get(package_name) else {
+            return Ok(false);
+        };
+        if package.checksum.len() != 64 || !package.checksum.bytes().all(|b| b.is_ascii_hexdigit())
+        {
+            return Ok(false);
+        }
+        let safe_name: String = package
+            .name
+            .chars()
+            .map(|ch| {
+                if ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.') {
+                    ch
+                } else {
+                    '_'
+                }
+            })
+            .collect();
+        let safe_version: String = package
+            .version
+            .chars()
+            .map(|ch| {
+                if ch.is_ascii_alphanumeric() || matches!(ch, '-' | '_' | '.') {
+                    ch
+                } else {
+                    '_'
+                }
+            })
+            .collect();
+        let archive = root
+            .join("vendor")
+            .join("cache")
+            .join(format!("{}-{}.tar.gz", safe_name, safe_version));
+        if !archive.is_file() {
+            return Ok(false);
+        }
+        Ok(sha256_file(&archive)?.eq_ignore_ascii_case(&package.checksum))
+    }
+
+    pub fn load_from_dir(dir: &Path) -> Result<Self, String> {
+        let path = dir.join("mantra.lock");
+        let content = fs::read_to_string(&path)
+            .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
+        let mut lockfile = Lockfile::default();
+        let mut current: Option<LockedPackage> = None;
+
+        for line in content.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+            if line == "[[package]]" {
+                if let Some(package) = current.take() {
+                    lockfile.packages.insert(package.name.clone(), package);
+                }
+                current = Some(LockedPackage {
+                    name: String::new(),
+                    version: String::new(),
+                    checksum: String::new(),
+                    source: String::new(),
+                });
+                continue;
+            }
+            let Some((key, value)) = line.split_once('=') else {
+                continue;
+            };
+            let key = key.trim();
+            let value = value.trim().trim_matches('"').to_string();
+            if key == "version" && current.is_none() {
+                lockfile.version = value
+                    .parse()
+                    .map_err(|_| "Invalid lockfile format version".to_string())?;
+                continue;
+            }
+            let Some(package) = current.as_mut() else {
+                continue;
+            };
+            match key {
+                "name" => package.name = value,
+                "version" => package.version = value,
+                "checksum" => package.checksum = value,
+                "source" => package.source = value,
+                _ => {}
+            }
+        }
+        if let Some(package) = current {
+            lockfile.packages.insert(package.name.clone(), package);
+        }
+        if lockfile.version != 1 {
+            return Err(format!(
+                "Unsupported mantra.lock format version {}",
+                lockfile.version
+            ));
+        }
+        Ok(lockfile)
     }
 
     pub fn to_lock_string(&self) -> String {
@@ -174,13 +321,35 @@ impl Lockfile {
         for (dep_name, dep_ver) in &manifest.dependencies {
             if let Some(locked) = self.packages.get(dep_name) {
                 if &locked.version != dep_ver {
-                    return Err(format!("Lockfile version mismatch for '{}': locked at {}, manifest requests {}", dep_name, locked.version, dep_ver));
+                    return Err(format!(
+                        "Lockfile version mismatch for '{}': locked at {}, manifest requests {}",
+                        dep_name, locked.version, dep_ver
+                    ));
                 }
             } else {
-                return Err(format!("Dependency '{}' in mantra.toml is not locked in mantra.lock", dep_name));
+                return Err(format!(
+                    "Dependency '{}' in mantra.toml is not locked in mantra.lock",
+                    dep_name
+                ));
             }
         }
         Ok(true)
     }
 }
 
+fn sha256_file(path: &Path) -> Result<String, String> {
+    let mut file = fs::File::open(path)
+        .map_err(|err| format!("Failed to open package archive {}: {err}", path.display()))?;
+    let mut hasher = Sha256::new();
+    let mut buffer = [0u8; 16 * 1024];
+    loop {
+        let count = file
+            .read(&mut buffer)
+            .map_err(|err| format!("Failed to read package archive {}: {err}", path.display()))?;
+        if count == 0 {
+            break;
+        }
+        hasher.update(&buffer[..count]);
+    }
+    Ok(format!("{:x}", hasher.finalize()))
+}

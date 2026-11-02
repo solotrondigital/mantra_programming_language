@@ -48,10 +48,17 @@ impl AIProvider for OpenAIProvider {
         "openai"
     }
 
-    fn generate(&self, model: &str, prompt: &Prompt, auth: &AuthCredential) -> AIResult<AIResponse> {
+    fn generate(
+        &self,
+        model: &str,
+        prompt: &Prompt,
+        auth: &AuthCredential,
+    ) -> AIResult<AIResponse> {
         let key = auth.resolve()?;
         if key.is_empty() {
-            return Err(AIError::AuthenticationError("OpenAI API key is empty".to_string()));
+            return Err(AIError::AuthenticationError(
+                "OpenAI API key is empty".to_string(),
+            ));
         }
 
         // Build the request body
@@ -97,10 +104,12 @@ impl AIProvider for OpenAIProvider {
             .choices
             .into_iter()
             .next()
-            .map(|c| (
-                c.message.content.unwrap_or_default(),
-                c.finish_reason.unwrap_or_else(|| "stop".to_string()),
-            ))
+            .map(|c| {
+                (
+                    c.message.content.unwrap_or_default(),
+                    c.finish_reason.unwrap_or_else(|| "stop".to_string()),
+                )
+            })
             .unwrap_or_else(|| (String::new(), "stop".to_string()));
 
         let (prompt_tokens, completion_tokens) = oai
@@ -112,18 +121,26 @@ impl AIProvider for OpenAIProvider {
                 (pt, ct)
             });
 
-        let usage = TokenUsage::new(prompt_tokens, completion_tokens)
-            .with_rates(0.0015, 0.002);
+        let usage = TokenUsage::new(prompt_tokens, completion_tokens).with_rates(0.0015, 0.002);
 
         let mut res = AIResponse::new(model, self.name(), text);
         res.usage = usage;
         Ok(res)
     }
 
-    fn stream(&self, model: &str, prompt: &Prompt, auth: &AuthCredential) -> AIResult<StreamReceiver> {
+    fn stream(
+        &self,
+        model: &str,
+        prompt: &Prompt,
+        auth: &AuthCredential,
+    ) -> AIResult<StreamReceiver> {
         // For streaming we call generate and then split the result into chunks
         let resp = self.generate(model, prompt, auth)?;
-        let words: Vec<String> = resp.text.split_whitespace().map(|w| format!("{} ", w)).collect();
+        let words: Vec<String> = resp
+            .text
+            .split_whitespace()
+            .map(|w| format!("{} ", w))
+            .collect();
         let mut chunks: Vec<StreamChunk> = words.into_iter().map(StreamChunk::new).collect();
         if let Some(last) = chunks.last_mut() {
             last.finish_reason = Some("stop".to_string());
@@ -134,4 +151,3 @@ impl AIProvider for OpenAIProvider {
         Ok(StreamReceiver::new(chunks))
     }
 }
-

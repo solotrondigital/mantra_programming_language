@@ -4,19 +4,19 @@ pub enum Token {
     Int(i64),
     Float(f64),
     String(String),
-    Exclamation,     // !
-    Dollar,          // $
-    LeftParen,       // (
-    RightParen,      // )
-    Colon,           // :
-    Equals,          // =
-    At,              // @
-    LeftBracket,     // [
-    RightBracket,    // ]
-    LeftBrace,       // {
-    RightBrace,      // }
-    Pipe,            // |
-    Ellipsis,        // ...
+    Exclamation,  // !
+    Dollar,       // $
+    LeftParen,    // (
+    RightParen,   // )
+    Colon,        // :
+    Equals,       // =
+    At,           // @
+    LeftBracket,  // [
+    RightBracket, // ]
+    LeftBrace,    // {
+    RightBrace,   // }
+    Pipe,         // |
+    Ellipsis,     // ...
     Eof,
 }
 
@@ -73,18 +73,54 @@ impl<'a> Lexer<'a> {
         };
 
         match ch {
-            '!' => { self.advance(); Ok(Token::Exclamation) }
-            '$' => { self.advance(); Ok(Token::Dollar) }
-            '(' => { self.advance(); Ok(Token::LeftParen) }
-            ')' => { self.advance(); Ok(Token::RightParen) }
-            ':' => { self.advance(); Ok(Token::Colon) }
-            '=' => { self.advance(); Ok(Token::Equals) }
-            '@' => { self.advance(); Ok(Token::At) }
-            '[' => { self.advance(); Ok(Token::LeftBracket) }
-            ']' => { self.advance(); Ok(Token::RightBracket) }
-            '{' => { self.advance(); Ok(Token::LeftBrace) }
-            '}' => { self.advance(); Ok(Token::RightBrace) }
-            '|' => { self.advance(); Ok(Token::Pipe) }
+            '!' => {
+                self.advance();
+                Ok(Token::Exclamation)
+            }
+            '$' => {
+                self.advance();
+                Ok(Token::Dollar)
+            }
+            '(' => {
+                self.advance();
+                Ok(Token::LeftParen)
+            }
+            ')' => {
+                self.advance();
+                Ok(Token::RightParen)
+            }
+            ':' => {
+                self.advance();
+                Ok(Token::Colon)
+            }
+            '=' => {
+                self.advance();
+                Ok(Token::Equals)
+            }
+            '@' => {
+                self.advance();
+                Ok(Token::At)
+            }
+            '[' => {
+                self.advance();
+                Ok(Token::LeftBracket)
+            }
+            ']' => {
+                self.advance();
+                Ok(Token::RightBracket)
+            }
+            '{' => {
+                self.advance();
+                Ok(Token::LeftBrace)
+            }
+            '}' => {
+                self.advance();
+                Ok(Token::RightBrace)
+            }
+            '|' => {
+                self.advance();
+                Ok(Token::Pipe)
+            }
             '.' => {
                 if self.pos + 2 < self.chars.len()
                     && self.chars[self.pos + 1] == '.'
@@ -99,7 +135,10 @@ impl<'a> Lexer<'a> {
             '"' => self.lex_string(),
             '-' | '0'..='9' => self.lex_number(),
             'a'..='z' | 'A'..='Z' | '_' => self.lex_name(),
-            other => Err(format!("Unexpected character '{}' at position {}", other, self.pos)),
+            other => Err(format!(
+                "Unexpected character '{}' at position {}",
+                other, self.pos
+            )),
         }
     }
 
@@ -172,4 +211,3 @@ impl<'a> Lexer<'a> {
         Err("Unterminated string literal in GraphQL query".to_string())
     }
 }
-

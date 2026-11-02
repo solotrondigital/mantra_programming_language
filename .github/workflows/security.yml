@@ -35,5 +35,6 @@ jobs:
           # The auditor requires a mantra.toml in the working directory; use the
           # mantra_widgets package which has a well-formed mantra.toml.
           cd crates/mantra_widgets
-          ../../target/debug/mantra audit || true
+          ../../target/debug/mantra lock
+          ../../target/debug/mantra audit
 

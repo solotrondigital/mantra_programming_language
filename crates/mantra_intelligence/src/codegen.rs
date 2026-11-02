@@ -90,7 +90,12 @@ class EmailNotificationService:
     }
 
     /// Generates a single method declaration and implementation.
-    pub fn generate_method(class_name: &str, method_name: &str, return_type: &str, prompt: &str) -> Result<String, String> {
+    pub fn generate_method(
+        class_name: &str,
+        method_name: &str,
+        return_type: &str,
+        prompt: &str,
+    ) -> Result<String, String> {
         let code = format!(
             r#"    pub def {}(self) -> {}:
         # Generated for: {}
@@ -104,14 +109,20 @@ class EmailNotificationService:
     /// Verifies that generated code parses without syntax errors using the actual Mantra compiler parser.
     fn validate_syntax(code: &str) -> Result<(), String> {
         let mut lexer = Lexer::new(code);
-        let tokens = lexer
-            .tokenize()
-            .map_err(|e| format!("Generated code lex error at line {}: {}", e.span.line, e.message))?;
+        let tokens = lexer.tokenize().map_err(|e| {
+            format!(
+                "Generated code lex error at line {}: {}",
+                e.span.line, e.message
+            )
+        })?;
 
         let mut parser = Parser::new(tokens);
-        parser
-            .parse()
-            .map_err(|e| format!("Generated code parse error at line {}: {}", e.span.line, e.message))?;
+        parser.parse().map_err(|e| {
+            format!(
+                "Generated code parse error at line {}: {}",
+                e.span.line, e.message
+            )
+        })?;
 
         Ok(())
     }
@@ -126,4 +137,3 @@ class EmailNotificationService:
         "GeneratedEntity".to_string()
     }
 }
-

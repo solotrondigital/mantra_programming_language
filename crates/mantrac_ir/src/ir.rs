@@ -50,16 +50,48 @@ pub enum IrBinaryOp {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum IrInstruction {
-    Const { dest: String, val: IrValue },
-    Copy { dest: String, src: String },
-    Binary { op: IrBinaryOp, dest: String, left: String, right: String },
-    Call { dest: Option<String>, func: String, args: Vec<String> },
-    CallAsync { dest: Option<String>, func: String, args: Vec<String> },
-    Await { dest: String, task: String },
-    Print { arg: String },
-    Jump { target: usize },
-    Branch { cond: String, true_target: usize, false_target: usize },
-    Return { val: Option<String> },
+    Const {
+        dest: String,
+        val: IrValue,
+    },
+    Copy {
+        dest: String,
+        src: String,
+    },
+    Binary {
+        op: IrBinaryOp,
+        dest: String,
+        left: String,
+        right: String,
+    },
+    Call {
+        dest: Option<String>,
+        func: String,
+        args: Vec<String>,
+    },
+    CallAsync {
+        dest: Option<String>,
+        func: String,
+        args: Vec<String>,
+    },
+    Await {
+        dest: String,
+        task: String,
+    },
+    Print {
+        arg: String,
+    },
+    Jump {
+        target: usize,
+    },
+    Branch {
+        cond: String,
+        true_target: usize,
+        false_target: usize,
+    },
+    Return {
+        val: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -88,4 +120,3 @@ impl IrProgram {
         }
     }
 }
-

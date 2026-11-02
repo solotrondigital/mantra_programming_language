@@ -13,7 +13,8 @@ impl CssBuilder {
 
     pub fn set(mut self, property: &str, value: &str) -> Self {
         if !value.is_empty() {
-            self.properties.push((property.to_string(), value.to_string()));
+            self.properties
+                .push((property.to_string(), value.to_string()));
         }
         self
     }
@@ -41,4 +42,3 @@ impl CssBuilder {
         format!(r#" style="{}""#, formatted)
     }
 }
-

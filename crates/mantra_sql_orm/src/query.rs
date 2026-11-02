@@ -11,7 +11,7 @@ pub enum OrderBy {
 #[derive(Debug, Clone)]
 pub struct WhereClause {
     pub column: String,
-    pub op: String,      // "=", "!=", ">", "<", ">=", "<="
+    pub op: String, // "=", "!=", ">", "<", ">=", "<="
     pub value: String,
 }
 
@@ -29,7 +29,11 @@ pub struct QueryBuilder {
 impl QueryBuilder {
     /// Start building a query against the given table.
     pub fn from(table: &str) -> Self {
-        QueryBuilder { table: table.to_string(), selects: vec!["*".into()], ..Default::default() }
+        QueryBuilder {
+            table: table.to_string(),
+            selects: vec!["*".into()],
+            ..Default::default()
+        }
     }
 
     /// Select specific columns.
@@ -40,19 +44,31 @@ impl QueryBuilder {
 
     /// Add a WHERE column = value condition.
     pub fn where_eq(mut self, column: &str, value: &str) -> Self {
-        self.wheres.push(WhereClause { column: column.into(), op: "=".into(), value: value.into() });
+        self.wheres.push(WhereClause {
+            column: column.into(),
+            op: "=".into(),
+            value: value.into(),
+        });
         self
     }
 
     /// Add a WHERE column != value condition.
     pub fn where_ne(mut self, column: &str, value: &str) -> Self {
-        self.wheres.push(WhereClause { column: column.into(), op: "!=".into(), value: value.into() });
+        self.wheres.push(WhereClause {
+            column: column.into(),
+            op: "!=".into(),
+            value: value.into(),
+        });
         self
     }
 
     /// Add a WHERE column > value condition.
     pub fn where_gt(mut self, column: &str, value: &str) -> Self {
-        self.wheres.push(WhereClause { column: column.into(), op: ">".into(), value: value.into() });
+        self.wheres.push(WhereClause {
+            column: column.into(),
+            op: ">".into(),
+            value: value.into(),
+        });
         self
     }
 
@@ -69,28 +85,40 @@ impl QueryBuilder {
     }
 
     /// Limit result count.
-    pub fn limit(mut self, n: usize) -> Self { self.limit_val = Some(n); self }
+    pub fn limit(mut self, n: usize) -> Self {
+        self.limit_val = Some(n);
+        self
+    }
 
     /// Skip the first n rows.
-    pub fn offset(mut self, n: usize) -> Self { self.offset_val = Some(n); self }
+    pub fn offset(mut self, n: usize) -> Self {
+        self.offset_val = Some(n);
+        self
+    }
 
     /// Build the final SQL SELECT string.
     pub fn build_select(&self) -> String {
         let mut sql = format!("SELECT {} FROM {}", self.selects.join(", "), self.table);
         if !self.wheres.is_empty() {
-            let predicates: Vec<String> = self.wheres.iter()
+            let predicates: Vec<String> = self
+                .wheres
+                .iter()
                 .map(|w| format!("{} {} '{}'", w.column, w.op, w.value))
                 .collect();
             sql.push_str(&format!(" WHERE {}", predicates.join(" AND ")));
         }
         if let Some(ref ord) = self.order {
             match ord {
-                OrderBy::Asc(col)  => sql.push_str(&format!(" ORDER BY {} ASC", col)),
+                OrderBy::Asc(col) => sql.push_str(&format!(" ORDER BY {} ASC", col)),
                 OrderBy::Desc(col) => sql.push_str(&format!(" ORDER BY {} DESC", col)),
             }
         }
-        if let Some(l) = self.limit_val  { sql.push_str(&format!(" LIMIT {}", l)); }
-        if let Some(o) = self.offset_val { sql.push_str(&format!(" OFFSET {}", o)); }
+        if let Some(l) = self.limit_val {
+            sql.push_str(&format!(" LIMIT {}", l));
+        }
+        if let Some(o) = self.offset_val {
+            sql.push_str(&format!(" OFFSET {}", o));
+        }
         sql
     }
 }

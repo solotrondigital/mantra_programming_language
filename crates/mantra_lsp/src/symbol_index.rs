@@ -93,12 +93,7 @@ fn symbols_to_json_array(syms: &[IndexedSymbol]) -> String {
     format!("[{}]", items.join(","))
 }
 
-fn collect_flat(
-    syms: &[IndexedSymbol],
-    uri: &str,
-    query: &str,
-    out: &mut Vec<String>,
-) {
+fn collect_flat(syms: &[IndexedSymbol], uri: &str, query: &str, out: &mut Vec<String>) {
     for s in syms {
         if query.is_empty() || s.name.to_lowercase().contains(query) {
             out.push(format!(
@@ -272,6 +267,12 @@ fn function_signature(f: &FunctionDecl) -> String {
         _ => "",
     };
     let asynck = if f.is_async { "async " } else { "" };
-    format!("{}{}def {}({}){}", vis, asynck, f.name, params.join(", "), ret)
+    format!(
+        "{}{}def {}({}){}",
+        vis,
+        asynck,
+        f.name,
+        params.join(", "),
+        ret
+    )
 }
-

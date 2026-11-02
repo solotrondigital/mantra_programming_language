@@ -12,7 +12,11 @@ pub struct ResponsiveValue<T> {
 
 impl<T: Clone> ResponsiveValue<T> {
     pub fn new(mobile: T) -> Self {
-        Self { mobile, tablet: None, desktop: None }
+        Self {
+            mobile,
+            tablet: None,
+            desktop: None,
+        }
     }
 
     pub fn with_tablet(mut self, tablet: T) -> Self {
@@ -29,9 +33,11 @@ impl<T: Clone> ResponsiveValue<T> {
         match screen.category() {
             ScreenCategory::Mobile => &self.mobile,
             ScreenCategory::Tablet => self.tablet.as_ref().unwrap_or(&self.mobile),
-            ScreenCategory::Desktop | ScreenCategory::WideScreen => {
-                self.desktop.as_ref().or(self.tablet.as_ref()).unwrap_or(&self.mobile)
-            }
+            ScreenCategory::Desktop | ScreenCategory::WideScreen => self
+                .desktop
+                .as_ref()
+                .or(self.tablet.as_ref())
+                .unwrap_or(&self.mobile),
         }
     }
 }
@@ -65,4 +71,3 @@ impl MediaQuery {
         }
     }
 }
-

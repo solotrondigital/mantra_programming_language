@@ -112,7 +112,14 @@ impl Widget for TextField {
                 <input id="{}" type="{}" placeholder="{}" value="{}"{} style="width:100%;height:42px;padding:0 12px;font-size:14px;border:1px solid {};border-radius:8px;background:var(--mantra-surface,#fff);color:var(--mantra-text,#0f172a);outline:none;box-sizing:border-box;transition:border-color 0.2s;"/>
                 {}
             </div>"#,
-            label_html, self.id, input_type, self.placeholder, self.value, on_input_attr, border_color, error_html
+            label_html,
+            self.id,
+            input_type,
+            self.placeholder,
+            self.value,
+            on_input_attr,
+            border_color,
+            error_html
         )
     }
 }

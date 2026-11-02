@@ -55,4 +55,3 @@ pub trait StateController: Send + Sync {
     fn on_init(&mut self) {}
     fn on_dispose(&mut self) {}
 }
-

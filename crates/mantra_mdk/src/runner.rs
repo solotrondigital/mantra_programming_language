@@ -19,8 +19,14 @@ impl Runner {
             let tp = Path::new(t);
             if tp.is_dir() {
                 tp.to_path_buf()
-            } else if tp.parent().map_or(false, |p| p.ends_with("src") || p.ends_with("lib") || p.ends_with("tests")) {
-                tp.parent().unwrap().parent().unwrap_or(Path::new(".")).to_path_buf()
+            } else if tp.parent().map_or(false, |p| {
+                p.ends_with("src") || p.ends_with("lib") || p.ends_with("tests")
+            }) {
+                tp.parent()
+                    .unwrap()
+                    .parent()
+                    .unwrap_or(Path::new("."))
+                    .to_path_buf()
             } else if let Some(parent) = tp.parent() {
                 if parent.as_os_str().is_empty() {
                     PathBuf::from(".")
@@ -34,7 +40,8 @@ impl Runner {
             PathBuf::from(".")
         };
 
-        let manifest = PackageManifest::load_from_dir(&project_dir).ok()
+        let manifest = PackageManifest::load_from_dir(&project_dir)
+            .ok()
             .or_else(|| PackageManifest::load_from_dir(Path::new(".")).ok());
         let project_type = manifest.as_ref().and_then(|m| m.project_type.as_deref());
         if project_type == Some("ai") {
@@ -45,7 +52,10 @@ impl Runner {
                     let mut checker = TypeChecker::new();
                     if let Err(diags) = checker.check_program(&program) {
                         for d in diags {
-                            eprintln!("{}", d.format_with_source(&file_path.to_string_lossy(), &source));
+                            eprintln!(
+                                "{}",
+                                d.format_with_source(&file_path.to_string_lossy(), &source)
+                            );
                         }
                         return Err("Type checking failed".to_string());
                     }
@@ -66,31 +76,45 @@ impl Runner {
         let mut checker = TypeChecker::new();
         if let Err(diags) = checker.check_program(&program) {
             for d in diags {
-                eprintln!("{}", d.format_with_source(&file_path.to_string_lossy(), &source));
+                eprintln!(
+                    "{}",
+                    d.format_with_source(&file_path.to_string_lossy(), &source)
+                );
             }
             return Err("Type checking failed".to_string());
         }
 
         let mut interpreter = Interpreter::new();
-        interpreter.execute_program(&program).map_err(|e| e.message)?;
+        interpreter
+            .execute_program(&program)
+            .map_err(|e| e.message)?;
 
         // If the project is configured as a backend service (REST/GraphQL) or web frontend,
         // start the real HTTP development server and listen for incoming requests.
-        if let Some((host, port, service_kind)) = crate::http_server::detect_service_and_port(target_path) {
+        if let Some((host, port, service_kind)) =
+            crate::http_server::detect_service_and_port(target_path)
+        {
             crate::http_server::serve_http(&host, port, &service_kind)?;
         }
 
         Ok(())
     }
 
-    pub fn build_target(target_path: Option<&str>, release: bool, custom_output: Option<&str>) -> Result<PathBuf, String> {
+    pub fn build_target(
+        target_path: Option<&str>,
+        release: bool,
+        custom_output: Option<&str>,
+    ) -> Result<PathBuf, String> {
         let file_path = Self::resolve_entry_file(target_path)?;
         let (program, source) = Self::load_and_merge_project(&file_path)?;
 
         let mut checker = TypeChecker::new();
         if let Err(diags) = checker.check_program(&program) {
             for d in diags {
-                eprintln!("{}", d.format_with_source(&file_path.to_string_lossy(), &source));
+                eprintln!(
+                    "{}",
+                    d.format_with_source(&file_path.to_string_lossy(), &source)
+                );
             }
             return Err("Type checking failed".to_string());
         }
@@ -107,9 +131,17 @@ impl Runner {
             let stem = if let Ok(m) = PackageManifest::load_from_dir(Path::new(".")) {
                 m.name
             } else {
-                file_path.file_stem().unwrap_or_default().to_string_lossy().to_string()
+                file_path
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string()
             };
-            let bin = if cfg!(windows) { format!("{}.exe", stem) } else { stem };
+            let bin = if cfg!(windows) {
+                format!("{}.exe", stem)
+            } else {
+                stem
+            };
             out_dir.join(bin)
         };
 
@@ -134,7 +166,10 @@ impl Runner {
         let mut checker = TypeChecker::new();
         if let Err(diags) = checker.check_program(&program) {
             for d in diags {
-                eprintln!("{}", d.format_with_source(&file_path.to_string_lossy(), &source));
+                eprintln!(
+                    "{}",
+                    d.format_with_source(&file_path.to_string_lossy(), &source)
+                );
             }
             return Err("Type checking failed".to_string());
         }
@@ -171,14 +206,23 @@ impl Runner {
             let _ = fs::create_dir_all(parent);
         }
 
-        fs::write(&out_path, &wasm_bytes)
-            .map_err(|e| format!("Failed to write WebAssembly output to {}: {}", out_path.display(), e))?;
+        fs::write(&out_path, &wasm_bytes).map_err(|e| {
+            format!(
+                "Failed to write WebAssembly output to {}: {}",
+                out_path.display(),
+                e
+            )
+        })?;
 
         let wat_code = emitter.emit_wat(&ir_prog);
         let wat_path = out_path.with_extension("wat");
         let _ = fs::write(&wat_path, wat_code);
 
-        println!("✓ Emitted WebAssembly binary : {} ({} bytes)", out_path.display(), wasm_bytes.len());
+        println!(
+            "✓ Emitted WebAssembly binary : {} ({} bytes)",
+            out_path.display(),
+            wasm_bytes.len()
+        );
         println!("✓ Emitted WebAssembly text   : {}", wat_path.display());
         if web_dir.join("index.html").exists() {
             println!("✓ Web application shell      : web/index.html");
@@ -205,11 +249,20 @@ impl Runner {
         // Compile WASM bundle first
         Self::build_web(None, false, None, None)?;
 
-        println!("\n>> Starting local HTTP development server on 127.0.0.1:{}...", web_port);
-        println!(">> Open http://127.0.0.1:{} in Chrome to view the application.", web_port);
+        println!(
+            "\n>> Starting local HTTP development server on 127.0.0.1:{}...",
+            web_port
+        );
+        println!(
+            ">> Open http://127.0.0.1:{} in Chrome to view the application.",
+            web_port
+        );
         println!(">> Ready for development. Serving static assets and WASM.");
 
-        println!("✓ Development server active on http://127.0.0.1:{}", web_port);
+        println!(
+            "✓ Development server active on http://127.0.0.1:{}",
+            web_port
+        );
         crate::http_server::serve_http("127.0.0.1", web_port, "web")?;
         Ok(())
     }
@@ -221,7 +274,10 @@ impl Runner {
         let mut checker = TypeChecker::new();
         if let Err(diags) = checker.check_program(&program) {
             for d in diags {
-                eprintln!("{}", d.format_with_source(&file_path.to_string_lossy(), &source));
+                eprintln!(
+                    "{}",
+                    d.format_with_source(&file_path.to_string_lossy(), &source)
+                );
             }
             return Err("Type checking errors found".to_string());
         }
@@ -297,7 +353,11 @@ impl Runner {
                 for entry in entries.flatten() {
                     let path = entry.path();
                     let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                    if name.starts_with('.') || name == "target" || name == "dist" || name == "build" {
+                    if name.starts_with('.')
+                        || name == "target"
+                        || name == "dist"
+                        || name == "build"
+                    {
                         continue;
                     }
                     if path.is_dir() {
@@ -320,7 +380,9 @@ impl Runner {
         files_to_read.sort();
 
         // Deduplicate and ensure entry_file is processed
-        let canonical_entry = entry_file.canonicalize().unwrap_or_else(|_| entry_file.to_path_buf());
+        let canonical_entry = entry_file
+            .canonicalize()
+            .unwrap_or_else(|_| entry_file.to_path_buf());
 
         let mut merged_declarations = Vec::new();
         let mut seen_canonical = std::collections::HashSet::new();
@@ -339,10 +401,18 @@ impl Runner {
                             let mut parser = Parser::new(tokens);
                             match parser.parse() {
                                 Ok(prog) => merged_declarations.extend(prog.declarations),
-                                Err(e) => return Err(format!("Parse error in {}: {}", file.display(), e.message)),
+                                Err(e) => {
+                                    return Err(format!(
+                                        "Parse error in {}: {}",
+                                        file.display(),
+                                        e.message
+                                    ))
+                                }
                             }
                         }
-                        Err(e) => return Err(format!("Lexer error in {}: {}", file.display(), e.message)),
+                        Err(e) => {
+                            return Err(format!("Lexer error in {}: {}", file.display(), e.message))
+                        }
                     }
                 }
             }
@@ -356,7 +426,12 @@ impl Runner {
 
         merged_declarations.extend(entry_prog.declarations);
 
-        Ok((mantrac_ast::Program { declarations: merged_declarations }, entry_source))
+        Ok((
+            mantrac_ast::Program {
+                declarations: merged_declarations,
+            },
+            entry_source,
+        ))
     }
 
     fn resolve_entry_file(target_path: Option<&str>) -> Result<PathBuf, String> {
@@ -393,4 +468,3 @@ impl Runner {
         Err("No entry point found. Provide a file path or ensure lib/main.mantra or src/main.mantra exists.".to_string())
     }
 }
-

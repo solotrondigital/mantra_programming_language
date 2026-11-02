@@ -54,11 +54,18 @@ jobs:
       - name: Build All Workspace Crates (Release)
         run: cargo build --release
 
+      - name: Run Rust Unit and Integration Tests
+        run: cargo test --workspace
+
       - name: Run Core Conformance & MDK Tests
         shell: bash
         run: |
           chmod +x tests/run_all.sh
           tests/run_all.sh
+
+      - name: Check Public ABI Header from C11 and C++11
+        shell: bash
+        run: bash tests/abi/check_header.sh
 
       - name: Run Extended Fuzz, Stress & Performance Suite
         shell: bash
@@ -78,5 +85,6 @@ jobs:
           cd /tmp/ci_test_app
           mantra check
           mantra test
+          mantra lock
           mantra audit
 

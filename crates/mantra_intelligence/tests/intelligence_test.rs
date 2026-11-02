@@ -4,6 +4,7 @@ use mantra_intelligence::completion::AiCompletionEngine;
 use mantra_intelligence::context::CompilerIntelligenceContext;
 use mantra_intelligence::doc_gen::DocGenerator;
 use mantra_intelligence::error_intelligence::ErrorIntelligenceEngine;
+use mantra_intelligence::project_graph::ProjectGraph;
 use mantra_intelligence::quick_fix::QuickFixEngine;
 use mantra_intelligence::refactor::RefactoringEngine;
 use mantra_intelligence::test_gen::TestGenerator;
@@ -37,17 +38,32 @@ class UserService:
 #[test]
 fn test_error_intelligence_explanations() {
     // 1. Keyword collision
-    let exp1 = ErrorIntelligenceEngine::explain("E0021", "Expected field. Found 'from'", "    pub from: String", None);
+    let exp1 = ErrorIntelligenceEngine::explain(
+        "E0021",
+        "Expected field. Found 'from'",
+        "    pub from: String",
+        None,
+    );
     assert!(exp1.title.contains("Reserved Keyword Collision"));
     assert!(exp1.suggested_remedy.contains("from_email"));
 
     // 2. Type mismatch
-    let exp2 = ErrorIntelligenceEngine::explain("E0012", "Type mismatch: expected Int, found String", "let count: Int = \"10\"", None);
+    let exp2 = ErrorIntelligenceEngine::explain(
+        "E0012",
+        "Type mismatch: expected Int, found String",
+        "let count: Int = \"10\"",
+        None,
+    );
     assert!(exp2.title.contains("Type Mismatch"));
     assert!(exp2.suggested_remedy.contains("Int"));
 
     // 3. Undefined symbol
-    let exp3 = ErrorIntelligenceEngine::explain("E0010", "Undefined symbol 'PropertiesTOML'", "let p = PropertiesTOML()", None);
+    let exp3 = ErrorIntelligenceEngine::explain(
+        "E0010",
+        "Undefined symbol 'PropertiesTOML'",
+        "let p = PropertiesTOML()",
+        None,
+    );
     assert!(exp3.title.contains("PropertiesTOML"));
     assert!(exp3.suggested_remedy.contains("mantra_util"));
 }
@@ -55,7 +71,8 @@ fn test_error_intelligence_explanations() {
 #[test]
 fn test_quick_fix_generation_and_apply() {
     let source = "class EmailMessage:\n    pub from: String\n";
-    let fixes = QuickFixEngine::suggest_fixes("src/email.mantra", source, "E0021", "Found 'from'", 2, 9);
+    let fixes =
+        QuickFixEngine::suggest_fixes("src/email.mantra", source, "E0021", "Found 'from'", 2, 9);
     assert!(!fixes.is_empty());
     assert!(fixes[0].replacement.contains("from_email"));
 
@@ -73,13 +90,17 @@ class UserService:
     let ctx = CompilerIntelligenceContext::from_source("src/user.mantra", source, 4, 10);
     let suggestions = AiCompletionEngine::complete(&ctx, "");
     assert!(!suggestions.is_empty());
-    let ghost = suggestions.iter().find(|s| s.is_ai_ghost_text).expect("Ghost text suggestion expected");
+    let ghost = suggestions
+        .iter()
+        .find(|s| s.is_ai_ghost_text)
+        .expect("Ghost text suggestion expected");
     assert!(ghost.insert_text.contains("SELECT"));
 }
 
 #[test]
 fn test_codegen_and_syntax_validation() {
-    let code = CodeGenerator::generate_class("Create a User entity with email and id").expect("Class generation failed");
+    let code = CodeGenerator::generate_class("Create a User entity with email and id")
+        .expect("Class generation failed");
     assert!(code.contains("class User:"));
     assert!(code.contains("pub id: Int"));
     assert!(code.contains("pub email: String"));
@@ -92,7 +113,8 @@ class Calculator:
     pub def add(self, a: Int, b: Int) -> Int:
         return a + b
 "#;
-    let tests = TestGenerator::generate_tests_for_source("src/calc.mantra", source).expect("Test generation failed");
+    let tests = TestGenerator::generate_tests_for_source("src/calc.mantra", source)
+        .expect("Test generation failed");
     assert!(tests.contains("def test_calculator_initialization"));
     assert!(tests.contains("def test_calculator_add"));
     assert!(tests.contains("assert("));
@@ -106,7 +128,8 @@ class Account:
     pub def deposit(self, amount: Float) -> Bool:
         return True
 "#;
-    let md = DocGenerator::generate_markdown_doc("src/account.mantra", source).expect("Doc generation failed");
+    let md = DocGenerator::generate_markdown_doc("src/account.mantra", source)
+        .expect("Doc generation failed");
     assert!(md.contains("# API Reference: `src/account.mantra`"));
     assert!(md.contains("## Class `Account`"));
     assert!(md.contains("### `def deposit"));
@@ -114,7 +137,8 @@ class Account:
 
 #[test]
 fn test_refactoring_engine() {
-    let source = "def calculate_price():\n    let base = 100\n    let tax = 20\n    return base + tax\n";
+    let source =
+        "def calculate_price():\n    let base = 100\n    let tax = 20\n    return base + tax\n";
     let renamed = RefactoringEngine::rename_symbol(source, "tax", "tax_rate");
     assert!(renamed.contains("let tax_rate = 20"));
 
@@ -130,13 +154,59 @@ let password = "SecretPassword123"
 panic("Fatal crash")
 "#;
     let issues = CodeAuditor::audit_source("src/app.mantra", source);
-    assert!(issues.iter().any(|i| i.category == "Security" && i.message.contains("credential")));
-    assert!(issues.iter().any(|i| i.category == "Security" && i.message.contains("password")));
-    assert!(issues.iter().any(|i| i.category == "CodeQuality" && i.message.contains("panic")));
+    assert!(issues
+        .iter()
+        .any(|i| i.category == "Security" && i.message.contains("credential")));
+    assert!(issues
+        .iter()
+        .any(|i| i.category == "Security" && i.message.contains("password")));
+    assert!(issues
+        .iter()
+        .any(|i| i.category == "CodeQuality" && i.message.contains("panic")));
 }
 
 #[test]
 fn test_mantra_intelligence_facade() {
     let desc = MantraIntelligence::describe("AI Error Intelligence");
     assert!(desc.contains("MVP 2"));
+}
+
+#[test]
+fn test_project_graph_indexes_manifest_modules_and_imports() {
+    use std::fs;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    let nonce = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let root = std::env::temp_dir().join(format!(
+        "mantra_intelligence_graph_{}_{}",
+        std::process::id(),
+        nonce
+    ));
+    fs::create_dir_all(root.join("src/services")).unwrap();
+    fs::write(
+        root.join("mantra.toml"),
+        "[project]\nname = \"shop\"\ntype = \"backend\"\n\n[dependencies]\nmantra_rest = \"0.7\"\n",
+    )
+    .unwrap();
+    fs::write(
+        root.join("src/services/order.mantra"),
+        "from mantra_rest import Router\nclass OrderService:\n    def create_order(self):\n        return True\n",
+    )
+    .unwrap();
+
+    let graph = ProjectGraph::index(&root).unwrap();
+    assert_eq!(graph.project_name, "shop");
+    assert_eq!(graph.project_type, "backend");
+    assert!(graph.dependencies.contains(&"mantra_rest".to_string()));
+    let module = graph.modules.get("order").expect("order module indexed");
+    assert!(module.classes.contains(&"OrderService".to_string()));
+    assert!(module
+        .imports
+        .iter()
+        .any(|import| import.contains("mantra_rest")));
+
+    fs::remove_dir_all(root).unwrap();
 }

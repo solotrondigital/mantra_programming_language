@@ -13,9 +13,13 @@ impl TestGenerator {
     /// Generates a complete unit test suite for the given Mantra source file.
     pub fn generate_tests_for_source(file_path: &str, source: &str) -> Result<String, String> {
         let mut lexer = Lexer::new(source);
-        let tokens = lexer.tokenize().map_err(|e| format!("Lexer error: {}", e.message))?;
+        let tokens = lexer
+            .tokenize()
+            .map_err(|e| format!("Lexer error: {}", e.message))?;
         let mut parser = Parser::new(tokens);
-        let program = parser.parse().map_err(|e| format!("Parser error: {}", e.message))?;
+        let program = parser
+            .parse()
+            .map_err(|e| format!("Parser error: {}", e.message))?;
 
         let mut classes = Vec::new();
         let mut functions = Vec::new();
@@ -61,7 +65,10 @@ impl TestGenerator {
         for (cls, methods) in classes {
             let test_fn_init = format!("test_{}_initialization", cls.to_lowercase());
             out.push_str(&format!("def {}() -> Bool:\n", test_fn_init));
-            out.push_str(&format!("    print(\"[TEST] Verifying {} constructor and state...\")\n", cls));
+            out.push_str(&format!(
+                "    print(\"[TEST] Verifying {} constructor and state...\")\n",
+                cls
+            ));
             out.push_str(&format!("    let instance = {}()\n", cls));
             out.push_str("    return True\n\n");
             test_calls.push(test_fn_init);
@@ -69,9 +76,14 @@ impl TestGenerator {
             for m in methods {
                 let test_fn_method = format!("test_{}_{}", cls.to_lowercase(), m);
                 out.push_str(&format!("def {}() -> Bool:\n", test_fn_method));
-                out.push_str(&format!("    print(\"[TEST] Verifying {}.{} execution...\")\n", cls, m));
+                out.push_str(&format!(
+                    "    print(\"[TEST] Verifying {}.{} execution...\")\n",
+                    cls, m
+                ));
                 out.push_str(&format!("    let instance = {}()\n", cls));
-                out.push_str(&format!("    # Assert method completes without runtime panic\n"));
+                out.push_str(&format!(
+                    "    # Assert method completes without runtime panic\n"
+                ));
                 out.push_str("    return True\n\n");
                 test_calls.push(test_fn_method);
             }
@@ -81,7 +93,10 @@ impl TestGenerator {
         for f in functions {
             let test_fn = format!("test_fn_{}", f);
             out.push_str(&format!("def {}() -> Bool:\n", test_fn));
-            out.push_str(&format!("    print(\"[TEST] Verifying function '{}'...\")\n", f));
+            out.push_str(&format!(
+                "    print(\"[TEST] Verifying function '{}'...\")\n",
+                f
+            ));
             out.push_str("    return True\n\n");
             test_calls.push(test_fn);
         }
@@ -102,4 +117,3 @@ impl TestGenerator {
         out
     }
 }
-

@@ -16,7 +16,8 @@ pub use adapters::oracle::OracleAdapter;
 pub use adapters::postgres::PostgreSQLAdapter;
 pub use adapters::sqlite::SQLiteAdapter;
 pub use adapters::{
-    AdapterKind, Cursor, CursorDirection, DatabaseAdapter, ParamDirection, ProcedureParam, ProcedureResult,
+    AdapterKind, Cursor, CursorDirection, DatabaseAdapter, ParamDirection, ProcedureParam,
+    ProcedureResult,
 };
 pub use migration::{ColumnDef, Migration, MigrationRunner, SchemaBuilder};
 pub use model::{Field, FieldType, FieldValue, Model, Row};

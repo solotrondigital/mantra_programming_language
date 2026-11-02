@@ -30,7 +30,11 @@ pub struct AIResponse {
 }
 
 impl AIResponse {
-    pub fn new(model: impl Into<String>, provider: impl Into<String>, text: impl Into<String>) -> Self {
+    pub fn new(
+        model: impl Into<String>,
+        provider: impl Into<String>,
+        text: impl Into<String>,
+    ) -> Self {
         Self {
             model: model.into(),
             provider: provider.into(),
@@ -48,8 +52,14 @@ pub trait AIProvider: Send + Sync {
     fn name(&self) -> &str;
 
     /// Generate a completion response for the given prompt and model.
-    fn generate(&self, model: &str, prompt: &Prompt, auth: &AuthCredential) -> AIResult<AIResponse>;
+    fn generate(&self, model: &str, prompt: &Prompt, auth: &AuthCredential)
+        -> AIResult<AIResponse>;
 
     /// Stream completion chunks for the given prompt and model.
-    fn stream(&self, model: &str, prompt: &Prompt, auth: &AuthCredential) -> AIResult<StreamReceiver>;
+    fn stream(
+        &self,
+        model: &str,
+        prompt: &Prompt,
+        auth: &AuthCredential,
+    ) -> AIResult<StreamReceiver>;
 }

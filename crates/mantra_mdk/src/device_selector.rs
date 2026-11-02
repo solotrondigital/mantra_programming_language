@@ -12,7 +12,7 @@ use std::process::Command;
 #[derive(Debug, Clone)]
 pub struct DetectedDevice {
     pub name: String,
-    pub category: String,       // "mobile", "desktop", "web"
+    pub category: String, // "mobile", "desktop", "web"
     pub id: String,
     pub platform_arch: String,
     pub details: String,
@@ -99,7 +99,12 @@ impl DeviceSelector {
 
         if let Ok(idx) = choice.parse::<usize>() {
             if idx >= 1 && idx <= devices.len() {
-                return Self::run_selected_device(&devices[idx - 1], target, web_port, defines_file);
+                return Self::run_selected_device(
+                    &devices[idx - 1],
+                    target,
+                    web_port,
+                    defines_file,
+                );
             }
         }
 
@@ -142,7 +147,10 @@ impl DeviceSelector {
                         return Self::run_selected_device(dev, target, web_port, defines_file);
                     }
                 }
-                println!("! Device '{}' not recognized. Available devices:", custom_id);
+                println!(
+                    "! Device '{}' not recognized. Available devices:",
+                    custom_id
+                );
                 for dev in &devices {
                     println!("  • {} ({})", dev.name, dev.id);
                 }
@@ -185,7 +193,10 @@ impl DeviceSelector {
 
         for line in output.lines() {
             let trimmed = line.trim();
-            if trimmed.is_empty() || trimmed.starts_with("List of devices") || trimmed.starts_with('*') {
+            if trimmed.is_empty()
+                || trimmed.starts_with("List of devices")
+                || trimmed.starts_with('*')
+            {
                 continue;
             }
 
@@ -210,7 +221,13 @@ impl DeviceSelector {
 
             // Query release, sdk, and abi via getprop
             let release = Command::new(&adb)
-                .args(&["-s", &dev_id, "shell", "getprop", "ro.build.version.release"])
+                .args(&[
+                    "-s",
+                    &dev_id,
+                    "shell",
+                    "getprop",
+                    "ro.build.version.release",
+                ])
                 .output()
                 .ok()
                 .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
@@ -260,7 +277,10 @@ impl DeviceSelector {
 
         // 1. Build runtime name to runtime identifier map (e.g. "iOS 18.6" -> "com.apple.CoreSimulator.SimRuntime.iOS-18-6")
         let mut runtimes = std::collections::HashMap::new();
-        if let Ok(rt_out) = Command::new("xcrun").args(&["simctl", "list", "runtimes"]).output() {
+        if let Ok(rt_out) = Command::new("xcrun")
+            .args(&["simctl", "list", "runtimes"])
+            .output()
+        {
             if rt_out.status.success() {
                 let rt_text = String::from_utf8_lossy(&rt_out.stdout);
                 for line in rt_text.lines() {
@@ -277,7 +297,10 @@ impl DeviceSelector {
         }
 
         // 2. Query simulators
-        let dev_out = match Command::new("xcrun").args(&["simctl", "list", "devices"]).output() {
+        let dev_out = match Command::new("xcrun")
+            .args(&["simctl", "list", "devices"])
+            .output()
+        {
             Ok(o) if o.status.success() => String::from_utf8_lossy(&o.stdout).to_string(),
             _ => return devices,
         };
@@ -289,7 +312,11 @@ impl DeviceSelector {
         for line in dev_out.lines() {
             let trimmed = line.trim();
             if trimmed.starts_with("-- ") && trimmed.ends_with(" --") {
-                current_section = trimmed.trim_start_matches("-- ").trim_end_matches(" --").trim().to_string();
+                current_section = trimmed
+                    .trim_start_matches("-- ")
+                    .trim_end_matches(" --")
+                    .trim()
+                    .to_string();
                 continue;
             }
 
@@ -303,9 +330,8 @@ impl DeviceSelector {
                     if let Some(end_paren) = rem.find(')') {
                         let uuid = rem[..end_paren].trim().to_string();
 
-                        let runtime_id = runtimes.get(&current_section)
-                            .cloned()
-                            .unwrap_or_else(|| {
+                        let runtime_id =
+                            runtimes.get(&current_section).cloned().unwrap_or_else(|| {
                                 let slug = current_section.replace('.', "-").replace(' ', "-");
                                 format!("com.apple.CoreSimulator.SimRuntime.{}", slug)
                             });
@@ -448,7 +474,10 @@ mod tests {
     #[test]
     fn test_device_discovery() {
         let devices = DeviceSelector::discover_devices();
-        assert!(!devices.is_empty(), "Should discover at least desktop or web devices");
+        assert!(
+            !devices.is_empty(),
+            "Should discover at least desktop or web devices"
+        );
 
         let has_desktop = devices.iter().any(|d| d.kind == DeviceKind::Desktop);
         let has_web = devices.iter().any(|d| d.kind == DeviceKind::Web);

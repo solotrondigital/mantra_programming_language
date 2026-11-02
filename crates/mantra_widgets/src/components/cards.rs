@@ -105,7 +105,10 @@ impl Widget for MantraCard {
         if let Some(act) = &self.on_click {
             elem = elem.with_attribute(
                 "onclick",
-                format!("window.MantraUI && window.MantraUI.emit('click', '{}', '{}')", self.id, act),
+                format!(
+                    "window.MantraUI && window.MantraUI.emit('click', '{}', '{}')",
+                    self.id, act
+                ),
             );
         }
 
@@ -165,7 +168,11 @@ impl Widget for StatisticsCard {
 
     fn render(&self, _ctx: &BuildContext) -> String {
         let trend_html = if let Some(pct) = self.change_percentage {
-            let color = if self.is_positive { "#10b981" } else { "#ef4444" };
+            let color = if self.is_positive {
+                "#10b981"
+            } else {
+                "#ef4444"
+            };
             let arrow = if self.is_positive { "↑" } else { "↓" };
             format!(
                 r#"<span style="color:{};font-size:12px;font-weight:600;margin-left:8px;">{} {:.1}%</span>"#,
@@ -176,7 +183,10 @@ impl Widget for StatisticsCard {
         };
 
         let icon_html = if let Some(ic) = &self.icon {
-            format!(r#"<div style="font-size:24px;margin-bottom:8px;">{}</div>"#, ic)
+            format!(
+                r#"<div style="font-size:24px;margin-bottom:8px;">{}</div>"#,
+                ic
+            )
         } else {
             String::new()
         };
@@ -207,7 +217,11 @@ pub struct ProductCard {
 }
 
 impl ProductCard {
-    pub fn new(title: impl Into<String>, price: impl Into<String>, image_url: impl Into<String>) -> Self {
+    pub fn new(
+        title: impl Into<String>,
+        price: impl Into<String>,
+        image_url: impl Into<String>,
+    ) -> Self {
         Self {
             id: format!("prod_{}", uuid_simple()),
             title: title.into(),
@@ -252,4 +266,3 @@ fn uuid_simple() -> u32 {
     static COUNTER: AtomicU32 = AtomicU32::new(2000);
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
-

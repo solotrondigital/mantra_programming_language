@@ -13,11 +13,19 @@ impl EnvLoader {
     /// and injects them into the current process environment via `std::env::set_var`.
     pub fn load_file(file_path: &Path) -> Result<HashMap<String, String>, String> {
         if !file_path.exists() {
-            return Err(format!("Environment file not found: '{}'", file_path.display()));
+            return Err(format!(
+                "Environment file not found: '{}'",
+                file_path.display()
+            ));
         }
 
-        let content = fs::read_to_string(file_path)
-            .map_err(|e| format!("Failed to read environment file '{}': {}", file_path.display(), e))?;
+        let content = fs::read_to_string(file_path).map_err(|e| {
+            format!(
+                "Failed to read environment file '{}': {}",
+                file_path.display(),
+                e
+            )
+        })?;
 
         let mut vars = HashMap::new();
         for line in content.lines() {
@@ -32,7 +40,9 @@ impl EnvLoader {
                 let mut val = raw_val.trim().to_string();
 
                 // Strip surrounding single or double quotes
-                if (val.starts_with('"') && val.ends_with('"')) || (val.starts_with('\'') && val.ends_with('\'')) {
+                if (val.starts_with('"') && val.ends_with('"'))
+                    || (val.starts_with('\'') && val.ends_with('\''))
+                {
                     if val.len() >= 2 {
                         val = val[1..val.len() - 1].to_string();
                     }
@@ -56,7 +66,11 @@ impl EnvLoader {
 
     /// Prints a formatted summary of loaded variables.
     pub fn print_summary(source_path: &str, vars: &HashMap<String, String>) {
-        println!("Loaded defines from '{}' ({} variables):", source_path, vars.len());
+        println!(
+            "Loaded defines from '{}' ({} variables):",
+            source_path,
+            vars.len()
+        );
         let mut keys: Vec<&String> = vars.keys().collect();
         keys.sort();
         for k in keys {
@@ -70,4 +84,3 @@ impl EnvLoader {
         }
     }
 }
-

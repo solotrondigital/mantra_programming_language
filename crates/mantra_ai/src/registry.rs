@@ -1,8 +1,8 @@
 //! Model Registry: Register, configure, and resolve AI models.
 
-use std::collections::HashMap;
 use crate::auth::AuthCredential;
 use crate::error::{AIError, AIResult};
+use std::collections::HashMap;
 
 /// Specification of a registered AI model.
 #[derive(Debug, Clone, PartialEq)]
@@ -93,7 +93,9 @@ impl ModelRegistry {
     pub fn get_default(&self) -> AIResult<&ModelSpec> {
         match &self.default_model {
             Some(alias) => self.get(alias),
-            None => Err(AIError::ModelNotFound("No default model set in registry".to_string())),
+            None => Err(AIError::ModelNotFound(
+                "No default model set in registry".to_string(),
+            )),
         }
     }
 
@@ -106,4 +108,3 @@ impl ModelRegistry {
         self.models.is_empty()
     }
 }
-

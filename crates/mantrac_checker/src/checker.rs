@@ -58,7 +58,10 @@ impl TypeChecker {
                 "getOrDefault".to_string(),
                 crate::symbols::MethodSymbol {
                     name: "getOrDefault".to_string(),
-                    params: vec![("key".to_string(), Type::String), ("default_val".to_string(), Type::String)],
+                    params: vec![
+                        ("key".to_string(), Type::String),
+                        ("default_val".to_string(), Type::String),
+                    ],
                     return_type: Type::String,
                     visibility: Visibility::Pub,
                     is_override: false,
@@ -149,7 +152,10 @@ impl TypeChecker {
                 "getPropertyOrDefault".to_string(),
                 crate::symbols::MethodSymbol {
                     name: "getPropertyOrDefault".to_string(),
-                    params: vec![("key_path".to_string(), Type::String), ("default_val".to_string(), Type::String)],
+                    params: vec![
+                        ("key_path".to_string(), Type::String),
+                        ("default_val".to_string(), Type::String),
+                    ],
                     return_type: Type::String,
                     visibility: Visibility::Pub,
                     is_override: false,
@@ -220,63 +226,91 @@ impl TypeChecker {
             // 1. EmailMessage class
             let mut em_fields = std::collections::HashMap::new();
             for f in &["from_email", "from", "to", "cc", "bcc", "subject", "body"] {
-                em_fields.insert(f.to_string(), crate::symbols::FieldSymbol {
-                    name: f.to_string(),
-                    ty: Type::String,
+                em_fields.insert(
+                    f.to_string(),
+                    crate::symbols::FieldSymbol {
+                        name: f.to_string(),
+                        ty: Type::String,
+                        visibility: Visibility::Pub,
+                        span: Span::default(),
+                    },
+                );
+            }
+            em_fields.insert(
+                "is_html".to_string(),
+                crate::symbols::FieldSymbol {
+                    name: "is_html".to_string(),
+                    ty: Type::Bool,
                     visibility: Visibility::Pub,
                     span: Span::default(),
-                });
-            }
-            em_fields.insert("is_html".to_string(), crate::symbols::FieldSymbol {
-                name: "is_html".to_string(),
-                ty: Type::Bool,
-                visibility: Visibility::Pub,
-                span: Span::default(),
-            });
+                },
+            );
 
             let mut em_methods = std::collections::HashMap::new();
-            for m in &["set_from", "set_to", "add_to", "set_cc", "add_cc", "set_bcc", "add_bcc", "set_subject", "set_body"] {
-                em_methods.insert(m.to_string(), crate::symbols::MethodSymbol {
-                    name: m.to_string(),
-                    params: vec![("val".to_string(), Type::String)],
+            for m in &[
+                "set_from",
+                "set_to",
+                "add_to",
+                "set_cc",
+                "add_cc",
+                "set_bcc",
+                "add_bcc",
+                "set_subject",
+                "set_body",
+            ] {
+                em_methods.insert(
+                    m.to_string(),
+                    crate::symbols::MethodSymbol {
+                        name: m.to_string(),
+                        params: vec![("val".to_string(), Type::String)],
+                        return_type: Type::Custom("EmailMessage".to_string(), vec![]),
+                        visibility: Visibility::Pub,
+                        is_override: false,
+                        is_static: false,
+                        is_abstract: false,
+                        span: Span::default(),
+                    },
+                );
+            }
+            em_methods.insert(
+                "get_from".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "get_from".to_string(),
+                    params: vec![],
+                    return_type: Type::String,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: false,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            em_methods.insert(
+                "set_html".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "set_html".to_string(),
+                    params: vec![("is_html".to_string(), Type::Bool)],
                     return_type: Type::Custom("EmailMessage".to_string(), vec![]),
                     visibility: Visibility::Pub,
                     is_override: false,
                     is_static: false,
                     is_abstract: false,
                     span: Span::default(),
-                });
-            }
-            em_methods.insert("get_from".to_string(), crate::symbols::MethodSymbol {
-                name: "get_from".to_string(),
-                params: vec![],
-                return_type: Type::String,
-                visibility: Visibility::Pub,
-                is_override: false,
-                is_static: false,
-                is_abstract: false,
-                span: Span::default(),
-            });
-            em_methods.insert("set_html".to_string(), crate::symbols::MethodSymbol {
-                name: "set_html".to_string(),
-                params: vec![("is_html".to_string(), Type::Bool)],
-                return_type: Type::Custom("EmailMessage".to_string(), vec![]),
-                visibility: Visibility::Pub,
-                is_override: false,
-                is_static: false,
-                is_abstract: false,
-                span: Span::default(),
-            });
-            em_methods.insert("describe".to_string(), crate::symbols::MethodSymbol {
-                name: "describe".to_string(),
-                params: vec![],
-                return_type: Type::String,
-                visibility: Visibility::Pub,
-                is_override: false,
-                is_static: false,
-                is_abstract: false,
-                span: Span::default(),
-            });
+                },
+            );
+            em_methods.insert(
+                "describe".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "describe".to_string(),
+                    params: vec![],
+                    return_type: Type::String,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: false,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
 
             self.symbols.classes.insert(
                 "EmailMessage".to_string(),
@@ -311,55 +345,107 @@ impl TypeChecker {
 
             // 2. SmtpClient class
             let mut sc_fields = std::collections::HashMap::new();
-            sc_fields.insert("server".to_string(), crate::symbols::FieldSymbol { name: "server".to_string(), ty: Type::String, visibility: Visibility::Pub, span: Span::default() });
-            sc_fields.insert("port".to_string(), crate::symbols::FieldSymbol { name: "port".to_string(), ty: Type::Int, visibility: Visibility::Pub, span: Span::default() });
-            sc_fields.insert("username".to_string(), crate::symbols::FieldSymbol { name: "username".to_string(), ty: Type::String, visibility: Visibility::Pub, span: Span::default() });
-            sc_fields.insert("password".to_string(), crate::symbols::FieldSymbol { name: "password".to_string(), ty: Type::String, visibility: Visibility::Pub, span: Span::default() });
-            sc_fields.insert("use_tls".to_string(), crate::symbols::FieldSymbol { name: "use_tls".to_string(), ty: Type::Bool, visibility: Visibility::Pub, span: Span::default() });
+            sc_fields.insert(
+                "server".to_string(),
+                crate::symbols::FieldSymbol {
+                    name: "server".to_string(),
+                    ty: Type::String,
+                    visibility: Visibility::Pub,
+                    span: Span::default(),
+                },
+            );
+            sc_fields.insert(
+                "port".to_string(),
+                crate::symbols::FieldSymbol {
+                    name: "port".to_string(),
+                    ty: Type::Int,
+                    visibility: Visibility::Pub,
+                    span: Span::default(),
+                },
+            );
+            sc_fields.insert(
+                "username".to_string(),
+                crate::symbols::FieldSymbol {
+                    name: "username".to_string(),
+                    ty: Type::String,
+                    visibility: Visibility::Pub,
+                    span: Span::default(),
+                },
+            );
+            sc_fields.insert(
+                "password".to_string(),
+                crate::symbols::FieldSymbol {
+                    name: "password".to_string(),
+                    ty: Type::String,
+                    visibility: Visibility::Pub,
+                    span: Span::default(),
+                },
+            );
+            sc_fields.insert(
+                "use_tls".to_string(),
+                crate::symbols::FieldSymbol {
+                    name: "use_tls".to_string(),
+                    ty: Type::Bool,
+                    visibility: Visibility::Pub,
+                    span: Span::default(),
+                },
+            );
 
             let mut sc_methods = std::collections::HashMap::new();
-            sc_methods.insert("send".to_string(), crate::symbols::MethodSymbol {
-                name: "send".to_string(),
-                params: vec![("message".to_string(), Type::Custom("EmailMessage".to_string(), vec![]))],
-                return_type: Type::Bool,
-                visibility: Visibility::Pub,
-                is_override: false,
-                is_static: false,
-                is_abstract: false,
-                span: Span::default(),
-            });
-            sc_methods.insert("send_simple".to_string(), crate::symbols::MethodSymbol {
-                name: "send_simple".to_string(),
-                params: vec![
-                    ("from_email".to_string(), Type::String),
-                    ("to_emails".to_string(), Type::String),
-                    ("subject".to_string(), Type::String),
-                    ("body".to_string(), Type::String),
-                ],
-                return_type: Type::Bool,
-                visibility: Visibility::Pub,
-                is_override: false,
-                is_static: false,
-                is_abstract: false,
-                span: Span::default(),
-            });
-            sc_methods.insert("send_mail".to_string(), crate::symbols::MethodSymbol {
-                name: "send_mail".to_string(),
-                params: vec![
-                    ("from_email".to_string(), Type::String),
-                    ("to_emails".to_string(), Type::String),
-                    ("cc_emails".to_string(), Type::String),
-                    ("bcc_emails".to_string(), Type::String),
-                    ("subject".to_string(), Type::String),
-                    ("body".to_string(), Type::String),
-                ],
-                return_type: Type::Bool,
-                visibility: Visibility::Pub,
-                is_override: false,
-                is_static: false,
-                is_abstract: false,
-                span: Span::default(),
-            });
+            sc_methods.insert(
+                "send".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "send".to_string(),
+                    params: vec![(
+                        "message".to_string(),
+                        Type::Custom("EmailMessage".to_string(), vec![]),
+                    )],
+                    return_type: Type::Bool,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: false,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            sc_methods.insert(
+                "send_simple".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "send_simple".to_string(),
+                    params: vec![
+                        ("from_email".to_string(), Type::String),
+                        ("to_emails".to_string(), Type::String),
+                        ("subject".to_string(), Type::String),
+                        ("body".to_string(), Type::String),
+                    ],
+                    return_type: Type::Bool,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: false,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            sc_methods.insert(
+                "send_mail".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "send_mail".to_string(),
+                    params: vec![
+                        ("from_email".to_string(), Type::String),
+                        ("to_emails".to_string(), Type::String),
+                        ("cc_emails".to_string(), Type::String),
+                        ("bcc_emails".to_string(), Type::String),
+                        ("subject".to_string(), Type::String),
+                        ("body".to_string(), Type::String),
+                    ],
+                    return_type: Type::Bool,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: false,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
 
             self.symbols.classes.insert(
                 "SmtpClient".to_string(),
@@ -395,65 +481,80 @@ impl TypeChecker {
 
             // 3. Email facade class
             let mut email_static = std::collections::HashMap::new();
-            email_static.insert("message".to_string(), crate::symbols::MethodSymbol {
-                name: "message".to_string(),
-                params: vec![],
-                return_type: Type::Custom("EmailMessage".to_string(), vec![]),
-                visibility: Visibility::Pub,
-                is_override: false,
-                is_static: true,
-                is_abstract: false,
-                span: Span::default(),
-            });
-            email_static.insert("client".to_string(), crate::symbols::MethodSymbol {
-                name: "client".to_string(),
-                params: vec![("server".to_string(), Type::String), ("port".to_string(), Type::Int)],
-                return_type: Type::Custom("SmtpClient".to_string(), vec![]),
-                visibility: Visibility::Pub,
-                is_override: false,
-                is_static: true,
-                is_abstract: false,
-                span: Span::default(),
-            });
-            email_static.insert("send".to_string(), crate::symbols::MethodSymbol {
-                name: "send".to_string(),
-                params: vec![
-                    ("from_email".to_string(), Type::String),
-                    ("to_emails".to_string(), Type::String),
-                    ("subject".to_string(), Type::String),
-                    ("body".to_string(), Type::String),
-                    ("server".to_string(), Type::String),
-                    ("port".to_string(), Type::Int),
-                ],
-                return_type: Type::Bool,
-                visibility: Visibility::Pub,
-                is_override: false,
-                is_static: true,
-                is_abstract: false,
-                span: Span::default(),
-            });
-            email_static.insert("send_full".to_string(), crate::symbols::MethodSymbol {
-                name: "send_full".to_string(),
-                params: vec![
-                    ("from_email".to_string(), Type::String),
-                    ("to_emails".to_string(), Type::String),
-                    ("cc_emails".to_string(), Type::String),
-                    ("bcc_emails".to_string(), Type::String),
-                    ("subject".to_string(), Type::String),
-                    ("body".to_string(), Type::String),
-                    ("server".to_string(), Type::String),
-                    ("port".to_string(), Type::Int),
-                    ("username".to_string(), Type::String),
-                    ("password".to_string(), Type::String),
-                    ("use_tls".to_string(), Type::Bool),
-                ],
-                return_type: Type::Bool,
-                visibility: Visibility::Pub,
-                is_override: false,
-                is_static: true,
-                is_abstract: false,
-                span: Span::default(),
-            });
+            email_static.insert(
+                "message".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "message".to_string(),
+                    params: vec![],
+                    return_type: Type::Custom("EmailMessage".to_string(), vec![]),
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: true,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            email_static.insert(
+                "client".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "client".to_string(),
+                    params: vec![
+                        ("server".to_string(), Type::String),
+                        ("port".to_string(), Type::Int),
+                    ],
+                    return_type: Type::Custom("SmtpClient".to_string(), vec![]),
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: true,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            email_static.insert(
+                "send".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "send".to_string(),
+                    params: vec![
+                        ("from_email".to_string(), Type::String),
+                        ("to_emails".to_string(), Type::String),
+                        ("subject".to_string(), Type::String),
+                        ("body".to_string(), Type::String),
+                        ("server".to_string(), Type::String),
+                        ("port".to_string(), Type::Int),
+                    ],
+                    return_type: Type::Bool,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: true,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
+            email_static.insert(
+                "send_full".to_string(),
+                crate::symbols::MethodSymbol {
+                    name: "send_full".to_string(),
+                    params: vec![
+                        ("from_email".to_string(), Type::String),
+                        ("to_emails".to_string(), Type::String),
+                        ("cc_emails".to_string(), Type::String),
+                        ("bcc_emails".to_string(), Type::String),
+                        ("subject".to_string(), Type::String),
+                        ("body".to_string(), Type::String),
+                        ("server".to_string(), Type::String),
+                        ("port".to_string(), Type::Int),
+                        ("username".to_string(), Type::String),
+                        ("password".to_string(), Type::String),
+                        ("use_tls".to_string(), Type::Bool),
+                    ],
+                    return_type: Type::Bool,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: true,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            );
 
             self.symbols.classes.insert(
                 "Email".to_string(),
@@ -572,7 +673,10 @@ impl TypeChecker {
             "write_file".to_string(),
             FunctionSymbol {
                 name: "write_file".to_string(),
-                params: vec![("path".to_string(), Type::String), ("content".to_string(), Type::String)],
+                params: vec![
+                    ("path".to_string(), Type::String),
+                    ("content".to_string(), Type::String),
+                ],
                 return_type: Type::Bool,
                 visibility: Visibility::Pub,
                 span: Span::default(),
@@ -592,7 +696,10 @@ impl TypeChecker {
             "get_env".to_string(),
             FunctionSymbol {
                 name: "get_env".to_string(),
-                params: vec![("key".to_string(), Type::String), ("default_val".to_string(), Type::String)],
+                params: vec![
+                    ("key".to_string(), Type::String),
+                    ("default_val".to_string(), Type::String),
+                ],
                 return_type: Type::String,
                 visibility: Visibility::Pub,
                 span: Span::default(),
@@ -620,6 +727,210 @@ impl TypeChecker {
                 span: Span::default(),
             },
         );
+
+        // Agent is a VM-provided class; applications can use its static API
+        // without copying the package interface declarations into each file.
+        let agent_methods = [
+            (
+                "create",
+                vec![
+                    ("name", Type::String),
+                    ("provider", Type::String),
+                    ("model", Type::String),
+                    ("api_key", Type::String),
+                    ("instructions", Type::String),
+                    ("persistent_memory_path", Type::String),
+                    ("max_model_steps", Type::Int),
+                    ("max_tool_calls", Type::Int),
+                    ("timeout_seconds", Type::Int),
+                ],
+                Type::Any,
+            ),
+            (
+                "register_tool",
+                vec![
+                    ("agent", Type::Any),
+                    ("tool_name", Type::String),
+                    ("description", Type::String),
+                    ("mantra_function_name", Type::String),
+                    ("requires_approval", Type::Bool),
+                ],
+                Type::Unit,
+            ),
+            (
+                "run",
+                vec![
+                    ("agent", Type::Any),
+                    ("session_id", Type::String),
+                    ("task", Type::String),
+                ],
+                Type::Any,
+            ),
+            (
+                "resume",
+                vec![
+                    ("agent", Type::Any),
+                    ("run_id", Type::String),
+                    ("approved", Type::Bool),
+                ],
+                Type::Any,
+            ),
+            (
+                "set_memory",
+                vec![
+                    ("agent", Type::Any),
+                    ("session_id", Type::String),
+                    ("key", Type::String),
+                    ("value", Type::String),
+                ],
+                Type::Unit,
+            ),
+            (
+                "remember",
+                vec![("agent", Type::Any), ("note", Type::String)],
+                Type::Unit,
+            ),
+            (
+                "conversation",
+                vec![("agent", Type::Any), ("session_id", Type::String)],
+                Type::String,
+            ),
+            (
+                "collaborate",
+                vec![
+                    ("agents", Type::Any),
+                    ("session_id", Type::String),
+                    ("task", Type::String),
+                ],
+                Type::Any,
+            ),
+        ]
+        .into_iter()
+        .map(|(name, params, return_type)| {
+            (
+                name.to_string(),
+                MethodSymbol {
+                    name: name.to_string(),
+                    params: params
+                        .into_iter()
+                        .map(|(param, ty)| (param.to_string(), ty))
+                        .collect(),
+                    return_type,
+                    visibility: Visibility::Pub,
+                    is_override: false,
+                    is_static: true,
+                    is_abstract: false,
+                    span: Span::default(),
+                },
+            )
+        })
+        .collect();
+        self.symbols.classes.insert(
+            "Agent".to_string(),
+            ClassSymbol {
+                name: "Agent".to_string(),
+                base_class: None,
+                interfaces: vec![],
+                is_abstract: false,
+                visibility: Visibility::Pub,
+                fields: HashMap::new(),
+                methods: HashMap::new(),
+                static_fields: HashMap::new(),
+                static_methods: agent_methods,
+                constructor: None,
+                span: Span::default(),
+            },
+        );
+
+        for (name, params, return_type) in [
+            (
+                "agent_create",
+                vec![
+                    ("name", Type::String),
+                    ("provider", Type::String),
+                    ("model", Type::String),
+                    ("api_key", Type::String),
+                    ("instructions", Type::String),
+                    ("persistent_memory_path", Type::String),
+                    ("max_model_steps", Type::Int),
+                    ("max_tool_calls", Type::Int),
+                    ("timeout_seconds", Type::Int),
+                ],
+                Type::Any,
+            ),
+            (
+                "agent_register_tool",
+                vec![
+                    ("agent", Type::Any),
+                    ("tool_name", Type::String),
+                    ("description", Type::String),
+                    ("function_name", Type::String),
+                    ("requires_approval", Type::Bool),
+                ],
+                Type::Unit,
+            ),
+            (
+                "agent_run",
+                vec![
+                    ("agent", Type::Any),
+                    ("session_id", Type::String),
+                    ("task", Type::String),
+                ],
+                Type::Any,
+            ),
+            (
+                "agent_resume",
+                vec![
+                    ("agent", Type::Any),
+                    ("run_id", Type::String),
+                    ("approved", Type::Bool),
+                ],
+                Type::Any,
+            ),
+            (
+                "agent_set_memory",
+                vec![
+                    ("agent", Type::Any),
+                    ("session_id", Type::String),
+                    ("key", Type::String),
+                    ("value", Type::String),
+                ],
+                Type::Unit,
+            ),
+            (
+                "agent_remember",
+                vec![("agent", Type::Any), ("note", Type::String)],
+                Type::Unit,
+            ),
+            (
+                "agent_conversation",
+                vec![("agent", Type::Any), ("session_id", Type::String)],
+                Type::String,
+            ),
+            (
+                "agent_collaborate",
+                vec![
+                    ("agents", Type::Any),
+                    ("session_id", Type::String),
+                    ("task", Type::String),
+                ],
+                Type::Any,
+            ),
+        ] {
+            self.symbols.functions.insert(
+                name.to_string(),
+                FunctionSymbol {
+                    name: name.to_string(),
+                    params: params
+                        .into_iter()
+                        .map(|(param, ty)| (param.to_string(), ty))
+                        .collect(),
+                    return_type,
+                    visibility: Visibility::Pub,
+                    span: Span::default(),
+                },
+            );
+        }
     }
 
     pub fn check_program(&mut self, program: &Program) -> Result<(), Vec<Diagnostic>> {
@@ -635,7 +946,11 @@ impl TypeChecker {
         // Phase 4: Typecheck bodies
         self.typecheck_bodies(program);
 
-        if self.diagnostics.iter().any(|d| d.level == crate::diagnostics::DiagnosticLevel::Error) {
+        if self
+            .diagnostics
+            .iter()
+            .any(|d| d.level == crate::diagnostics::DiagnosticLevel::Error)
+        {
             Err(self.diagnostics.clone())
         } else {
             Ok(())
@@ -648,7 +963,11 @@ impl TypeChecker {
                 Declaration::Interface(iface) => {
                     let mut methods = HashMap::new();
                     for m in &iface.methods {
-                        let params = m.params.iter().map(|p| (p.name.clone(), p.ty.clone().unwrap_or(Type::Any))).collect();
+                        let params = m
+                            .params
+                            .iter()
+                            .map(|p| (p.name.clone(), p.ty.clone().unwrap_or(Type::Any)))
+                            .collect();
                         methods.insert(
                             m.name.clone(),
                             MethodSymbol {
@@ -704,7 +1023,11 @@ impl TypeChecker {
                                 );
                             }
                             ClassMember::Method(m) => {
-                                let params: Vec<(String, Type)> = m.params.iter().map(|p| (p.name.clone(), p.ty.clone().unwrap_or(Type::Any))).collect();
+                                let params: Vec<(String, Type)> = m
+                                    .params
+                                    .iter()
+                                    .map(|p| (p.name.clone(), p.ty.clone().unwrap_or(Type::Any)))
+                                    .collect();
                                 let m_sym = MethodSymbol {
                                     name: m.name.clone(),
                                     params: params.clone(),
@@ -722,15 +1045,26 @@ impl TypeChecker {
                                         params.iter().cloned().collect();
                                     for stmt in &m.body {
                                         if let Stmt::Assign { target, value, .. } = stmt {
-                                            if let Expr::FieldAccess { receiver, field, .. } = target {
+                                            if let Expr::FieldAccess {
+                                                receiver, field, ..
+                                            } = target
+                                            {
                                                 if let Expr::Ident(ref recv_name, _) = **receiver {
-                                                    if recv_name == "self" && !fields.contains_key(field.as_str()) {
+                                                    if recv_name == "self"
+                                                        && !fields.contains_key(field.as_str())
+                                                    {
                                                         // Infer type from rhs ident (param name) or literal
-                                                        let inferred = if let Expr::Ident(ref rhs_name, _) = value {
-                                                            param_map.get(rhs_name).cloned().unwrap_or(Type::Any)
-                                                        } else {
-                                                            Type::Any
-                                                        };
+                                                        let inferred =
+                                                            if let Expr::Ident(ref rhs_name, _) =
+                                                                value
+                                                            {
+                                                                param_map
+                                                                    .get(rhs_name)
+                                                                    .cloned()
+                                                                    .unwrap_or(Type::Any)
+                                                            } else {
+                                                                Type::Any
+                                                            };
                                                         let vis = if field.starts_with('_') {
                                                             Visibility::Private
                                                         } else {
@@ -756,7 +1090,11 @@ impl TypeChecker {
                                 }
                             }
                             ClassMember::StaticMethod(sm) => {
-                                let params = sm.params.iter().map(|p| (p.name.clone(), p.ty.clone().unwrap_or(Type::Any))).collect();
+                                let params = sm
+                                    .params
+                                    .iter()
+                                    .map(|p| (p.name.clone(), p.ty.clone().unwrap_or(Type::Any)))
+                                    .collect();
                                 static_methods.insert(
                                     sm.name.clone(),
                                     MethodSymbol {
@@ -772,13 +1110,24 @@ impl TypeChecker {
                                 );
                             }
                             ClassMember::Property(p) => {
-                                let params = p.getter.params.iter().map(|param| (param.name.clone(), param.ty.clone().unwrap_or(Type::Any))).collect();
+                                let params = p
+                                    .getter
+                                    .params
+                                    .iter()
+                                    .map(|param| {
+                                        (param.name.clone(), param.ty.clone().unwrap_or(Type::Any))
+                                    })
+                                    .collect();
                                 methods.insert(
                                     p.name.clone(),
                                     MethodSymbol {
                                         name: p.name.clone(),
                                         params,
-                                        return_type: p.getter.return_type.clone().unwrap_or(Type::Any),
+                                        return_type: p
+                                            .getter
+                                            .return_type
+                                            .clone()
+                                            .unwrap_or(Type::Any),
                                         visibility: p.getter.visibility,
                                         is_override: false,
                                         is_static: false,
@@ -808,7 +1157,11 @@ impl TypeChecker {
                     );
                 }
                 Declaration::Function(f) => {
-                    let params = f.params.iter().map(|p| (p.name.clone(), p.ty.clone().unwrap_or(Type::Any))).collect();
+                    let params = f
+                        .params
+                        .iter()
+                        .map(|p| (p.name.clone(), p.ty.clone().unwrap_or(Type::Any)))
+                        .collect();
                     self.symbols.functions.insert(
                         f.name.clone(),
                         FunctionSymbol {
@@ -820,7 +1173,11 @@ impl TypeChecker {
                         },
                     );
                 }
-                Declaration::Import { module, alias, span: _ } => {
+                Declaration::Import {
+                    module,
+                    alias,
+                    span: _,
+                } => {
                     if let Some(al) = alias {
                         self.symbols.imported_symbols.insert(al.clone());
                     }
@@ -878,16 +1235,23 @@ impl TypeChecker {
                 if let Some(iface) = self.symbols.interfaces.get(iface_name).cloned() {
                     for (m_name, required_method) in &iface.methods {
                         // Look for method in class or ancestors
-                        if let Some(impl_method) = self.lookup_method_in_hierarchy(&cls.name, m_name) {
+                        if let Some(impl_method) =
+                            self.lookup_method_in_hierarchy(&cls.name, m_name)
+                        {
                             // Check parameter count
                             // Note: class method has 'self' as first param, while interface might or might not
-                            let impl_params_len = if impl_method.params.first().map_or(false, |p| p.0 == "self") {
-                                impl_method.params.len() - 1
-                            } else {
-                                impl_method.params.len()
-                            };
+                            let impl_params_len =
+                                if impl_method.params.first().map_or(false, |p| p.0 == "self") {
+                                    impl_method.params.len() - 1
+                                } else {
+                                    impl_method.params.len()
+                                };
 
-                            let req_params_len = if required_method.params.first().map_or(false, |p| p.0 == "self") {
+                            let req_params_len = if required_method
+                                .params
+                                .first()
+                                .map_or(false, |p| p.0 == "self")
+                            {
                                 required_method.params.len() - 1
                             } else {
                                 required_method.params.len()
@@ -917,7 +1281,10 @@ impl TypeChecker {
                 } else {
                     self.diagnostics.push(Diagnostic::error(
                         "E0108",
-                        format!("Class '{}' implements undefined interface '{}'", cls.name, iface_name),
+                        format!(
+                            "Class '{}' implements undefined interface '{}'",
+                            cls.name, iface_name
+                        ),
                         cls.span,
                     ));
                 }
@@ -965,7 +1332,10 @@ impl TypeChecker {
                         false
                     };
                     let in_iface = cls.interfaces.iter().any(|iface_name| {
-                        self.symbols.interfaces.get(iface_name).map_or(false, |iface| iface.methods.contains_key(m_name))
+                        self.symbols
+                            .interfaces
+                            .get(iface_name)
+                            .map_or(false, |iface| iface.methods.contains_key(m_name))
                     });
                     let has_base_method = in_base || in_iface;
 
@@ -984,7 +1354,11 @@ impl TypeChecker {
         }
     }
 
-    fn lookup_method_in_hierarchy(&self, class_name: &str, method_name: &str) -> Option<MethodSymbol> {
+    fn lookup_method_in_hierarchy(
+        &self,
+        class_name: &str,
+        method_name: &str,
+    ) -> Option<MethodSymbol> {
         let mut curr = Some(class_name.to_string());
         let mut visited = HashSet::new();
         while let Some(name) = curr {
@@ -1077,7 +1451,10 @@ impl TypeChecker {
                     if !self.is_subtype(&init_ty, &declared_ty) {
                         self.diagnostics.push(Diagnostic::error(
                             "E0109",
-                            format!("Type mismatch in variable '{}': expected {}, found {}", v.name, declared_ty, init_ty),
+                            format!(
+                                "Type mismatch in variable '{}': expected {}, found {}",
+                                v.name, declared_ty, init_ty
+                            ),
                             v.span,
                         ));
                     }
@@ -1090,7 +1467,12 @@ impl TypeChecker {
                     let ret_ty = f.return_type.clone().unwrap_or(Type::Unit);
                     scope_stack.enter_scope();
                     for p in &f.params {
-                        scope_stack.insert(p.name.clone(), p.ty.clone().unwrap_or(Type::Any), false, p.span);
+                        scope_stack.insert(
+                            p.name.clone(),
+                            p.ty.clone().unwrap_or(Type::Any),
+                            false,
+                            p.span,
+                        );
                     }
                     for stmt in &f.body {
                         self.typecheck_stmt(stmt, &mut scope_stack, &ret_ty);
@@ -1104,10 +1486,20 @@ impl TypeChecker {
                             ClassMember::Method(m) => {
                                 let ret_ty = m.return_type.clone().unwrap_or(Type::Unit);
                                 scope_stack.enter_scope();
-                                scope_stack.insert("self".to_string(), Type::Custom(cls.name.clone(), Vec::new()), false, m.span);
+                                scope_stack.insert(
+                                    "self".to_string(),
+                                    Type::Custom(cls.name.clone(), Vec::new()),
+                                    false,
+                                    m.span,
+                                );
                                 for p in &m.params {
                                     if p.name != "self" {
-                                        scope_stack.insert(p.name.clone(), p.ty.clone().unwrap_or(Type::Any), false, p.span);
+                                        scope_stack.insert(
+                                            p.name.clone(),
+                                            p.ty.clone().unwrap_or(Type::Any),
+                                            false,
+                                            p.span,
+                                        );
                                     }
                                 }
                                 for stmt in &m.body {
@@ -1119,7 +1511,12 @@ impl TypeChecker {
                                 let ret_ty = sm.return_type.clone().unwrap_or(Type::Unit);
                                 scope_stack.enter_scope();
                                 for p in &sm.params {
-                                    scope_stack.insert(p.name.clone(), p.ty.clone().unwrap_or(Type::Any), false, p.span);
+                                    scope_stack.insert(
+                                        p.name.clone(),
+                                        p.ty.clone().unwrap_or(Type::Any),
+                                        false,
+                                        p.span,
+                                    );
                                 }
                                 for stmt in &sm.body {
                                     self.typecheck_stmt(stmt, &mut scope_stack, &ret_ty);
@@ -1138,31 +1535,51 @@ impl TypeChecker {
 
     fn typecheck_stmt(&mut self, stmt: &Stmt, scopes: &mut ScopeStack, expected_ret: &Type) {
         match stmt {
-            Stmt::Let { name, ty, init, span } => {
+            Stmt::Let {
+                name,
+                ty,
+                init,
+                span,
+            } => {
                 let init_ty = self.infer_expr(init, scopes);
                 let final_ty = ty.clone().unwrap_or(init_ty.clone());
                 if !self.is_subtype(&init_ty, &final_ty) {
                     self.diagnostics.push(Diagnostic::error(
                         "E0109",
-                        format!("Type mismatch in variable '{}': expected {}, found {}", name, final_ty, init_ty),
+                        format!(
+                            "Type mismatch in variable '{}': expected {}, found {}",
+                            name, final_ty, init_ty
+                        ),
                         *span,
                     ));
                 }
                 scopes.insert(name.clone(), final_ty, false, *span);
             }
-            Stmt::Mut { name, ty, init, span } => {
+            Stmt::Mut {
+                name,
+                ty,
+                init,
+                span,
+            } => {
                 let init_ty = self.infer_expr(init, scopes);
                 let final_ty = ty.clone().unwrap_or(init_ty.clone());
                 if !self.is_subtype(&init_ty, &final_ty) {
                     self.diagnostics.push(Diagnostic::error(
                         "E0109",
-                        format!("Type mismatch in mutable variable '{}': expected {}, found {}", name, final_ty, init_ty),
+                        format!(
+                            "Type mismatch in mutable variable '{}': expected {}, found {}",
+                            name, final_ty, init_ty
+                        ),
                         *span,
                     ));
                 }
                 scopes.insert(name.clone(), final_ty, true, *span);
             }
-            Stmt::Assign { target, value, span } => {
+            Stmt::Assign {
+                target,
+                value,
+                span,
+            } => {
                 let val_ty = self.infer_expr(value, scopes);
                 if let Expr::Ident(ref name, _) = target {
                     if let Some(var) = scopes.lookup(name) {
@@ -1176,7 +1593,10 @@ impl TypeChecker {
                         if !self.is_subtype(&val_ty, &var.ty) {
                             self.diagnostics.push(Diagnostic::error(
                                 "E0109",
-                                format!("Cannot assign value of type {} to variable '{}' of type {}", val_ty, name, var.ty),
+                                format!(
+                                    "Cannot assign value of type {} to variable '{}' of type {}",
+                                    val_ty, name, var.ty
+                                ),
                                 *span,
                             ));
                         }
@@ -1184,7 +1604,12 @@ impl TypeChecker {
                         // Inferred local variable binding
                         scopes.insert(name.clone(), val_ty, true, *span);
                     }
-                } else if let Expr::FieldAccess { receiver, field, span: field_span } = target {
+                } else if let Expr::FieldAccess {
+                    receiver,
+                    field,
+                    span: field_span,
+                } = target
+                {
                     let recv_ty = self.infer_expr(receiver, scopes);
                     if let Type::Custom(ref cls_name, _) = recv_ty {
                         self.check_member_access(cls_name, field, *field_span);
@@ -1195,7 +1620,13 @@ impl TypeChecker {
                 let _ = self.infer_expr(target, scopes);
                 let _ = self.infer_expr(value, scopes);
             }
-            Stmt::If { condition, then_branch, elif_branches, else_branch, span } => {
+            Stmt::If {
+                condition,
+                then_branch,
+                elif_branches,
+                else_branch,
+                span,
+            } => {
                 let cond_ty = self.infer_expr(condition, scopes);
                 if !self.is_subtype(&cond_ty, &Type::Bool) {
                     self.diagnostics.push(Diagnostic::error(
@@ -1234,7 +1665,11 @@ impl TypeChecker {
                     scopes.exit_scope();
                 }
             }
-            Stmt::While { condition, body, span } => {
+            Stmt::While {
+                condition,
+                body,
+                span,
+            } => {
                 let cond_ty = self.infer_expr(condition, scopes);
                 if !self.is_subtype(&cond_ty, &Type::Bool) {
                     self.diagnostics.push(Diagnostic::error(
@@ -1249,7 +1684,12 @@ impl TypeChecker {
                 }
                 scopes.exit_scope();
             }
-            Stmt::For { var, iterable, body, span: _ } => {
+            Stmt::For {
+                var,
+                iterable,
+                body,
+                span: _,
+            } => {
                 let iter_ty = self.infer_expr(iterable, scopes);
                 let elem_ty = match iter_ty {
                     Type::List(elem) => *elem,
@@ -1271,7 +1711,10 @@ impl TypeChecker {
                 if !self.is_subtype(&val_ty, expected_ret) {
                     self.diagnostics.push(Diagnostic::error(
                         "E0111",
-                        format!("Return type mismatch: expected {}, found {}", expected_ret, val_ty),
+                        format!(
+                            "Return type mismatch: expected {}, found {}",
+                            expected_ret, val_ty
+                        ),
                         *span,
                     ));
                 }
@@ -1290,7 +1733,10 @@ impl TypeChecker {
                 if !is_inside_declaring_class {
                     self.diagnostics.push(Diagnostic::error(
                         "E0102",
-                        format!("Cannot access private field '{}' of class '{}' from outside", member_name, class_name),
+                        format!(
+                            "Cannot access private field '{}' of class '{}' from outside",
+                            member_name, class_name
+                        ),
                         span,
                     ));
                 }
@@ -1325,23 +1771,37 @@ impl TypeChecker {
                     Type::Any
                 }
             }
-            Expr::Binary { op, left, right, span } => {
+            Expr::Binary {
+                op,
+                left,
+                right,
+                span,
+            } => {
                 let l_ty = self.infer_expr(left, scopes);
                 let r_ty = self.infer_expr(right, scopes);
                 match op {
-                    BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Mod => {
+                    BinaryOp::Add
+                    | BinaryOp::Sub
+                    | BinaryOp::Mul
+                    | BinaryOp::Div
+                    | BinaryOp::Mod => {
                         if l_ty == Type::Float || r_ty == Type::Float {
                             Type::Float
-                        } else if *op == BinaryOp::Add && (l_ty == Type::String || r_ty == Type::String) {
+                        } else if *op == BinaryOp::Add
+                            && (l_ty == Type::String || r_ty == Type::String)
+                        {
                             // String + anything (including Any from unresolved exprs) = String
                             Type::String
                         } else {
                             Type::Int
                         }
                     }
-                    BinaryOp::Eq | BinaryOp::NotEq | BinaryOp::Lt | BinaryOp::LtEq | BinaryOp::Gt | BinaryOp::GtEq => {
-                        Type::Bool
-                    }
+                    BinaryOp::Eq
+                    | BinaryOp::NotEq
+                    | BinaryOp::Lt
+                    | BinaryOp::LtEq
+                    | BinaryOp::Gt
+                    | BinaryOp::GtEq => Type::Bool,
                     BinaryOp::And | BinaryOp::Or => {
                         // Allow Any (unresolved imported types) to flow through without errors.
                         // Only emit E0113 when both sides are concretely non-boolean.
@@ -1397,7 +1857,12 @@ impl TypeChecker {
                 }
                 Type::Any
             }
-            Expr::MethodCall { receiver, method, args, span } => {
+            Expr::MethodCall {
+                receiver,
+                method,
+                args,
+                span,
+            } => {
                 let recv_ty = self.infer_expr(receiver, scopes);
                 for arg in args {
                     let _ = self.infer_expr(arg, scopes);
@@ -1425,7 +1890,11 @@ impl TypeChecker {
                         }
                     }
                 } else if recv_ty == Type::String {
-                    if method == "to_string" || method == "trim" || method == "upper" || method == "lower" {
+                    if method == "to_string"
+                        || method == "trim"
+                        || method == "upper"
+                        || method == "lower"
+                    {
                         return Type::String;
                     }
                     if method == "len" {
@@ -1438,7 +1907,11 @@ impl TypeChecker {
                 }
                 Type::Any
             }
-            Expr::FieldAccess { receiver, field, span } => {
+            Expr::FieldAccess {
+                receiver,
+                field,
+                span,
+            } => {
                 let recv_ty = self.infer_expr(receiver, scopes);
                 if let Type::Custom(ref cls_name, _) = recv_ty {
                     self.check_member_access(cls_name, field, *span);
@@ -1460,13 +1933,21 @@ impl TypeChecker {
                 }
                 Type::Unit
             }
-            Expr::SuperMethodCall { method: _, args, span: _ } => {
+            Expr::SuperMethodCall {
+                method: _,
+                args,
+                span: _,
+            } => {
                 for arg in args {
                     let _ = self.infer_expr(arg, scopes);
                 }
                 Type::Any
             }
-            Expr::Index { receiver, index, span: _ } => {
+            Expr::Index {
+                receiver,
+                index,
+                span: _,
+            } => {
                 let r_ty = self.infer_expr(receiver, scopes);
                 let _ = self.infer_expr(index, scopes);
                 match r_ty {
@@ -1499,7 +1980,9 @@ impl TypeChecker {
             Expr::Await { value, .. } => {
                 let inner_ty = self.infer_expr(value, scopes);
                 match inner_ty {
-                    Type::Custom(ref name, ref args) if (name == "Task" || name == "Future") && !args.is_empty() => {
+                    Type::Custom(ref name, ref args)
+                        if (name == "Task" || name == "Future") && !args.is_empty() =>
+                    {
                         args[0].clone()
                     }
                     _ => inner_ty,

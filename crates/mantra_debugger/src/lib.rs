@@ -40,8 +40,16 @@ impl DebugSession {
 
         for l in start..=end {
             let marker = if l == line { "-> " } else { "   " };
-            let bp_marker = if self.breakpoints.contains(&l) { "[*]" } else { "   " };
-            let src = self.source_lines.get(l - 1).map(|s| s.as_str()).unwrap_or("");
+            let bp_marker = if self.breakpoints.contains(&l) {
+                "[*]"
+            } else {
+                "   "
+            };
+            let src = self
+                .source_lines
+                .get(l - 1)
+                .map(|s| s.as_str())
+                .unwrap_or("");
             println!("{}{}{:4} | {}", marker, bp_marker, l, src);
         }
     }
@@ -98,7 +106,11 @@ impl DebugSession {
                         if self.add_breakpoint(line_num) {
                             println!("Breakpoint set at line {}", line_num);
                         } else {
-                            println!("Line {} out of range (1-{})", line_num, self.source_lines.len());
+                            println!(
+                                "Line {} out of range (1-{})",
+                                line_num,
+                                self.source_lines.len()
+                            );
                         }
                     } else {
                         println!("Invalid line number: {}", parts[1]);
@@ -123,7 +135,11 @@ impl DebugSession {
                         sorted.sort();
                         println!("Active Breakpoints:");
                         for bp in sorted {
-                            println!("  Line {}: {}", bp, self.source_lines.get(*bp - 1).unwrap_or(&"".to_string()));
+                            println!(
+                                "  Line {}: {}",
+                                bp,
+                                self.source_lines.get(*bp - 1).unwrap_or(&"".to_string())
+                            );
                         }
                     }
                 }
@@ -170,4 +186,3 @@ impl DebugSession {
         Ok(())
     }
 }
-

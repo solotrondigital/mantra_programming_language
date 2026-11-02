@@ -23,7 +23,13 @@ impl CodeAction {
         let cmd = self
             .command
             .as_deref()
-            .map(|c| format!(r#","command":{{"command":"{}","title":"{}"}}"#, escape_json_str(c), escape_json_str(&self.title)))
+            .map(|c| {
+                format!(
+                    r#","command":{{"command":"{}","title":"{}"}}"#,
+                    escape_json_str(c),
+                    escape_json_str(&self.title)
+                )
+            })
             .unwrap_or_default();
         format!(
             r#"{{"title":"{}","kind":"{}"{}{}}}"#,
@@ -75,13 +81,37 @@ pub fn get_code_actions(
 
     // ── Diagnostic-based quick fixes via mantra_intelligence (MVP 2) ───
     for diag in diagnostics_json {
+        let parsed = serde_json::from_str::<serde_json::Value>(diag).ok();
+        let code = parsed
+            .as_ref()
+            .and_then(|value| value.get("code"))
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or("");
+        let message = parsed
+            .as_ref()
+            .and_then(|value| value.get("message"))
+            .and_then(serde_json::Value::as_str)
+            .unwrap_or(diag);
+        let diagnostic_line = parsed
+            .as_ref()
+            .and_then(|value| value.pointer("/range/start/line"))
+            .and_then(serde_json::Value::as_u64)
+            .map(|line| line as usize + 1)
+            .unwrap_or((_range.start.line + 1) as usize);
+        let diagnostic_col = parsed
+            .as_ref()
+            .and_then(|value| value.pointer("/range/start/character"))
+            .and_then(serde_json::Value::as_u64)
+            .map(|col| col as usize + 1)
+            .unwrap_or(_range.start.character as usize + 1);
+
         let patches = mantra_intelligence::QuickFixEngine::suggest_fixes(
             &document.uri,
             &document.text,
-            "E0012",
-            diag,
-            (_range.start.line + 1) as usize,
-            _range.start.character as usize,
+            code,
+            message,
+            diagnostic_line,
+            diagnostic_col,
         );
         for patch in patches {
             let start_line = patch.line.saturating_sub(1) as u32;
@@ -101,7 +131,10 @@ pub fn get_code_actions(
             });
         }
 
-        if diag.contains("error") || diag.contains("Error") || diag.contains("E00") {
+        if message.to_lowercase().contains("error")
+            || message.contains("Type mismatch")
+            || code.starts_with('E')
+        {
             actions.push(CodeAction {
                 title: "💡 Mantra AI: Explain compiler error".to_string(),
                 kind: "quickfix".to_string(),
@@ -110,7 +143,7 @@ pub fn get_code_actions(
             });
         }
 
-        if diag.contains("undefined") || diag.contains("Undefined") {
+        if message.to_lowercase().contains("undefined") {
             actions.push(CodeAction {
                 title: "Add import for undefined symbol".to_string(),
                 kind: "quickfix".to_string(),
@@ -166,4 +199,3 @@ fn organize_imports(document: &Document) -> Option<String> {
     }
     Some(result)
 }
-

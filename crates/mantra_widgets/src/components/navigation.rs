@@ -44,8 +44,17 @@ impl Widget for AppBar {
     }
 
     fn render(&self, ctx: &BuildContext) -> String {
-        let leading_html = self.leading.as_ref().map(|l| l.render(ctx)).unwrap_or_default();
-        let actions_html = self.actions.iter().map(|a| a.render(ctx)).collect::<Vec<_>>().join("");
+        let leading_html = self
+            .leading
+            .as_ref()
+            .map(|l| l.render(ctx))
+            .unwrap_or_default();
+        let actions_html = self
+            .actions
+            .iter()
+            .map(|a| a.render(ctx))
+            .collect::<Vec<_>>()
+            .join("");
 
         format!(
             r#"<header id="{}" class="mantra-appbar" style="height:56px;padding:0 16px;display:flex;align-items:center;background:var(--mantra-surface,#fff);border-bottom:1px solid var(--mantra-border,#e2e8f0);position:sticky;top:0;z-index:100;box-sizing:border-box;">
@@ -139,4 +148,3 @@ fn uuid_simple() -> u32 {
     static COUNTER: AtomicU32 = AtomicU32::new(7000);
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
-

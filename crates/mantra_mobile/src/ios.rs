@@ -161,7 +161,8 @@ class ViewController: UIViewController {
         hostingController.didMove(toParent: self)
     }
 }
-"#.to_string()
+"#
+        .to_string()
     }
 
     /// Generates iOS Info.plist with permission usage strings and App Transport Security.

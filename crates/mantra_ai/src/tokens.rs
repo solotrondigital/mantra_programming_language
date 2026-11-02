@@ -60,8 +60,10 @@ impl TokenManager {
                 return Err(limit);
             }
         }
-        self.total_prompt_tokens.fetch_add(usage.prompt_tokens, Ordering::Relaxed);
-        self.total_completion_tokens.fetch_add(usage.completion_tokens, Ordering::Relaxed);
+        self.total_prompt_tokens
+            .fetch_add(usage.prompt_tokens, Ordering::Relaxed);
+        self.total_completion_tokens
+            .fetch_add(usage.completion_tokens, Ordering::Relaxed);
         Ok(())
     }
 
@@ -83,4 +85,3 @@ impl TokenManager {
         self.total_completion_tokens.store(0, Ordering::Relaxed);
     }
 }
-

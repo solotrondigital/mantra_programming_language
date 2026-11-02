@@ -24,7 +24,7 @@ pub mod streaming;
 pub mod tokens;
 
 pub use auth::AuthCredential;
-pub use client::{AI, AIModelHandle};
+pub use client::{AIModelHandle, AI};
 pub use config::AIConfig;
 pub use error::{AIError, AIResult};
 pub use prompt::{Prompt, PromptTemplate};
@@ -44,4 +44,3 @@ pub fn env(var_name: &str) -> AuthCredential {
 pub fn api_key(key: &str) -> AuthCredential {
     AuthCredential::ApiKey(key.to_string())
 }
-

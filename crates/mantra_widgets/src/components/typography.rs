@@ -44,7 +44,10 @@ impl Widget for Text {
             .map(|s| format!(r#" style="{}""#, s.to_css()))
             .unwrap_or_default();
 
-        format!(r#"<span id="{}" class="mantra-text"{}>{}</span>"#, self.id, style_attr, self.content)
+        format!(
+            r#"<span id="{}" class="mantra-text"{}>{}</span>"#,
+            self.id, style_attr, self.content
+        )
     }
 }
 
@@ -58,15 +61,27 @@ pub struct Heading {
 
 impl Heading {
     pub fn h1(text: impl Into<String>) -> Self {
-        Self { id: format!("h_{}", uuid_simple()), level: 1, text: text.into() }
+        Self {
+            id: format!("h_{}", uuid_simple()),
+            level: 1,
+            text: text.into(),
+        }
     }
 
     pub fn h2(text: impl Into<String>) -> Self {
-        Self { id: format!("h_{}", uuid_simple()), level: 2, text: text.into() }
+        Self {
+            id: format!("h_{}", uuid_simple()),
+            level: 2,
+            text: text.into(),
+        }
     }
 
     pub fn h3(text: impl Into<String>) -> Self {
-        Self { id: format!("h_{}", uuid_simple()), level: 3, text: text.into() }
+        Self {
+            id: format!("h_{}", uuid_simple()),
+            level: 3,
+            text: text.into(),
+        }
     }
 }
 

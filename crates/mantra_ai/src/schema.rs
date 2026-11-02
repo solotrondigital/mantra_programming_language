@@ -1,7 +1,7 @@
 //! Structured Output and Schema Validation for Mantra AI.
 
-use std::collections::HashMap;
 use crate::error::{AIError, AIResult};
+use std::collections::HashMap;
 
 /// JSON-compatible Value representation for structured AI outputs without external crates.
 #[derive(Debug, Clone, PartialEq)]
@@ -47,7 +47,13 @@ impl JsonValue {
     pub fn to_json_string(&self) -> String {
         match self {
             JsonValue::Null => "null".to_string(),
-            JsonValue::Bool(b) => if *b { "true".to_string() } else { "false".to_string() },
+            JsonValue::Bool(b) => {
+                if *b {
+                    "true".to_string()
+                } else {
+                    "false".to_string()
+                }
+            }
             JsonValue::Number(n) => n.to_string(),
             JsonValue::String(s) => format!("\"{}\"", s.replace('"', "\\\"")),
             JsonValue::Array(arr) => {
@@ -55,9 +61,10 @@ impl JsonValue {
                 format!("[{}]", items.join(","))
             }
             JsonValue::Object(obj) => {
-                let pairs: Vec<String> = obj.iter().map(|(k, v)| {
-                    format!("\"{}\":{}", k, v.to_json_string())
-                }).collect();
+                let pairs: Vec<String> = obj
+                    .iter()
+                    .map(|(k, v)| format!("\"{}\":{}", k, v.to_json_string()))
+                    .collect();
                 format!("{{{}}}", pairs.join(","))
             }
         }
@@ -118,7 +125,10 @@ impl StructuredSchema {
                                 return Err(AIError::SchemaValidationError {
                                     expected: format!("Field '{}' is required", field_name),
                                     actual: "Missing field".to_string(),
-                                    details: format!("Object at '{}' lacks required field '{}'", path, field_name),
+                                    details: format!(
+                                        "Object at '{}' lacks required field '{}'",
+                                        path, field_name
+                                    ),
                                 });
                             }
                         }
@@ -126,14 +136,11 @@ impl StructuredSchema {
                 }
                 Ok(())
             }
-            (expected, actual) => {
-                Err(AIError::SchemaValidationError {
-                    expected: format!("{:?}", expected),
-                    actual: format!("{:?}", actual),
-                    details: format!("Type mismatch at '{}'", path),
-                })
-            }
+            (expected, actual) => Err(AIError::SchemaValidationError {
+                expected: format!("{:?}", expected),
+                actual: format!("{:?}", actual),
+                details: format!("Type mismatch at '{}'", path),
+            }),
         }
     }
 }
-

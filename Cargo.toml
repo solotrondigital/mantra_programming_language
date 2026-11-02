@@ -22,6 +22,8 @@ members = [
     "crates/mantra_util",
     "crates/mantra_email",
     "crates/mantra_intelligence",
+    "crates/mantra_agents",
+    "crates/mantra_ml",
 ]
 resolver = "2"
 

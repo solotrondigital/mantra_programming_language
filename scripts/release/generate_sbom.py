@@ -12,6 +12,8 @@ import os
 import sys
 import json
 import uuid
+import tomllib
+import re
 from datetime import datetime, timezone
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -22,40 +24,50 @@ if hasattr(sys.stderr, "reconfigure"):
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 def get_version():
-    if len(sys.argv) > 1 and sys.argv[1] and not sys.argv[1].startswith("-"):
+    if len(sys.argv) > 1 and re.fullmatch(r"v?\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?", sys.argv[1]):
         v = sys.argv[1]
         return v.lstrip("vV")
-    cargo_path = os.path.join(REPO_ROOT, "Cargo.toml")
-    if os.path.exists(cargo_path):
-        with open(cargo_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("version") and "=" in line:
-                    return line.split("=", 1)[1].strip().strip('"').strip("'")
-    return "0.5.0"
+    cargo_path = os.path.join(REPO_ROOT, "crates", "mantrac", "Cargo.toml")
+    with open(cargo_path, "rb") as f:
+        return tomllib.load(f)["package"]["version"]
 
 VERSION = get_version()
 DIST_DIR = os.path.join(REPO_ROOT, f"dist/releases/v{VERSION}")
 
-CRATE_NAMES = [
-    ("mantrac", "Mantra primary compiler executable and driver"),
-    ("mantrac_lexer", "High-speed lexical tokenizer with source span tracking"),
-    ("mantrac_parser", "Recursive-descent AST parser with Pratt operator precedence"),
-    ("mantrac_ast", "Strongly-typed Abstract Syntax Tree definitions"),
-    ("mantrac_checker", "Static semantic analyzer and type checker"),
-    ("mantrac_ir", "SSA-based intermediate representation and optimizer"),
-    ("mantrac_codegen", "Native C99 emitter and Clang/LLVM machine code generator"),
-    ("mantrac_vm", "Native bytecode interpreter and virtual machine"),
-    ("mantra_bootstrap", "Self-hosting stage-0 bootstrap toolchain"),
-    ("mantra_mdk", "Mantra Developer Kit CLI (create, run, build, test, audit)"),
-    ("mantra_lsp", "Language Server Protocol daemon for modern IDEs"),
-    ("mantra_debugger", "Interactive runtime debugger and state inspector"),
-    ("mantra_web", "Async HTTP web server, routing, and WebAssembly engine"),
-    ("mantra_rest", "RESTful API framework and high-performance JSON serializer"),
-    ("mantra_graphql", "Native GraphQL schema builder and query execution engine"),
-    ("mantra_mobile", "Hybrid mobile platform bridges for Android and iOS"),
-    ("mantra_sql_orm", "Enterprise SQL ORM (Oracle, MSSQL, MongoDB, SQLite, Postgres)"),
-]
+CRATE_DESCRIPTIONS = {
+    "mantrac": "Mantra compiler executable and driver",
+    "mantrac_lexer": "Lexer with source span tracking",
+    "mantrac_parser": "Parser and AST builder",
+    "mantrac_ast": "Abstract syntax tree definitions",
+    "mantrac_checker": "Static semantic analyzer and type checker",
+    "mantrac_ir": "Intermediate representation and optimizer",
+    "mantrac_codegen": "Native code emitter",
+    "mantrac_vm": "Mantra virtual machine",
+    "mantra_bootstrap": "Compiler bootstrap tooling",
+    "mantra_mdk": "Mantra Developer Kit CLI",
+    "mantra_lsp": "Language Server Protocol implementation",
+    "mantra_debugger": "Runtime debugger",
+    "mantra_web": "Web runtime primitives",
+    "mantra_rest": "REST framework",
+    "mantra_graphql": "GraphQL runtime",
+    "mantra_mobile": "Android and iOS bridge framework",
+    "mantra_sql_orm": "SQL object relational mapping",
+}
+
+def get_workspace_crates():
+    with open(os.path.join(REPO_ROOT, "Cargo.toml"), "rb") as f:
+        workspace = tomllib.load(f)["workspace"]
+    crates = []
+    for member in workspace["members"]:
+        manifest_path = os.path.join(REPO_ROOT, member, "Cargo.toml")
+        with open(manifest_path, "rb") as f:
+            package = tomllib.load(f)["package"]
+        name = package["name"]
+        description = package.get("description") or CRATE_DESCRIPTIONS.get(name, f"Mantra workspace crate {name}")
+        crates.append((name, description, package["version"]))
+    return sorted(crates)
+
+CRATE_NAMES = get_workspace_crates()
 
 def generate_spdx():
     packages = []
@@ -76,12 +88,12 @@ def generate_spdx():
 
     relationships = []
 
-    for name, desc in CRATE_NAMES:
+    for name, desc, package_version in CRATE_NAMES:
         spdx_id = f"SPDXRef-Package-{name.replace('_', '-')}"
         packages.append({
             "name": name,
             "SPDXID": spdx_id,
-            "versionInfo": VERSION,
+            "versionInfo": package_version,
             "supplier": "Organization: Solotron Technologies Private Limited",
             "downloadLocation": "NOASSERTION",
             "filesAnalyzed": False,
@@ -117,15 +129,15 @@ def generate_spdx():
 
 def generate_cyclonedx():
     components = []
-    for name, desc in CRATE_NAMES:
+    for name, desc, package_version in CRATE_NAMES:
         components.append({
             "type": "library",
             "name": name,
-            "version": VERSION,
+            "version": package_version,
             "description": desc,
             "scope": "required",
             "licenses": [{"license": {"id": "MIT"}}, {"license": {"id": "GPL-3.0"}}],
-            "purl": f"pkg:cargo/{name}@{VERSION}",
+            "purl": f"pkg:cargo/{name}@{package_version}",
             "supplier": {"name": "Solotron Technologies Private Limited"}
         })
 

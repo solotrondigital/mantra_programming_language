@@ -1,9 +1,9 @@
 //! SMTP network client implementation using standard TCP sockets.
 
+use crate::message::EmailMessage;
 use std::io::{BufRead, BufReader, Write};
 use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
-use crate::message::EmailMessage;
 
 /// Configuration options for an SMTP connection.
 #[derive(Debug, Clone)]
@@ -151,7 +151,10 @@ impl SmtpClient {
         let _ = stream.write_all(b"QUIT\r\n");
         let _ = stream.flush();
 
-        Ok(format!("SENT: Successfully delivered to {}", recipients.join(", ")))
+        Ok(format!(
+            "SENT: Successfully delivered to {}",
+            recipients.join(", ")
+        ))
     }
 
     fn connect(&self, addr: &str) -> Result<TcpStream, String> {
@@ -220,8 +223,16 @@ impl SmtpClient {
         let mut result = String::new();
         for chunk in data.chunks(3) {
             let b0 = chunk[0] as usize;
-            let b1 = if chunk.len() > 1 { chunk[1] as usize } else { 0 };
-            let b2 = if chunk.len() > 2 { chunk[2] as usize } else { 0 };
+            let b1 = if chunk.len() > 1 {
+                chunk[1] as usize
+            } else {
+                0
+            };
+            let b2 = if chunk.len() > 2 {
+                chunk[2] as usize
+            } else {
+                0
+            };
 
             let c0 = (b0 >> 2) & 0x3F;
             let c1 = ((b0 & 0x03) << 4) | ((b1 >> 4) & 0x0F);
@@ -244,4 +255,3 @@ impl SmtpClient {
         result
     }
 }
-

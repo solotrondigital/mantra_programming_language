@@ -60,4 +60,3 @@ pub trait State<T: Widget>: Debug + Send + Sync {
     fn build(&self, widget: &T, ctx: &BuildContext) -> String;
     fn dispose(&mut self) {}
 }
-

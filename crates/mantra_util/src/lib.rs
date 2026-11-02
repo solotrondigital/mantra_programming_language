@@ -5,4 +5,3 @@
 //! - `ENV`: Cross-platform operating system environment variable loader.
 
 pub const MANTRA_UTIL_SOURCE: &str = include_str!("../lib/mantra_util.mantra");
-

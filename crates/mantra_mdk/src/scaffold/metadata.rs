@@ -66,7 +66,8 @@ type = "{app_type}"
             }
             AppType::Ai => {
                 manifest.push_str("\"mantra.ai\" = \"0.7.0\"\n\n");
-                manifest.push_str(r#"[ai]
+                manifest.push_str(
+                    r#"[ai]
 default_provider = "openai"
 default_model = "assistant"
 timeout_ms = 30000
@@ -92,7 +93,8 @@ name = "claude-3-5-sonnet"
 env = "ANTHROPIC_API_KEY"
 temperature = 0.1
 max_tokens = 8192
-"#);
+"#,
+                );
             }
         }
 
@@ -448,4 +450,3 @@ mantra create \
 ```"#
     }
 }
-

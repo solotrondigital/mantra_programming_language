@@ -109,7 +109,7 @@ impl ReproducibilityChecker {
             exception_reason: Some(
                 "Stage header lines ('; mantrac-self … stage=N …') are excluded \
                  from comparison because the stage number legitimately differs."
-                .to_string()
+                    .to_string(),
             ),
         }
     }
@@ -147,7 +147,10 @@ mod tests {
         let checker = ReproducibilityChecker::new();
         let s = "KEYWORD:def\nIDENT:main\nSYM:(\nSYM:)\nEOF";
         let r = checker.compare_strings(s, s);
-        assert!(r.identical, "Identical inputs should produce identical result");
+        assert!(
+            r.identical,
+            "Identical inputs should produce identical result"
+        );
     }
 
     #[test]
@@ -156,7 +159,11 @@ mod tests {
         let s1 = "; mantrac-self 0.3.0 stage=1\nKEYWORD:def\nEOF";
         let s2 = "; mantrac-self 0.3.0 stage=2\nKEYWORD:def\nEOF";
         let r = checker.compare_strings(s1, s2);
-        assert!(r.identical, "Stage header differences should be excluded: {:?}", r.differences);
+        assert!(
+            r.identical,
+            "Stage header differences should be excluded: {:?}",
+            r.differences
+        );
     }
 
     #[test]
@@ -170,4 +177,3 @@ mod tests {
         assert_eq!(r.differences[0].line_number, 2);
     }
 }
-

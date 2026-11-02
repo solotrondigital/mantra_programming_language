@@ -1,4 +1,6 @@
-use super::{AdapterKind, Cursor, CursorDirection, DatabaseAdapter, ProcedureParam, ProcedureResult};
+use super::{
+    AdapterKind, Cursor, CursorDirection, DatabaseAdapter, ProcedureParam, ProcedureResult,
+};
 use crate::model::{FieldValue, Row};
 use std::collections::HashMap;
 
@@ -59,13 +61,19 @@ impl DatabaseAdapter for GenericDbAdapter {
         self.connected
     }
 
-    fn execute_procedure(&self, name: &str, params: &[ProcedureParam]) -> Result<ProcedureResult, String> {
+    fn execute_procedure(
+        &self,
+        name: &str,
+        params: &[ProcedureParam],
+    ) -> Result<ProcedureResult, String> {
         if !self.connected {
             return Err(format!("Generic adapter '{}': Not connected", self.name));
         }
         let mut output_params = HashMap::new();
         for p in params {
-            if p.direction == super::ParamDirection::Out || p.direction == super::ParamDirection::InOut {
+            if p.direction == super::ParamDirection::Out
+                || p.direction == super::ParamDirection::InOut
+            {
                 output_params.insert(p.name.clone(), FieldValue::Text("GENERIC_OUT".to_string()));
             }
         }
@@ -86,7 +94,12 @@ impl DatabaseAdapter for GenericDbAdapter {
         let mut row = Row::new();
         row.insert("CURSOR", FieldValue::Text(name.to_string()));
         row.insert("QUERY", FieldValue::Text(query.to_string()));
-        Ok(Cursor::new(name, query, vec![row], CursorDirection::ForwardOnly))
+        Ok(Cursor::new(
+            name,
+            query,
+            vec![row],
+            CursorDirection::ForwardOnly,
+        ))
     }
 
     fn close_cursor(&self, _name: &str) -> Result<(), String> {
@@ -129,11 +142,19 @@ impl DatabaseAdapter for GenericDbAdapter {
         Ok(format!("REFRESH VIEW {}", name))
     }
 
-    fn execute_scalar_function(&self, name: &str, args: &[FieldValue]) -> Result<FieldValue, String> {
+    fn execute_scalar_function(
+        &self,
+        name: &str,
+        args: &[FieldValue],
+    ) -> Result<FieldValue, String> {
         if !self.connected {
             return Err(format!("Generic adapter '{}': Not connected", self.name));
         }
-        let args_str = args.iter().map(|a| a.to_string()).collect::<Vec<_>>().join(", ");
+        let args_str = args
+            .iter()
+            .map(|a| a.to_string())
+            .collect::<Vec<_>>()
+            .join(", ");
         Ok(FieldValue::Text(format!("{}({})", name, args_str)))
     }
 
@@ -147,4 +168,3 @@ impl DatabaseAdapter for GenericDbAdapter {
         Ok(vec![row])
     }
 }
-

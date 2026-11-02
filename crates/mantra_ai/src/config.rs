@@ -1,12 +1,12 @@
 //! Project-level AI Configuration parser and runtime settings.
 //! Supports `project.toml` or `mantra.toml` [ai] and [ai.models] sections.
 
-use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
 use crate::auth::AuthCredential;
 use crate::error::{AIError, AIResult};
 use crate::registry::{ModelRegistry, ModelSpec};
+use std::collections::HashMap;
+use std::fs;
+use std::path::Path;
 
 /// Project-level AI Configuration loaded from manifest files.
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -118,7 +118,8 @@ impl AIConfig {
                     // Check if env_val is a literal key (e.g. starts with "sk-", "AIza", or long key)
                     if env_val.starts_with("sk-")
                         || env_val.starts_with("AIza")
-                        || (env_val.len() > 30 && !env_val.chars().all(|c| c.is_ascii_uppercase() || c == '_'))
+                        || (env_val.len() > 30
+                            && !env_val.chars().all(|c| c.is_ascii_uppercase() || c == '_'))
                     {
                         AuthCredential::ApiKey(env_val)
                     } else if let Some(constant_key) = config.keys.get(&env_val) {
@@ -126,7 +127,9 @@ impl AIConfig {
                     } else {
                         AuthCredential::EnvVar(env_val)
                     }
-                } else if let Some(constant_key) = config.keys.get(&prov_lower)
+                } else if let Some(constant_key) = config
+                    .keys
+                    .get(&prov_lower)
                     .or_else(|| config.keys.get(&format!("{}_api_key", prov_lower)))
                     .or_else(|| config.keys.get(default_env_var))
                 {
@@ -175,15 +178,18 @@ impl AIConfig {
             if let Some((k, v)) = trimmed.split_once('=') {
                 let key = k.trim();
                 let raw_val = v.trim();
-                let val = if raw_val.starts_with('"') && raw_val.ends_with('"') && raw_val.len() >= 2 {
-                    &raw_val[1..raw_val.len() - 1]
-                } else {
-                    raw_val
-                };
+                let val =
+                    if raw_val.starts_with('"') && raw_val.ends_with('"') && raw_val.len() >= 2 {
+                        &raw_val[1..raw_val.len() - 1]
+                    } else {
+                        raw_val
+                    };
 
                 match current_section {
                     "ai" => match key {
-                        "default_provider" | "provider" => config.default_provider = val.to_string(),
+                        "default_provider" | "provider" => {
+                            config.default_provider = val.to_string()
+                        }
                         "default_model" | "model" => config.default_model = val.to_string(),
                         "timeout_ms" => {
                             if let Ok(num) = val.parse::<u64>() {
@@ -196,8 +202,9 @@ impl AIConfig {
                             }
                         }
                         // Support constants/keys directly in [ai]
-                        "api_key" | "apiKey" | "openai_api_key" | "gemini_api_key" | "anthropic_api_key"
-                        | "OPENAI_API_KEY" | "GEMINI_API_KEY" | "ANTHROPIC_API_KEY" => {
+                        "api_key" | "apiKey" | "openai_api_key" | "gemini_api_key"
+                        | "anthropic_api_key" | "OPENAI_API_KEY" | "GEMINI_API_KEY"
+                        | "ANTHROPIC_API_KEY" => {
                             config.keys.insert(key.to_string(), val.to_string());
                         }
                         _ => {}
@@ -209,7 +216,9 @@ impl AIConfig {
                         "provider" => model_provider = Some(val.to_string()),
                         "name" | "model" => model_real_name = Some(val.to_string()),
                         "api_key" | "apiKey" | "key" => model_api_key = Some(val.to_string()),
-                        "env" | "api_key_env" | "apiKeyEnv" => model_env_key = Some(val.to_string()),
+                        "env" | "api_key_env" | "apiKeyEnv" => {
+                            model_env_key = Some(val.to_string())
+                        }
                         "temperature" => model_temp = val.parse::<f32>().ok(),
                         "max_tokens" => model_max_tokens = val.parse::<usize>().ok(),
                         _ => {}
@@ -246,4 +255,3 @@ impl AIConfig {
         reg
     }
 }
-

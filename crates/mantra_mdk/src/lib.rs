@@ -29,8 +29,8 @@ pub use mobile_builder::MobileBuilder;
 pub use project::ProjectScaffolder;
 pub use runner::Runner;
 pub use scaffold::{
-    AppType, ArgumentParser, BackendService, CreateCommand, FilesystemService, FrontendTemplateGenerator,
-    GraphQLTemplateGenerator, ProjectGenerator, ProjectMetadataGenerator, ProjectOptionsValidator,
-    RawProjectOptions, RestTemplateGenerator, ValidatedOptions,
+    AppType, ArgumentParser, BackendService, CreateCommand, FilesystemService,
+    FrontendTemplateGenerator, GraphQLTemplateGenerator, ProjectGenerator,
+    ProjectMetadataGenerator, ProjectOptionsValidator, RawProjectOptions, RestTemplateGenerator,
+    ValidatedOptions,
 };
-

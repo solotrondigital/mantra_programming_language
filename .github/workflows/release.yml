@@ -64,7 +64,7 @@ jobs:
         run: |
           python3 scripts/release/sync_versions.py
           python3 scripts/release/check_release_status.py
-          VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.7.0")
+          VER=$(python3 -c 'import tomllib; print(tomllib.load(open("crates/mantrac/Cargo.toml", "rb"))["package"]["version"])')
           FORCED=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' Cargo.toml 2>/dev/null || echo "false")
           VER="${VER#v}"
           echo "VERSION=${VER}" >> $GITHUB_ENV
@@ -115,7 +115,7 @@ jobs:
         run: |
           python3 scripts/release/sync_versions.py
           python3 scripts/release/check_release_status.py
-          VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.7.0")
+          VER=$(python3 -c 'import tomllib; print(tomllib.load(open("crates/mantrac/Cargo.toml", "rb"))["package"]["version"])')
           FORCED=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' Cargo.toml 2>/dev/null || echo "false")
           VER="${VER#v}"
           echo "VERSION=${VER}" >> $GITHUB_ENV
@@ -143,8 +143,22 @@ jobs:
           chmod +x scripts/release/*.sh scripts/release/*.py
           ./scripts/release/update_distributions.sh "${{ env.VERSION }}"
 
+      - name: Import release signing key
+        shell: bash
+        env:
+          RELEASE_GPG_PRIVATE_KEY: ${{ secrets.RELEASE_GPG_PRIVATE_KEY }}
+        run: |
+          if [ -z "${RELEASE_GPG_PRIVATE_KEY}" ]; then
+            echo "RELEASE_GPG_PRIVATE_KEY is required to publish a signed release." >&2
+            exit 1
+          fi
+          printf '%s' "${RELEASE_GPG_PRIVATE_KEY}" | gpg --batch --import
+
       - name: Generate Manifest, SBOMs & Cryptographic Signatures
         shell: bash
+        env:
+          GPG_KEY_ID: ${{ secrets.RELEASE_GPG_KEY_ID }}
+          GPG_PASSPHRASE: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
         run: |
           ./scripts/release/sign_release.sh "${{ env.VERSION }}"
 
@@ -291,7 +305,7 @@ jobs:
         run: |
           python3 scripts/release/sync_versions.py
           python3 scripts/release/check_release_status.py
-          VER=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' Cargo.toml 2>/dev/null || echo "0.7.0")
+          VER=$(python3 -c 'import tomllib; print(tomllib.load(open("crates/mantrac/Cargo.toml", "rb"))["package"]["version"])')
           FORCED=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' Cargo.toml 2>/dev/null || echo "false")
           VER="${VER#v}"
           echo "VERSION=${VER}" >> $GITHUB_ENV

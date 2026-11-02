@@ -1,9 +1,11 @@
 # Mantra Programming Language — Native ABI & FFI Specification
 ## Stable Application Binary Interface (v1.0 / Edition 2026)
 
-> **Document Status:** 🔒 STABLE ABI SPECIFICATION  
+> **Document Status:** PROPOSED ABI v1 CONTRACT — RUNTIME CONFORMANCE INCOMPLETE
 > **Target Release:** Mantra v0.6.0+  
 > **C Header:** [`include/mantra_abi.h`](../../include/mantra_abi.h)
+
+> The public header is compile-checked as C11 and C++11 on the local 64-bit toolchain. This does not establish binary compatibility across compilers or platforms. The declared allocation, retain/release, and string functions must be linked and exercised before consumers rely on them as a shipped ABI.
 
 ---
 

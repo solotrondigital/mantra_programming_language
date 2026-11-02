@@ -12,6 +12,7 @@
 
 use mantra_intelligence::audit::CodeAuditor;
 use mantra_intelligence::codegen::CodeGenerator;
+use mantra_intelligence::context::CompilerIntelligenceContext;
 use mantra_intelligence::doc_gen::DocGenerator;
 use mantra_intelligence::error_intelligence::ErrorIntelligenceEngine;
 use mantra_intelligence::project_graph::ProjectGraph;
@@ -56,7 +57,8 @@ Usage:
 
 Subcommands:
     explain <FILE>[:LINE]     Explain compiler diagnostics or syntax at the target line
-    fix <FILE> [--apply]      Suggest and optionally apply automated quick-fixes for compile errors
+    fix <FILE> [--dry-run|--apply]
+                              Preview compiler-guided quick-fixes, or apply them to the file
     generate "<PROMPT>"       Synthesize a new Mantra class, service, or model from natural language
     test-gen <FILE>           Generate an automated unit test suite in tests/ using assert()
     doc <FILE> [--in-place]   Generate Markdown reference documentation or docstrings
@@ -110,29 +112,45 @@ Examples:
         println!("Code: {}", target_line.trim());
         println!("------------------------------------------------------------------");
 
-        let explanation = ErrorIntelligenceEngine::explain(
-            "E0012",
-            "Compiler semantic analysis at target line",
-            target_line,
-            None,
-        );
+        let context = CompilerIntelligenceContext::from_source(file_path, &content, line_num, 1);
+        let diagnostics: Vec<_> = context
+            .diagnostics
+            .iter()
+            .filter(|diagnostic| diagnostic.line == line_num && diagnostic.level == "error")
+            .collect();
 
-        println!("Title   : {}", explanation.title);
-        println!("Summary : {}", explanation.summary);
-        println!("\nRoot Cause:\n  {}", explanation.root_cause);
-        println!("\nSuggested Remedy:\n  {}", explanation.suggested_remedy);
-        if let Some(ref patch) = explanation.suggested_patch {
-            println!("\nSuggested Patch:\n  {}", patch);
+        if diagnostics.is_empty() {
+            println!("No compiler error was found at line {}.", line_num);
+            if !target_line.trim().is_empty() {
+                println!("Source: {}", target_line.trim());
+            }
+            return;
         }
-        if let Some(ref diff) = explanation.diff_preview {
-            println!("\nDiff Preview:\n{}", diff);
+
+        for diagnostic in diagnostics {
+            let explanation = ErrorIntelligenceEngine::explain(
+                &diagnostic.code,
+                &diagnostic.message,
+                &diagnostic.source_line,
+                Some(&context),
+            );
+            println!("\n[{}] {}", explanation.code, explanation.title);
+            println!("Summary : {}", explanation.summary);
+            println!("Root Cause:\n  {}", explanation.root_cause);
+            println!("Suggested Remedy:\n  {}", explanation.suggested_remedy);
+            if let Some(ref patch) = explanation.suggested_patch {
+                println!("Suggested Patch:\n  {}", patch);
+            }
+            if let Some(ref diff) = explanation.diff_preview {
+                println!("Diff Preview:\n{}", diff);
+            }
         }
         println!("==================================================================");
     }
 
     fn handle_fix(args: &[String]) {
         if args.is_empty() {
-            eprintln!("Usage: mantra ai fix <FILE> [--apply]");
+            eprintln!("Usage: mantra ai fix <FILE> [--dry-run|--apply]");
             exit(1);
         }
 
@@ -147,16 +165,29 @@ Examples:
             }
         };
 
-        println!("Analyzing '{}' for automated AI quick fixes...", file_path);
+        println!("Checking '{}' for compiler diagnostics and quick fixes...", file_path);
 
+        let context = CompilerIntelligenceContext::from_source(file_path, &content, 1, 1);
         let mut all_patches = Vec::new();
-        for (idx, line) in content.lines().enumerate() {
-            let patches = QuickFixEngine::suggest_fixes(file_path, &content, "E0021", line, idx + 1, 1);
-            all_patches.extend(patches);
+        for diagnostic in context.diagnostics.iter().filter(|d| d.level == "error") {
+            all_patches.extend(QuickFixEngine::suggest_fixes(
+                file_path,
+                &content,
+                &diagnostic.code,
+                &diagnostic.message,
+                diagnostic.line,
+                diagnostic.col,
+            ));
         }
+        all_patches.sort_by_key(|patch| patch.line);
+        all_patches.dedup_by(|a, b| a.line == b.line && a.replacement == b.replacement);
 
         if all_patches.is_empty() {
-            println!("✓ No compiler fixes required. File is clean!");
+            if context.diagnostics.iter().any(|d| d.level == "error") {
+                println!("No automatic quick fix is available for the compiler errors in this file.");
+            } else {
+                println!("✓ No compiler errors found. File is clean!");
+            }
             return;
         }
 

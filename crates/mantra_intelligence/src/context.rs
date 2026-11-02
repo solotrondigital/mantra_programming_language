@@ -52,7 +52,12 @@ pub struct CompilerIntelligenceContext {
 
 impl CompilerIntelligenceContext {
     /// Extracts intelligence context directly from source text and cursor location.
-    pub fn from_source(file_path: &str, source: &str, cursor_line: usize, cursor_col: usize) -> Self {
+    pub fn from_source(
+        file_path: &str,
+        source: &str,
+        cursor_line: usize,
+        cursor_col: usize,
+    ) -> Self {
         let lines: Vec<&str> = source.lines().collect();
 
         // 1. Surrounding code slice (5 lines before, cursor line, 5 lines after)
@@ -77,7 +82,11 @@ impl CompilerIntelligenceContext {
         let tokens = match lexer.tokenize() {
             Ok(t) => t,
             Err(e) => {
-                let src_line = lines.get(e.span.line.saturating_sub(1)).copied().unwrap_or("").to_string();
+                let src_line = lines
+                    .get(e.span.line.saturating_sub(1))
+                    .copied()
+                    .unwrap_or("")
+                    .to_string();
                 diagnostics.push(DiagnosticInfo {
                     code: e.code.to_string(),
                     level: "error".to_string(),
@@ -103,7 +112,11 @@ impl CompilerIntelligenceContext {
         let program = match parser.parse() {
             Ok(p) => p,
             Err(e) => {
-                let src_line = lines.get(e.span.line.saturating_sub(1)).copied().unwrap_or("").to_string();
+                let src_line = lines
+                    .get(e.span.line.saturating_sub(1))
+                    .copied()
+                    .unwrap_or("")
+                    .to_string();
                 diagnostics.push(DiagnosticInfo {
                     code: "E0020".to_string(),
                     level: "error".to_string(),
@@ -126,18 +139,30 @@ impl CompilerIntelligenceContext {
         };
 
         // 3. Inspect declarations to build symbols & enclosing scope
-        Self::inspect_ast(&program, cursor_line, &mut scope, &mut symbols, &mut imports);
+        Self::inspect_ast(
+            &program,
+            cursor_line,
+            &mut scope,
+            &mut symbols,
+            &mut imports,
+        );
 
         // 4. Run type checker for semantic diagnostics and symbol table
         let mut checker = TypeChecker::new();
         if let Err(type_diags) = checker.check_program(&program) {
             for td in type_diags {
-                let src_line = lines.get(td.span.line.saturating_sub(1)).copied().unwrap_or("").to_string();
+                let src_line = lines
+                    .get(td.span.line.saturating_sub(1))
+                    .copied()
+                    .unwrap_or("")
+                    .to_string();
                 diagnostics.push(DiagnosticInfo {
                     code: td.code.to_string(),
                     level: match td.level {
                         mantrac_checker::diagnostics::DiagnosticLevel::Error => "error".to_string(),
-                        mantrac_checker::diagnostics::DiagnosticLevel::Warning => "warning".to_string(),
+                        mantrac_checker::diagnostics::DiagnosticLevel::Warning => {
+                            "warning".to_string()
+                        }
                         mantrac_checker::diagnostics::DiagnosticLevel::Note => "note".to_string(),
                     },
                     message: td.message,
@@ -196,7 +221,10 @@ impl CompilerIntelligenceContext {
                                 symbols.push(SymbolSummary {
                                     name: f.name.clone(),
                                     kind: "field".to_string(),
-                                    type_name: f.ty.as_ref().map_or("Any".to_string(), |t| format!("{:?}", t)),
+                                    type_name: f
+                                        .ty
+                                        .as_ref()
+                                        .map_or("Any".to_string(), |t| format!("{:?}", t)),
                                     visibility: format!("{:?}", f.visibility),
                                 });
                             }
@@ -204,7 +232,10 @@ impl CompilerIntelligenceContext {
                                 symbols.push(SymbolSummary {
                                     name: method.name.clone(),
                                     kind: "method".to_string(),
-                                    type_name: method.return_type.as_ref().map_or("Void".to_string(), |t| format!("{:?}", t)),
+                                    type_name: method
+                                        .return_type
+                                        .as_ref()
+                                        .map_or("Void".to_string(), |t| format!("{:?}", t)),
                                     visibility: format!("{:?}", method.visibility),
                                 });
                                 if cursor_line >= method.span.line {
@@ -219,7 +250,10 @@ impl CompilerIntelligenceContext {
                     symbols.push(SymbolSummary {
                         name: func.name.clone(),
                         kind: "function".to_string(),
-                        type_name: func.return_type.as_ref().map_or("Void".to_string(), |t| format!("{:?}", t)),
+                        type_name: func
+                            .return_type
+                            .as_ref()
+                            .map_or("Void".to_string(), |t| format!("{:?}", t)),
                         visibility: format!("{:?}", func.visibility),
                     });
                     if cursor_line >= func.span.line {
@@ -247,7 +281,10 @@ impl CompilerIntelligenceContext {
         if !self.diagnostics.is_empty() {
             s.push_str("Active Compiler Diagnostics:\n");
             for d in &self.diagnostics {
-                s.push_str(&format!("  - [{}] {} (line {})\n", d.code, d.message, d.line));
+                s.push_str(&format!(
+                    "  - [{}] {} (line {})\n",
+                    d.code, d.message, d.line
+                ));
             }
         }
         s.push_str("\nSurrounding Source Code:\n");

@@ -21,9 +21,12 @@ if [ -n "$1" ]; then
     VERSION="${RAW_VER#v}"
     VERSION="${VERSION#V}"
 else
-    VERSION=$(awk -F'=' '/^version *=/ {gsub(/[ "]/, "", $2); print $2; exit}' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || true)
+    VERSION=$(python3 -c 'import sys,tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["package"]["version"])' "${REPO_ROOT}/crates/mantrac/Cargo.toml" 2>/dev/null || true)
 fi
-VERSION="${VERSION:-0.7.0}"
+if [ -z "${VERSION}" ]; then
+    echo "Unable to resolve release version from crates/mantrac/Cargo.toml" >&2
+    exit 1
+fi
 FORCED_UPDATE=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || echo "false")
 if [ "$FORCED_UPDATE" = "true" ]; then
     echo ">> [Forced Update] forced-update=true: overriding distribution packages for v${VERSION}."

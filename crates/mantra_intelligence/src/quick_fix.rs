@@ -39,7 +39,9 @@ impl QuickFixEngine {
         let mut patches = Vec::new();
 
         // ── 1. Keyword Collision: 'from' -> 'from_email' ────────────────────
-        if (code == "E0021" || code == "E0020") && (message.contains("Found 'from'") || current_line.contains("pub from:")) {
+        if (code == "E0021" || code == "E0020")
+            && (message.contains("Found 'from'") || current_line.contains("pub from:"))
+        {
             let replaced = current_line.replace("pub from:", "pub from_email:");
             let diff = format!("- {}\n+ {}", current_line.trim(), replaced.trim());
             patches.push(CodePatch {
@@ -70,7 +72,9 @@ impl QuickFixEngine {
                         diff,
                     });
                 }
-            } else if message.contains("expected String, found Int") || message.contains("expected String, found Float") {
+            } else if message.contains("expected String, found Int")
+                || message.contains("expected String, found Float")
+            {
                 if let Some((lhs, rhs)) = current_line.split_once('=') {
                     let replaced = format!("{} = str({})", lhs, rhs.trim());
                     let diff = format!("- {}\n+ {}", current_line.trim(), replaced.trim());
@@ -92,7 +96,10 @@ impl QuickFixEngine {
             let mut import_stmt = None;
             if message.contains("PropertiesTOML") || message.contains("ENV") {
                 import_stmt = Some("from mantra_util import PropertiesTOML, ENV");
-            } else if message.contains("EmailMessage") || message.contains("SmtpClient") || message.contains("Email") {
+            } else if message.contains("EmailMessage")
+                || message.contains("SmtpClient")
+                || message.contains("Email")
+            {
                 import_stmt = Some("from mantra_email import EmailMessage, SmtpClient, Email");
             } else if message.contains("AI") || message.contains("ModelHandle") {
                 import_stmt = Some("from mantra_ai import AI, ModelHandle");
@@ -128,4 +135,3 @@ impl QuickFixEngine {
         }
     }
 }
-

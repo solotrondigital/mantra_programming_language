@@ -30,24 +30,20 @@ impl<'a> Validator<'a> {
                 Definition::Operation(op) => {
                     let root_type_name = match op.operation_type {
                         OperationType::Query => &self.schema.query_type,
-                        OperationType::Mutation => {
-                            match &self.schema.mutation_type {
-                                Some(m) => m,
-                                None => {
-                                    errors.push("Schema does not support mutations".to_string());
-                                    continue;
-                                }
+                        OperationType::Mutation => match &self.schema.mutation_type {
+                            Some(m) => m,
+                            None => {
+                                errors.push("Schema does not support mutations".to_string());
+                                continue;
                             }
-                        }
-                        OperationType::Subscription => {
-                            match &self.schema.subscription_type {
-                                Some(s) => s,
-                                None => {
-                                    errors.push("Schema does not support subscriptions".to_string());
-                                    continue;
-                                }
+                        },
+                        OperationType::Subscription => match &self.schema.subscription_type {
+                            Some(s) => s,
+                            None => {
+                                errors.push("Schema does not support subscriptions".to_string());
+                                continue;
                             }
-                        }
+                        },
                     };
 
                     self.validate_selection_set(root_type_name, &op.selection_set, &mut errors);
@@ -59,7 +55,11 @@ impl<'a> Validator<'a> {
                             frag.name, frag.type_condition
                         ));
                     } else {
-                        self.validate_selection_set(&frag.type_condition, &frag.selection_set, &mut errors);
+                        self.validate_selection_set(
+                            &frag.type_condition,
+                            &frag.selection_set,
+                            &mut errors,
+                        );
                     }
                 }
             }
@@ -81,7 +81,10 @@ impl<'a> Validator<'a> {
         let current_type = match self.schema.get_type(current_type_name) {
             Some(t) => t,
             None => {
-                errors.push(format!("Cannot validate selections on unknown type '{}'", current_type_name));
+                errors.push(format!(
+                    "Cannot validate selections on unknown type '{}'",
+                    current_type_name
+                ));
                 return;
             }
         };
@@ -93,7 +96,9 @@ impl<'a> Validator<'a> {
                     if f.name == "__typename" {
                         continue;
                     }
-                    if current_type_name == self.schema.query_type && (f.name == "__schema" || f.name == "__type") {
+                    if current_type_name == self.schema.query_type
+                        && (f.name == "__schema" || f.name == "__type")
+                    {
                         continue;
                     }
 
@@ -134,17 +139,23 @@ impl<'a> Validator<'a> {
                 }
                 Selection::FragmentSpread(name) => {
                     if let Some(frag) = self.fragments.get(name) {
-                        self.validate_selection_set(&frag.type_condition, &frag.selection_set, errors);
+                        self.validate_selection_set(
+                            &frag.type_condition,
+                            &frag.selection_set,
+                            errors,
+                        );
                     } else {
                         errors.push(format!("Unknown fragment spread '...{}'", name));
                     }
                 }
                 Selection::InlineFragment(inline) => {
-                    let target_type = inline.type_condition.as_deref().unwrap_or(current_type_name);
+                    let target_type = inline
+                        .type_condition
+                        .as_deref()
+                        .unwrap_or(current_type_name);
                     self.validate_selection_set(target_type, &inline.selection_set, errors);
                 }
             }
         }
     }
 }
-

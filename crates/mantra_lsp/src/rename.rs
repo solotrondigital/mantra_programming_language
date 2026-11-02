@@ -35,7 +35,10 @@ pub fn prepare_rename(
                 || c.static_methods.contains_key(&word)
                 || c.static_fields.contains_key(&word)
         })
-        || st.interfaces.values().any(|i| i.methods.contains_key(&word));
+        || st
+            .interfaces
+            .values()
+            .any(|i| i.methods.contains_key(&word));
 
     if known {
         Some(LspRange::new(line, start, line, end))
@@ -109,15 +112,63 @@ pub fn rename_symbol(
 fn is_keyword_or_builtin(word: &str) -> bool {
     matches!(
         word,
-        "def" | "class" | "interface" | "extends" | "implements" | "abstract"
-            | "override" | "static" | "pub" | "private" | "protected" | "let" | "mut"
-            | "if" | "elif" | "else" | "for" | "in" | "while" | "break" | "continue"
-            | "async" | "await" | "return" | "module" | "import" | "from" | "as"
-            | "self" | "super" | "and" | "or" | "not" | "True" | "False" | "None"
-            | "print" | "len" | "range" | "str" | "int" | "float" | "assert"
-            | "read_file" | "write_file" | "system_exec" | "get_env"
-            | "Int" | "Float" | "Bool" | "String" | "Byte" | "Unit" | "Any"
-            | "Option" | "Result" | "List" | "Map"
+        "def"
+            | "class"
+            | "interface"
+            | "extends"
+            | "implements"
+            | "abstract"
+            | "override"
+            | "static"
+            | "pub"
+            | "private"
+            | "protected"
+            | "let"
+            | "mut"
+            | "if"
+            | "elif"
+            | "else"
+            | "for"
+            | "in"
+            | "while"
+            | "break"
+            | "continue"
+            | "async"
+            | "await"
+            | "return"
+            | "module"
+            | "import"
+            | "from"
+            | "as"
+            | "self"
+            | "super"
+            | "and"
+            | "or"
+            | "not"
+            | "True"
+            | "False"
+            | "None"
+            | "print"
+            | "len"
+            | "range"
+            | "str"
+            | "int"
+            | "float"
+            | "assert"
+            | "read_file"
+            | "write_file"
+            | "system_exec"
+            | "get_env"
+            | "Int"
+            | "Float"
+            | "Bool"
+            | "String"
+            | "Byte"
+            | "Unit"
+            | "Any"
+            | "Option"
+            | "Result"
+            | "List"
+            | "Map"
     )
 }
-

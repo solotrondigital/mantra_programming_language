@@ -98,10 +98,21 @@ pub struct Field {
 
 impl Field {
     pub fn new(name: &str, field_type: FieldType) -> Self {
-        Field { name: name.to_string(), field_type, primary_key: false, nullable: true }
+        Field {
+            name: name.to_string(),
+            field_type,
+            primary_key: false,
+            nullable: true,
+        }
     }
-    pub fn primary(mut self) -> Self { self.primary_key = true; self }
-    pub fn not_null(mut self) -> Self { self.nullable = false; self }
+    pub fn primary(mut self) -> Self {
+        self.primary_key = true;
+        self
+    }
+    pub fn not_null(mut self) -> Self {
+        self.nullable = false;
+        self
+    }
 }
 
 /// Active Record base trait — implemented by generated Mantra model classes.

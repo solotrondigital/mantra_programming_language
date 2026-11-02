@@ -12,7 +12,12 @@ pub struct EdgeInsets {
 }
 
 impl EdgeInsets {
-    pub const ZERO: EdgeInsets = EdgeInsets { top: 0.0, right: 0.0, bottom: 0.0, left: 0.0 };
+    pub const ZERO: EdgeInsets = EdgeInsets {
+        top: 0.0,
+        right: 0.0,
+        bottom: 0.0,
+        left: 0.0,
+    };
 
     pub fn all(value: f64) -> Self {
         Self {
@@ -33,7 +38,12 @@ impl EdgeInsets {
     }
 
     pub fn only(top: f64, right: f64, bottom: f64, left: f64) -> Self {
-        Self { top, right, bottom, left }
+        Self {
+            top,
+            right,
+            bottom,
+            left,
+        }
     }
 
     pub fn horizontal(&self) -> f64 {
@@ -52,7 +62,10 @@ impl EdgeInsets {
                 format!("{}px {}px", self.top, self.right)
             }
         } else {
-            format!("{}px {}px {}px {}px", self.top, self.right, self.bottom, self.left)
+            format!(
+                "{}px {}px {}px {}px",
+                self.top, self.right, self.bottom, self.left
+            )
         }
     }
 }
@@ -160,4 +173,3 @@ impl FlexWrap {
         }
     }
 }
-

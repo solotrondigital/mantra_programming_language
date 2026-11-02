@@ -27,9 +27,9 @@ pub enum PluginTier {
 impl std::fmt::Display for PluginTier {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            PluginTier::Stable       => write!(f, "stable"),
+            PluginTier::Stable => write!(f, "stable"),
             PluginTier::Experimental => write!(f, "experimental"),
-            PluginTier::Unsafe       => write!(f, "unsafe"),
+            PluginTier::Unsafe => write!(f, "unsafe"),
         }
     }
 }
@@ -67,7 +67,9 @@ impl PluginManifest {
         if self.api_version != crate::version::MANTRA_VERSION_STR {
             return Err(format!(
                 "Plugin '{}' api_version '{}' is not compatible with compiler version '{}'",
-                self.name, self.api_version, crate::version::MANTRA_VERSION_STR
+                self.name,
+                self.api_version,
+                crate::version::MANTRA_VERSION_STR
             ));
         }
         Ok(())
@@ -195,4 +197,3 @@ mod tests {
         assert!(reg.register(p).is_err());
     }
 }
-

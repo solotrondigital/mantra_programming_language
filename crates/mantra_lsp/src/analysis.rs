@@ -3,7 +3,7 @@
 // Runs lexer → parser → type-checker and normalises results for the LSP.
 // ==============================================================================
 
-use crate::protocol::{LspDiagnostic, LspRange, severity};
+use crate::protocol::{severity, LspDiagnostic, LspRange};
 use mantrac_ast::Program;
 use mantrac_checker::{GlobalSymbolTable, TypeChecker};
 use mantrac_lexer::{span::Span, Lexer};
@@ -107,6 +107,10 @@ pub fn span_to_lsp_range(span: Span) -> LspRange {
     let line = if span.line > 0 { span.line - 1 } else { 0 } as u32;
     let col = if span.col > 0 { span.col - 1 } else { 0 } as u32;
     // Estimate end column: use byte span length if meaningful, else col+1
-    let len = if span.end > span.start { span.end - span.start } else { 1 };
+    let len = if span.end > span.start {
+        span.end - span.start
+    } else {
+        1
+    };
     LspRange::new(line, col, line, col + len as u32)
 }

@@ -19,9 +19,7 @@ fn test_screen_size_categorization() {
 
 #[test]
 fn test_responsive_value_resolution() {
-    let cols = ResponsiveValue::new(1)
-        .with_tablet(2)
-        .with_desktop(4);
+    let cols = ResponsiveValue::new(1).with_tablet(2).with_desktop(4);
 
     let mobile = ScreenSize::new(390.0, 844.0);
     let tablet = ScreenSize::new(800.0, 1200.0);
@@ -31,4 +29,3 @@ fn test_responsive_value_resolution() {
     assert_eq!(*cols.resolve(&tablet), 2);
     assert_eq!(*cols.resolve(&desktop), 4);
 }
-

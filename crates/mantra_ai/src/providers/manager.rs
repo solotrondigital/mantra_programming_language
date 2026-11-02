@@ -1,12 +1,12 @@
 //! Provider Manager: Multi-provider orchestration and dynamic registration.
 
+use crate::error::{AIError, AIResult};
+use crate::providers::anthropic::AnthropicProvider;
+use crate::providers::gemini::GeminiProvider;
+use crate::providers::openai::OpenAIProvider;
+use crate::providers::AIProvider;
 use std::collections::HashMap;
 use std::sync::Arc;
-use crate::error::{AIError, AIResult};
-use crate::providers::{AIProvider};
-use crate::providers::openai::OpenAIProvider;
-use crate::providers::gemini::GeminiProvider;
-use crate::providers::anthropic::AnthropicProvider;
 
 /// Central manager that registers, resolves, and manages AI providers.
 #[derive(Clone)]
@@ -37,7 +37,8 @@ impl ProviderManager {
 
     /// Register a custom or standard provider adapter.
     pub fn register(&mut self, provider: Arc<dyn AIProvider>) {
-        self.providers.insert(provider.name().to_lowercase(), provider);
+        self.providers
+            .insert(provider.name().to_lowercase(), provider);
     }
 
     /// Set the default fallback provider name.
@@ -48,16 +49,17 @@ impl ProviderManager {
     /// Resolve a provider by name.
     pub fn get(&self, name: &str) -> AIResult<Arc<dyn AIProvider>> {
         let key = name.to_lowercase();
-        self.providers.get(&key).cloned().ok_or_else(|| {
-            AIError::ProviderError {
+        self.providers
+            .get(&key)
+            .cloned()
+            .ok_or_else(|| AIError::ProviderError {
                 provider: name.to_string(),
                 message: format!(
                     "Provider '{}' is not registered. Available: {:?}",
                     name,
                     self.providers.keys().collect::<Vec<_>>()
                 ),
-            }
-        })
+            })
     }
 
     /// Get default configured provider.
@@ -70,4 +72,3 @@ impl ProviderManager {
         self.providers.keys().cloned().collect()
     }
 }
-

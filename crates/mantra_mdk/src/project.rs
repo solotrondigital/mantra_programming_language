@@ -236,8 +236,12 @@ def main() -> Int:
             service: None,
             dependencies: std::collections::HashMap::new(),
         };
-        manifest.dependencies.insert("mantra.web".to_string(), "0.6.0".to_string());
-        manifest.dependencies.insert("mantra.rest".to_string(), "0.6.0".to_string());
+        manifest
+            .dependencies
+            .insert("mantra.web".to_string(), "0.6.0".to_string());
+        manifest
+            .dependencies
+            .insert("mantra.rest".to_string(), "0.6.0".to_string());
         manifest.save_to_dir(root)?;
 
         let main_src = format!(
@@ -383,8 +387,11 @@ def main() -> Int:
             .map_err(|e| format!("Failed to create src/shared dir: {}", e))?;
         fs::create_dir_all(root.join("www"))
             .map_err(|e| format!("Failed to create www dir: {}", e))?;
-        fs::create_dir_all(root.join("android/app/src/main/java").join(package_name.replace('.', "/")))
-            .map_err(|e| format!("Failed to create android dir: {}", e))?;
+        fs::create_dir_all(
+            root.join("android/app/src/main/java")
+                .join(package_name.replace('.', "/")),
+        )
+        .map_err(|e| format!("Failed to create android dir: {}", e))?;
         fs::create_dir_all(root.join("android/app/src/main/res/xml"))
             .map_err(|e| format!("Failed to create android res dir: {}", e))?;
         fs::create_dir_all(root.join("ios/MantraApp"))
@@ -404,7 +411,9 @@ def main() -> Int:
             service: None,
             dependencies: std::collections::HashMap::new(),
         };
-        manifest.dependencies.insert("mantra.mobile".to_string(), "0.6.0".to_string());
+        manifest
+            .dependencies
+            .insert("mantra.mobile".to_string(), "0.6.0".to_string());
         manifest.save_to_dir(root)?;
 
         // 1. Shared Models
@@ -653,48 +662,58 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // 6. Android Platform Templates
         use mantra_mobile::AndroidBridgeTemplate;
-        let pkg_path = root.join("android/app/src/main/java").join(package_name.replace('.', "/"));
+        let pkg_path = root
+            .join("android/app/src/main/java")
+            .join(package_name.replace('.', "/"));
         fs::write(
             pkg_path.join("MantraBridge.kt"),
             AndroidBridgeTemplate::generate_bridge_kotlin(&package_name),
-        ).map_err(|e| format!("Failed to write MantraBridge.kt: {}", e))?;
+        )
+        .map_err(|e| format!("Failed to write MantraBridge.kt: {}", e))?;
 
         fs::write(
             pkg_path.join("MainActivity.kt"),
             AndroidBridgeTemplate::generate_main_activity_kotlin(&package_name, name),
-        ).map_err(|e| format!("Failed to write MainActivity.kt: {}", e))?;
+        )
+        .map_err(|e| format!("Failed to write MainActivity.kt: {}", e))?;
 
         fs::write(
             root.join("android/app/src/main/AndroidManifest.xml"),
             AndroidBridgeTemplate::generate_manifest(&package_name, name),
-        ).map_err(|e| format!("Failed to write AndroidManifest.xml: {}", e))?;
+        )
+        .map_err(|e| format!("Failed to write AndroidManifest.xml: {}", e))?;
 
         fs::write(
             root.join("android/app/src/main/res/xml/network_security_config.xml"),
             AndroidBridgeTemplate::generate_network_security_config(),
-        ).map_err(|e| format!("Failed to write network_security_config.xml: {}", e))?;
+        )
+        .map_err(|e| format!("Failed to write network_security_config.xml: {}", e))?;
 
         fs::write(
             root.join("android/build.gradle.kts"),
             AndroidBridgeTemplate::generate_build_gradle(&package_name),
-        ).map_err(|e| format!("Failed to write build.gradle.kts: {}", e))?;
+        )
+        .map_err(|e| format!("Failed to write build.gradle.kts: {}", e))?;
 
         // 7. iOS Platform Templates
         use mantra_mobile::IosBridgeTemplate;
         fs::write(
             root.join("ios/MantraApp/MantraBridge.swift"),
             IosBridgeTemplate::generate_bridge_swift(),
-        ).map_err(|e| format!("Failed to write MantraBridge.swift: {}", e))?;
+        )
+        .map_err(|e| format!("Failed to write MantraBridge.swift: {}", e))?;
 
         fs::write(
             root.join("ios/MantraApp/ViewController.swift"),
             IosBridgeTemplate::generate_view_controller_swift(name),
-        ).map_err(|e| format!("Failed to write ViewController.swift: {}", e))?;
+        )
+        .map_err(|e| format!("Failed to write ViewController.swift: {}", e))?;
 
         fs::write(
             root.join("ios/MantraApp/Info.plist"),
             IosBridgeTemplate::generate_info_plist(&package_name, name),
-        ).map_err(|e| format!("Failed to write Info.plist: {}", e))?;
+        )
+        .map_err(|e| format!("Failed to write Info.plist: {}", e))?;
 
         // 8. Tests
         let test_src = format!(
@@ -763,7 +782,8 @@ def main() -> Int:
         // Determine enabled platforms
         let all_platforms = platforms.is_empty();
         let enable_web = all_platforms || platforms.iter().any(|p| p.eq_ignore_ascii_case("web"));
-        let enable_android = all_platforms || platforms.iter().any(|p| p.eq_ignore_ascii_case("android"));
+        let enable_android =
+            all_platforms || platforms.iter().any(|p| p.eq_ignore_ascii_case("android"));
         let enable_ios = all_platforms || platforms.iter().any(|p| p.eq_ignore_ascii_case("ios"));
 
         // ── directory tree ──────────────────────────────────────────────────
@@ -1076,23 +1096,31 @@ def main() -> Int:
             fs::write(
                 android_pkg_path.join("MantraBridge.kt"),
                 AndroidBridgeTemplate::generate_bridge_kotlin(&android_package),
-            ).map_err(|e| format!("Failed to write MantraBridge.kt: {}", e))?;
+            )
+            .map_err(|e| format!("Failed to write MantraBridge.kt: {}", e))?;
             fs::write(
                 android_pkg_path.join("MainActivity.kt"),
-                AndroidBridgeTemplate::generate_main_activity_kotlin(&android_package, project_name),
-            ).map_err(|e| format!("Failed to write MainActivity.kt: {}", e))?;
+                AndroidBridgeTemplate::generate_main_activity_kotlin(
+                    &android_package,
+                    project_name,
+                ),
+            )
+            .map_err(|e| format!("Failed to write MainActivity.kt: {}", e))?;
             fs::write(
                 root.join("android/app/src/main/AndroidManifest.xml"),
                 AndroidBridgeTemplate::generate_manifest(&android_package, project_name),
-            ).map_err(|e| format!("Failed to write AndroidManifest.xml: {}", e))?;
+            )
+            .map_err(|e| format!("Failed to write AndroidManifest.xml: {}", e))?;
             fs::write(
                 root.join("android/app/src/main/res/xml/network_security_config.xml"),
                 AndroidBridgeTemplate::generate_network_security_config(),
-            ).map_err(|e| format!("Failed to write network_security_config.xml: {}", e))?;
+            )
+            .map_err(|e| format!("Failed to write network_security_config.xml: {}", e))?;
             fs::write(
                 root.join("android/build.gradle.kts"),
                 AndroidBridgeTemplate::generate_build_gradle(&android_package),
-            ).map_err(|e| format!("Failed to write build.gradle.kts: {}", e))?;
+            )
+            .map_err(|e| format!("Failed to write build.gradle.kts: {}", e))?;
         }
 
         // ── iOS platform skeleton ────────────────────────────────────────────
@@ -1105,15 +1133,18 @@ def main() -> Int:
             fs::write(
                 root.join("ios/MantraApp/MantraBridge.swift"),
                 IosBridgeTemplate::generate_bridge_swift(),
-            ).map_err(|e| format!("Failed to write MantraBridge.swift: {}", e))?;
+            )
+            .map_err(|e| format!("Failed to write MantraBridge.swift: {}", e))?;
             fs::write(
                 root.join("ios/MantraApp/ViewController.swift"),
                 IosBridgeTemplate::generate_view_controller_swift(project_name),
-            ).map_err(|e| format!("Failed to write ViewController.swift: {}", e))?;
+            )
+            .map_err(|e| format!("Failed to write ViewController.swift: {}", e))?;
             fs::write(
                 root.join("ios/MantraApp/Info.plist"),
                 IosBridgeTemplate::generate_info_plist(&android_package, project_name),
-            ).map_err(|e| format!("Failed to write Info.plist: {}", e))?;
+            )
+            .map_err(|e| format!("Failed to write Info.plist: {}", e))?;
         }
 
         // ── Environment files ────────────────────────────────────────────────
@@ -1335,7 +1366,9 @@ mantra test
         println!("  cd {dir}", dir = directory);
         println!("  mantra run");
         if enable_web {
-            println!("  mantra run -d chrome --web-port 4300 --mantra-define-from-file=.env.development");
+            println!(
+                "  mantra run -d chrome --web-port 4300 --mantra-define-from-file=.env.development"
+            );
             println!("  mantra build web --release --mantra-define-from-file=.env.development");
         }
         if enable_android {
@@ -1349,4 +1382,3 @@ mantra test
         Ok(())
     }
 }
-

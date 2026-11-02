@@ -282,7 +282,8 @@ impl SchemaBuilder {
     }
 
     pub fn add_object(mut self, obj: ObjectType) -> Self {
-        self.types.insert(obj.name.clone(), TypeDefinition::Object(obj));
+        self.types
+            .insert(obj.name.clone(), TypeDefinition::Object(obj));
         self
     }
 
@@ -318,7 +319,8 @@ impl SchemaBuilder {
     }
 
     pub fn add_input_object(mut self, input: InputObjectType) -> Self {
-        self.types.insert(input.name.clone(), TypeDefinition::InputObject(input));
+        self.types
+            .insert(input.name.clone(), TypeDefinition::InputObject(input));
         self
     }
 

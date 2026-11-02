@@ -1,0 +1,6 @@
+[package]
+name = "mantra_agents"
+version = "0.7.0"
+description = "Bounded agent runtime with allow-listed tools, memory, approvals, and execution traces"
+entry = "lib/mantra_agents.mantra"
+

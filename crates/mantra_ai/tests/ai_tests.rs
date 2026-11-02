@@ -24,7 +24,10 @@ fn test_prompt_template_rendering() {
 
     let rendered = tpl.render(&vars);
     assert_eq!(rendered, "Hello Alice, welcome to Mantra!");
-    assert_eq!(tpl.system_instruction.as_deref(), Some("You are a friendly assistant"));
+    assert_eq!(
+        tpl.system_instruction.as_deref(),
+        Some("You are a friendly assistant")
+    );
 }
 
 #[test]
@@ -155,4 +158,3 @@ temperature = 0.2
     let res = handle.generate("Analyze quarterly sales").unwrap();
     assert!(res.text.contains("[OpenAI:gpt-4o]"));
 }
-

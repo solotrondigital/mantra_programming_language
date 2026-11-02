@@ -5,8 +5,8 @@
 //! instead runs the AI application logic directly in Rust, calling OpenAI,
 //! Gemini, and Anthropic APIs with the credentials from the environment.
 
-use mantra_ai::config::AIConfig;
 use mantra_ai::client::AI;
+use mantra_ai::config::AIConfig;
 use std::path::Path;
 
 /// Entry-point called by `Runner::run_target` for AI project types.
@@ -17,9 +17,8 @@ impl AiRunner {
     /// execute the demonstration scenarios — calling real LLM HTTP APIs.
     pub fn run(project_dir: &Path) -> Result<(), String> {
         // ── Load project AI configuration ────────────────────────────────
-        let config = AIConfig::load_from_dir(project_dir).map_err(|e| {
-            format!("Failed to load AI configuration: {}", e)
-        })?;
+        let config = AIConfig::load_from_dir(project_dir)
+            .map_err(|e| format!("Failed to load AI configuration: {}", e))?;
 
         let project_name = {
             // Read mantra.toml for [project] name field
@@ -33,8 +32,13 @@ impl AiRunner {
             let mut in_project = false;
             for line in content.lines() {
                 let t = line.trim();
-                if t == "[project]" { in_project = true; continue; }
-                if t.starts_with('[') { in_project = false; }
+                if t == "[project]" {
+                    in_project = true;
+                    continue;
+                }
+                if t.starts_with('[') {
+                    in_project = false;
+                }
                 if in_project {
                     if let Some((k, v)) = t.split_once('=') {
                         if k.trim() == "name" {
@@ -59,7 +63,10 @@ impl AiRunner {
         let ai = AI::from_config(&config);
 
         println!("==================================================================");
-        println!("              RUNNING {} (MANTRA AI)                    ", project_name.to_uppercase());
+        println!(
+            "              RUNNING {} (MANTRA AI)                    ",
+            project_name.to_uppercase()
+        );
         println!("==================================================================");
         println!("Dynamic Configuration Loaded from mantra.toml:");
         println!("------------------------------------------------------------------");
@@ -72,8 +79,12 @@ impl AiRunner {
         println!("------------------------------------------------------------------");
         println!("Models Defined in mantra.toml:");
         for (alias, spec) in &config.models {
-            let temp_str = spec.default_temperature.map_or("0.7".to_string(), |t| t.to_string());
-            let max_t_str = spec.default_max_tokens.map_or("2048".to_string(), |m| m.to_string());
+            let temp_str = spec
+                .default_temperature
+                .map_or("0.7".to_string(), |t| t.to_string());
+            let max_t_str = spec
+                .default_max_tokens
+                .map_or("2048".to_string(), |m| m.to_string());
             println!("  • [{}]", alias);
             println!("      provider    = \"{}\"", spec.provider);
             println!("      name        = \"{}\"", spec.model_name);
@@ -89,7 +100,12 @@ impl AiRunner {
         } else if config.models.contains_key("assistant") {
             "assistant".to_string()
         } else {
-            config.models.keys().next().cloned().unwrap_or_else(|| "assistant".to_string())
+            config
+                .models
+                .keys()
+                .next()
+                .cloned()
+                .unwrap_or_else(|| "assistant".to_string())
         };
 
         println!("--- 1. Generating Model Response [{}] ---", default_alias);
@@ -99,7 +115,9 @@ impl AiRunner {
                     "[AI Service] Dispatching prompt to {} ({})...",
                     handle.spec.provider, handle.spec.model_name
                 );
-                match handle.generate("Explain native AI integration in the Mantra Programming Language") {
+                match handle
+                    .generate("Explain native AI integration in the Mantra Programming Language")
+                {
                     Ok(resp) => {
                         println!(
                             "  -> Tokens: {} (Prompt: {}, Completion: {}) | Cost: ${:.4}",
@@ -111,20 +129,32 @@ impl AiRunner {
                         println!("Result:\n{}\n", resp.text);
                     }
                     Err(e) => {
-                        eprintln!("  [Warning] {} model call failed: {}", handle.spec.provider, e);
+                        eprintln!(
+                            "  [Warning] {} model call failed: {}",
+                            handle.spec.provider, e
+                        );
                         if e.to_string().contains("Authentication Error") {
                             eprintln!("  -> Ensure {} environment variable or api_key in mantra.toml is set.\n", Self::env_for_provider(&handle.spec.provider));
                         } else {
-                            eprintln!("  -> Check your {} account credits / API key validity.\n", handle.spec.provider);
+                            eprintln!(
+                                "  -> Check your {} account credits / API key validity.\n",
+                                handle.spec.provider
+                            );
                         }
                     }
                 }
             }
-            Err(e) => eprintln!("  [Warning] Could not resolve model '{}': {}\n", default_alias, e),
+            Err(e) => eprintln!(
+                "  [Warning] Could not resolve model '{}': {}\n",
+                default_alias, e
+            ),
         }
 
         // ── 2. Streaming response demonstration (Dynamic) ───────────────
-        println!("--- 2. Streaming Response Demonstration [{}] ---", default_alias);
+        println!(
+            "--- 2. Streaming Response Demonstration [{}] ---",
+            default_alias
+        );
         match ai.get(&default_alias) {
             Ok(handle) => {
                 println!(
@@ -142,7 +172,9 @@ impl AiRunner {
                                         println!();
                                         println!(
                                             "  [finish: {}]",
-                                            chunk.finish_reason.unwrap_or_else(|| "stop".to_string())
+                                            chunk
+                                                .finish_reason
+                                                .unwrap_or_else(|| "stop".to_string())
                                         );
                                         break;
                                     }
@@ -158,7 +190,10 @@ impl AiRunner {
                     Err(e) => eprintln!("  [Warning] Streaming failed: {}\n", e),
                 }
             }
-            Err(e) => eprintln!("  [Warning] Could not resolve model '{}': {}\n", default_alias, e),
+            Err(e) => eprintln!(
+                "  [Warning] Could not resolve model '{}': {}\n",
+                default_alias, e
+            ),
         }
 
         // ── 3. Iterate over all other models dynamically from mantra.toml ─
@@ -167,26 +202,37 @@ impl AiRunner {
             if alias == &default_alias {
                 continue;
             }
-            println!("--- {}. Multi-Provider Model Binding: [{}] ---", step_num, alias);
+            println!(
+                "--- {}. Multi-Provider Model Binding: [{}] ---",
+                step_num, alias
+            );
             println!("Bound provider: {} / {}", spec.provider, spec.model_name);
             match ai.get(alias) {
                 Ok(handle) => {
-                    let prompt_text = format!("Provide structural overview of {} model capabilities in Mantra", alias);
+                    let prompt_text = format!(
+                        "Provide structural overview of {} model capabilities in Mantra",
+                        alias
+                    );
                     match handle.generate(&prompt_text) {
                         Ok(resp) => {
                             println!(
                                 "  -> Tokens: {} | Cost: ${:.4}",
-                                resp.usage.total_tokens,
-                                resp.usage.estimated_cost_usd
+                                resp.usage.total_tokens, resp.usage.estimated_cost_usd
                             );
                             println!("Result:\n{}\n", resp.text);
                         }
                         Err(e) => {
-                            eprintln!("  [Warning] {} model call failed: {}", handle.spec.provider, e);
+                            eprintln!(
+                                "  [Warning] {} model call failed: {}",
+                                handle.spec.provider, e
+                            );
                             if e.to_string().contains("Authentication Error") {
                                 eprintln!("  -> Ensure {} environment variable or api_key in mantra.toml is set.\n", Self::env_for_provider(&handle.spec.provider));
                             } else {
-                                eprintln!("  -> Check your {} account credits / API key validity.\n", handle.spec.provider);
+                                eprintln!(
+                                    "  -> Check your {} account credits / API key validity.\n",
+                                    handle.spec.provider
+                                );
                             }
                         }
                     }
@@ -207,7 +253,10 @@ impl AiRunner {
         println!();
 
         println!("==================================================================");
-        println!("         {} AI Execution Completed Successfully! 🚀", project_name.to_uppercase());
+        println!(
+            "         {} AI Execution Completed Successfully! 🚀",
+            project_name.to_uppercase()
+        );
         println!("==================================================================");
         Ok(())
     }

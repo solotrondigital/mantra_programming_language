@@ -72,10 +72,7 @@ class GraphQLSchema:
     def get_operations(self) -> Int:
         return self.operation_count
 "#;
-        FilesystemService::write_file(
-            &root.join("src/graphql/schema/schema.mantra"),
-            schema_src,
-        )?;
+        FilesystemService::write_file(&root.join("src/graphql/schema/schema.mantra"), schema_src)?;
 
         // 5. src/graphql/resolvers/query_resolver.mantra
         let query_res_src = r#"# GraphQL Root Query Resolver
@@ -117,10 +114,7 @@ class UserType:
     def describe(self) -> String:
         return "type User { id: ID!, name: String!, email: String! }"
 "#;
-        FilesystemService::write_file(
-            &root.join("src/graphql/types/user_type.mantra"),
-            type_src,
-        )?;
+        FilesystemService::write_file(&root.join("src/graphql/types/user_type.mantra"), type_src)?;
 
         // 8. src/graphql/queries/user_queries.mantra
         let query_ops_src = r#"# User Query Operations

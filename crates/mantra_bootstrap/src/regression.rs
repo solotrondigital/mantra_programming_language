@@ -59,10 +59,18 @@ pub struct CaseResult {
 
 impl CaseResult {
     pub fn ok(name: &str) -> Self {
-        CaseResult { name: name.to_string(), passed: true, message: "PASS".to_string() }
+        CaseResult {
+            name: name.to_string(),
+            passed: true,
+            message: "PASS".to_string(),
+        }
     }
     pub fn err(name: &str, msg: &str) -> Self {
-        CaseResult { name: name.to_string(), passed: false, message: msg.to_string() }
+        CaseResult {
+            name: name.to_string(),
+            passed: false,
+            message: msg.to_string(),
+        }
     }
 }
 
@@ -144,10 +152,13 @@ impl RegressionSuite {
         ).with_output("async ok"));
 
         // ── Compiler version metadata ──────────────────────────────────────
-        cases.push(RegressionCase::pass(
-            "version_constant_readable",
-            "def main() -> Int:\n    v: String = \"0.3.0\"\n    print(v)\n    return 0\n",
-        ).with_output("0.3.0"));
+        cases.push(
+            RegressionCase::pass(
+                "version_constant_readable",
+                "def main() -> Int:\n    v: String = \"0.3.0\"\n    print(v)\n    return 0\n",
+            )
+            .with_output("0.3.0"),
+        );
 
         RegressionSuite { cases }
     }
@@ -171,10 +182,9 @@ impl RegressionSuite {
         if case.expect_pass {
             match outcome {
                 Ok(_) => CaseResult::ok(&case.name),
-                Err(e) => CaseResult::err(
-                    &case.name,
-                    &format!("Expected PASS but got error: {}", e),
-                ),
+                Err(e) => {
+                    CaseResult::err(&case.name, &format!("Expected PASS but got error: {}", e))
+                }
             }
         } else {
             // Expect a failure — verify the expected error code appears
@@ -186,10 +196,7 @@ impl RegressionSuite {
                         } else {
                             CaseResult::err(
                                 &case.name,
-                                &format!(
-                                    "Expected error code '{}' but got: {}",
-                                    code, e.message
-                                ),
+                                &format!("Expected error code '{}' but got: {}", code, e.message),
                             )
                         }
                     } else {
@@ -242,13 +249,20 @@ mod tests {
     fn canonical_suite_has_cases() {
         let suite = RegressionSuite::canonical();
         assert!(!suite.cases.is_empty(), "Canonical suite must not be empty");
-        assert!(suite.cases.len() >= 10, "Should have at least 10 regression cases");
+        assert!(
+            suite.cases.len() >= 10,
+            "Should have at least 10 regression cases"
+        );
     }
 
     #[test]
     fn hello_world_passes() {
         let suite = RegressionSuite::canonical();
-        let hello = suite.cases.iter().find(|c| c.name == "hello_world").unwrap();
+        let hello = suite
+            .cases
+            .iter()
+            .find(|c| c.name == "hello_world")
+            .unwrap();
         let result = suite.run_case(hello);
         assert!(result.passed, "hello_world should pass: {}", result.message);
     }
@@ -264,9 +278,16 @@ mod tests {
     #[test]
     fn function_call_passes() {
         let suite = RegressionSuite::canonical();
-        let case = suite.cases.iter().find(|c| c.name == "function_call").unwrap();
+        let case = suite
+            .cases
+            .iter()
+            .find(|c| c.name == "function_call")
+            .unwrap();
         let result = suite.run_case(case);
-        assert!(result.passed, "function_call should pass: {}", result.message);
+        assert!(
+            result.passed,
+            "function_call should pass: {}",
+            result.message
+        );
     }
 }
-

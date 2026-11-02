@@ -10,13 +10,22 @@ pub struct Span {
 
 impl Span {
     pub fn new(line: usize, col: usize, start: usize, end: usize) -> Self {
-        Span { line, col, start, end }
+        Span {
+            line,
+            col,
+            start,
+            end,
+        }
     }
 
     pub fn merge(self, other: Span) -> Span {
         Span {
             line: self.line.min(other.line),
-            col: if self.line <= other.line { self.col } else { other.col },
+            col: if self.line <= other.line {
+                self.col
+            } else {
+                other.col
+            },
             start: self.start.min(other.start),
             end: self.end.max(other.end),
         }
@@ -28,4 +37,3 @@ impl fmt::Display for Span {
         write!(f, "{}:{}", self.line, self.col)
     }
 }
-

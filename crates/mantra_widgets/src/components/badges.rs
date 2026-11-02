@@ -127,10 +127,18 @@ impl Widget for Chip {
         let (bg, text_color, border) = if self.is_selected {
             ("var(--mantra-primary, #4f46e5)", "#ffffff", "none")
         } else {
-            ("var(--mantra-surface, #f1f5f9)", "var(--mantra-text, #0f172a)", "1px solid var(--mantra-border, #cbd5e1)")
+            (
+                "var(--mantra-surface, #f1f5f9)",
+                "var(--mantra-text, #0f172a)",
+                "1px solid var(--mantra-border, #cbd5e1)",
+            )
         };
 
-        let icon_html = self.icon.as_ref().map(|i| format!(r#"<span style="margin-right:6px;">{}</span>"#, i)).unwrap_or_default();
+        let icon_html = self
+            .icon
+            .as_ref()
+            .map(|i| format!(r#"<span style="margin-right:6px;">{}</span>"#, i))
+            .unwrap_or_default();
 
         format!(
             r#"<div id="{}" class="mantra-chip" style="display:inline-flex;align-items:center;padding:4px 12px;border-radius:9999px;background:{};color:{};border:{};font-size:13px;font-weight:500;cursor:pointer;user-select:none;">
@@ -146,4 +154,3 @@ fn uuid_simple() -> u32 {
     static COUNTER: AtomicU32 = AtomicU32::new(4000);
     COUNTER.fetch_add(1, Ordering::Relaxed)
 }
-
