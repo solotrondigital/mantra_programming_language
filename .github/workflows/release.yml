@@ -12,6 +12,16 @@ on:
       - '.github/workflows/**'
       - 'create_installers.sh'
       - 'distribution/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'crates/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'scripts/release/**'
+      - '.github/workflows/**'
+      - 'create_installers.sh'
+      - 'distribution/**'
   workflow_dispatch:
     inputs:
       version:
@@ -70,7 +80,7 @@ jobs:
   build-and-package:
     name: Build & Package (${{ matrix.platform }})
     needs: release-gate
-    if: needs.release-gate.outputs.should_release == 'true'
+    if: github.event_name == 'pull_request' || needs.release-gate.outputs.should_release == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -146,7 +156,7 @@ jobs:
   publish-release:
     name: Assemble and publish GitHub release
     needs: [release-gate, build-and-package]
-    if: needs.release-gate.outputs.should_release == 'true'
+    if: github.event_name != 'pull_request' && needs.release-gate.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

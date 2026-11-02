@@ -1,6 +1,10 @@
 name: Publish Homebrew Formula
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   release:
     types: [published]
   workflow_dispatch:
@@ -14,7 +18,23 @@ permissions:
   contents: read
 
 jobs:
+  validate:
+    name: Validate Homebrew package inputs
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate release version and formula generator
+        run: |
+          python scripts/release/version_config.py verify
+          python -m py_compile scripts/release/generate_homebrew_formula.py
+          ruby -c distribution/homebrew-tap/Formula/mantra.rb
+
   publish:
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
