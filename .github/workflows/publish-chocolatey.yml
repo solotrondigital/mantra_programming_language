@@ -3,8 +3,6 @@ name: Publish Chocolatey Package
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   release:
     types: [published]
   workflow_dispatch:
@@ -20,7 +18,7 @@ permissions:
 jobs:
   validate:
     name: Validate Chocolatey package inputs
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    if: github.event_name == 'push'
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
@@ -34,12 +32,12 @@ jobs:
           python -m py_compile scripts/release/package_chocolatey.py
 
   publish:
-    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.version != '')
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name || github.ref }}
+          ref: ${{ github.event.release.tag_name || inputs.version || github.ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'

@@ -3,17 +3,6 @@ name: Production Release
 on:
   push:
     branches: [main]
-    tags: ['v*']
-    paths:
-      - 'crates/**'
-      - 'Cargo.toml'
-      - 'Cargo.lock'
-      - 'scripts/release/**'
-      - '.github/workflows/**'
-      - 'create_installers.sh'
-      - 'distribution/**'
-  pull_request:
-    branches: [main]
     paths:
       - 'crates/**'
       - 'Cargo.toml'
@@ -80,7 +69,7 @@ jobs:
   build-and-package:
     name: Build & Package (${{ matrix.platform }})
     needs: release-gate
-    if: github.event_name == 'pull_request' || needs.release-gate.outputs.should_release == 'true'
+    if: needs.release-gate.outputs.should_release == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -156,7 +145,7 @@ jobs:
   publish-release:
     name: Assemble and publish GitHub release
     needs: [release-gate, build-and-package]
-    if: github.event_name != 'pull_request' && needs.release-gate.outputs.should_release == 'true'
+    if: needs.release-gate.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -203,3 +192,20 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-package-registries:
+    name: Trigger Chocolatey and Homebrew publishing
+    needs: [release-gate, publish-release]
+    if: needs.publish-release.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+    steps:
+      - name: Dispatch package publishing workflows for the released version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.release-gate.outputs.version }}
+        run: |
+          gh workflow run publish-chocolatey.yml --ref "v$VERSION" -f version="v$VERSION"
+          gh workflow run publish-homebrew.yml --ref "v$VERSION" -f version="v$VERSION"
