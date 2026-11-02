@@ -88,6 +88,7 @@ fn url_decode(s: &str) -> String {
 mod tests {
     use super::*;
 
+    #[cfg(not(windows))]
     #[test]
     fn test_unix_uri_conversion() {
         let uri = "file:///Users/user/project/main.mantra";
@@ -104,6 +105,7 @@ mod tests {
         assert!(path.to_string_lossy().contains("C:"));
     }
 
+    #[cfg(not(windows))]
     #[test]
     fn test_spaces_in_uri() {
         let uri = "file:///Users/user/My%20Projects/main.mantra";

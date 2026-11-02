@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - mantra_intelligence
     paths:
       - 'tooling/ide/**'
       - 'tooling/grammars/**'
@@ -12,7 +13,7 @@ on:
   workflow_dispatch:
     inputs:
       force_publish:
-        description: 'Force publish even if version has not changed'
+        description: 'Attempt publishing the current extension version (registries reject versions already published)'
         type: boolean
         required: false
         default: false
@@ -43,12 +44,6 @@ jobs:
           python3 scripts/release/sync_versions.py
 
           FORCE="${{ github.event.inputs.force_publish }}"
-          CARGO_FORCED=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' Cargo.toml 2>/dev/null || echo "false")
-          if [ "$CARGO_FORCED" = "true" ]; then
-            echo "Forced update enabled in Cargo.toml."
-            FORCE="true"
-          fi
-
           LANG_VER=$(jq -r '.version' tooling/ide/vscode/package.json)
           CLI_VER=$(jq -r '.version' tooling/ide/vscode-cli/package.json)
           echo "Current Language Support Version: $LANG_VER"
@@ -124,37 +119,48 @@ jobs:
           name: mantra-vscode-extensions
           path: ./*.vsix
 
-      # ─── Publish to Visual Studio Marketplace ──────────────────────────────
-      - name: Publish Language Support to VS Code Marketplace
-        if: steps.version_check.outputs.publish_lang == 'true' && env.VS_MARKETPLACE_TOKEN != ''
+      # Step-level secrets cannot be used in the step's `if` expression. Run the
+      # publish step for changed packages, then report a clear warning if its token
+      # has not been configured.
+      - name: Publish to Visual Studio Marketplace
+        if: steps.version_check.outputs.publish_lang == 'true' || steps.version_check.outputs.publish_cli == 'true'
         env:
           VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+          LANG_VERSION: ${{ steps.version_check.outputs.lang_version }}
+          CLI_VERSION: ${{ steps.version_check.outputs.cli_version }}
+          PUBLISH_LANG: ${{ steps.version_check.outputs.publish_lang }}
+          PUBLISH_CLI: ${{ steps.version_check.outputs.publish_cli }}
         shell: bash
         run: |
-          npx vsce publish --packagePath mantra-language-support-${{ steps.version_check.outputs.lang_version }}.vsix -p "$VS_MARKETPLACE_TOKEN"
+          if [ -z "$VS_MARKETPLACE_TOKEN" ]; then
+            echo "::warning::VS_MARKETPLACE_TOKEN is not configured; VS Code Marketplace publishing was skipped."
+            exit 0
+          fi
+          if [ "$PUBLISH_LANG" = "true" ]; then
+            (cd tooling/ide/vscode && npx vsce publish --packagePath "$GITHUB_WORKSPACE/mantra-language-support-${LANG_VERSION}.vsix" -p "$VS_MARKETPLACE_TOKEN")
+          fi
+          if [ "$PUBLISH_CLI" = "true" ]; then
+            (cd tooling/ide/vscode-cli && npx vsce publish --packagePath "$GITHUB_WORKSPACE/mantra-cli-${CLI_VERSION}.vsix" -p "$VS_MARKETPLACE_TOKEN")
+          fi
 
-      - name: Publish CLI Extension to VS Code Marketplace
-        if: steps.version_check.outputs.publish_cli == 'true' && env.VS_MARKETPLACE_TOKEN != ''
-        env:
-          VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
-        shell: bash
-        run: |
-          npx vsce publish --packagePath mantra-cli-${{ steps.version_check.outputs.cli_version }}.vsix -p "$VS_MARKETPLACE_TOKEN"
-
-      # ─── Publish to Open VSX Registry (Eclipse Open VSX) ───────────────────
-      - name: Publish Language Support to Open VSX Registry
-        if: steps.version_check.outputs.publish_lang == 'true' && env.OPEN_VSX_TOKEN != ''
-        env:
-          OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
-        shell: bash
-        run: |
-          npx ovsx publish mantra-language-support-${{ steps.version_check.outputs.lang_version }}.vsix -p "$OPEN_VSX_TOKEN"
-
-      - name: Publish CLI Extension to Open VSX Registry
-        if: steps.version_check.outputs.publish_cli == 'true' && env.OPEN_VSX_TOKEN != ''
+      - name: Publish to Open VSX Registry
+        if: steps.version_check.outputs.publish_lang == 'true' || steps.version_check.outputs.publish_cli == 'true'
         env:
           OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
+          LANG_VERSION: ${{ steps.version_check.outputs.lang_version }}
+          CLI_VERSION: ${{ steps.version_check.outputs.cli_version }}
+          PUBLISH_LANG: ${{ steps.version_check.outputs.publish_lang }}
+          PUBLISH_CLI: ${{ steps.version_check.outputs.publish_cli }}
         shell: bash
         run: |
-          npx ovsx publish mantra-cli-${{ steps.version_check.outputs.cli_version }}.vsix -p "$OPEN_VSX_TOKEN"
+          if [ -z "$OPEN_VSX_TOKEN" ]; then
+            echo "::warning::OPEN_VSX_TOKEN is not configured; Open VSX publishing was skipped."
+            exit 0
+          fi
+          if [ "$PUBLISH_LANG" = "true" ]; then
+            npx --yes ovsx publish "mantra-language-support-${LANG_VERSION}.vsix" -p "$OPEN_VSX_TOKEN"
+          fi
+          if [ "$PUBLISH_CLI" = "true" ]; then
+            npx --yes ovsx publish "mantra-cli-${CLI_VERSION}.vsix" -p "$OPEN_VSX_TOKEN"
+          fi
 

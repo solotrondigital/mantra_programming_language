@@ -1,10 +1,10 @@
-name: Mantra Toolchain CI
+name: Mantra Cross-Platform Build, Test & Install CI
 
 on:
   push:
-    branches: [ main, release-* ]
+    branches: [ main, release-*, mantra_intelligence ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, mantra_intelligence ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -102,9 +102,10 @@ jobs:
           mantrac --version | tee /tmp/mantrac-version.txt
           grep -F "v${EXPECTED_VERSION}" /tmp/mantra-version.txt
           grep -F "${EXPECTED_VERSION}" /tmp/mantrac-version.txt
-          rm -rf /tmp/ci_test_app
-          mantra create --type standalone --org com.ci --project-name ci_test_app --directory /tmp/ci_test_app
-          cd /tmp/ci_test_app
+          TEST_APP_DIR="$RUNNER_TEMP/ci_test_app"
+          rm -rf "$TEST_APP_DIR"
+          mantra create --type standalone --org com.ci --project-name ci_test_app "$TEST_APP_DIR"
+          cd "$TEST_APP_DIR"
           mantra check
           mantra test
           mantra lock
