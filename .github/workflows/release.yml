@@ -193,23 +193,116 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publish-package-registries:
-    name: Trigger Chocolatey and Homebrew publishing
+  publish-chocolatey:
+    name: Publish Chocolatey package
     needs: [release-gate, publish-release]
     if: needs.publish-release.result == 'success'
-    runs-on: ubuntu-latest
+    runs-on: windows-2022
     permissions:
-      actions: write
       contents: read
     steps:
-      - name: Checkout workflow repository
+      - name: Checkout released source
         uses: actions/checkout@v4
         with:
-          ref: main
-      - name: Dispatch package publishing workflows for the released version
+          ref: v${{ needs.release-gate.outputs.version }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download Windows release asset and build Chocolatey package
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ needs.release-gate.outputs.version }}
         run: |
-          gh workflow run publish-chocolatey.yml --ref "v$VERSION" -f version="v$VERSION"
-          gh workflow run publish-homebrew.yml --ref "v$VERSION" -f version="v$VERSION"
+          mkdir -p "dist/releases/v$VERSION"
+          gh release download "v$VERSION" --pattern "mantra-${VERSION}-windows.zip" --dir "dist/releases/v$VERSION"
+          python scripts/release/package_chocolatey.py "$VERSION"
+          python - "$VERSION" <<'PY'
+          import sys, zipfile, xml.etree.ElementTree as ET
+          version = sys.argv[1]
+          package = f"dist/releases/v{version}/mantra.{version}.nupkg"
+          with zipfile.ZipFile(package) as archive:
+              nuspec_name = next(name for name in archive.namelist() if name.endswith(".nuspec"))
+              root = ET.fromstring(archive.read(nuspec_name))
+          namespace = {"n": "http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd"}
+          actual = root.findtext("n:metadata/n:version", namespaces=namespace)
+          if actual != version:
+              raise SystemExit(f"Package version {actual!r} does not match release version {version!r}")
+          print(f"Validated Chocolatey package v{actual}")
+          PY
+      - name: Publish package to Chocolatey Gallery
+        shell: pwsh
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+          VERSION: ${{ needs.release-gate.outputs.version }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CHOCOLATEY_API_KEY)) {
+            throw "CHOCOLATEY_API_KEY is required to publish the Chocolatey package."
+          }
+          $package = "dist/releases/v$env:VERSION/mantra.$env:VERSION.nupkg"
+          choco push $package --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
+          if ($LASTEXITCODE -ne 0) { throw "Chocolatey publish failed with exit code $LASTEXITCODE" }
+
+  publish-homebrew:
+    name: Publish Homebrew formula
+    needs: [release-gate, publish-release]
+    if: needs.publish-release.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout released source
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ needs.release-gate.outputs.version }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download release assets and generate Homebrew formula
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.release-gate.outputs.version }}
+        run: |
+          mkdir -p dist/release-assets
+          gh release download "v$VERSION" --dir dist/release-assets
+          python scripts/release/generate_homebrew_formula.py "$VERSION" dist/release-assets dist/mantra.rb
+          ruby -c dist/mantra.rb
+      - name: Push formula to Homebrew tap
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ needs.release-gate.outputs.version }}
+        shell: bash
+        run: |
+          if [[ -z "$HOMEBREW_TAP_TOKEN" ]]; then
+            echo "HOMEBREW_TAP_TOKEN is required to deploy the Homebrew formula." >&2
+            exit 1
+          fi
+          TMP_DIR="$(mktemp -d)"
+          trap 'rm -rf "$TMP_DIR"' EXIT
+          TARGET=""
+          for REPOSITORY in solotrondigital/homebrew-tap solotrontech/homebrew-tap; do
+            if git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${REPOSITORY}.git" "$TMP_DIR/tap" 2>/dev/null; then
+              TARGET="$REPOSITORY"
+              break
+            fi
+            rm -rf "$TMP_DIR/tap"
+          done
+          if [[ -z "$TARGET" ]]; then
+            echo "Could not clone the configured Homebrew tap repository." >&2
+            exit 1
+          fi
+          cd "$TMP_DIR/tap"
+          BRANCH=main
+          if ! git ls-remote --exit-code --heads origin main >/dev/null 2>&1; then BRANCH=master; fi
+          git checkout -B "$BRANCH" "origin/$BRANCH"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p Formula
+          cp "$GITHUB_WORKSPACE/dist/mantra.rb" Formula/mantra.rb
+          git add Formula/mantra.rb
+          if ! git diff --cached --quiet; then
+            git commit -m "feat(formula): bump mantra to v$VERSION"
+            git push origin "HEAD:$BRANCH"
+          else
+            echo "Homebrew formula is already current at v$VERSION."
+          fi
