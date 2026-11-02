@@ -62,9 +62,10 @@ type = "{app_type}"
                     manifest.push_str(&format!("\"mantra.rest\" = \"{runtime_version}\"\n"));
                 }
             },
-            AppType::Standalone => {
-                manifest.push_str(&format!("\"mantra.core\" = \"{runtime_version}\"\n"));
-            }
+            // `mantra.core` is provided by the compiler/runtime itself, not
+            // downloaded as a registry package, so it must not be locked as an
+            // external dependency with an archive checksum.
+            AppType::Standalone => {}
             AppType::Ai => {
                 manifest.push_str(&format!("\"mantra.ai\" = \"{runtime_version}\"\n\n"));
                 manifest.push_str(
