@@ -2,12 +2,16 @@ use std::cmp::Ordering;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 #[cfg(windows)]
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
 pub fn run(args: &[String]) -> Result<(), String> {
+    if args.is_empty() {
+        return uninstall_all();
+    }
     if args.len() != 2 || args[0] != "--version" {
-        return Err("Usage: mantra uninstall --version <version>".to_string());
+        return Err("Usage: mantra uninstall [--version <version>]".to_string());
     }
 
     let version = args[1].trim_start_matches(|character| character == 'v' || character == 'V');
@@ -36,13 +40,17 @@ pub fn run(args: &[String]) -> Result<(), String> {
 
     #[cfg(not(windows))]
     {
-        fs::remove_dir_all(&version_dir).map_err(|error| {
-            format!(
-                "Could not remove Mantra v{version} at {}: {error}",
-                version_dir.display()
-            )
-        })?;
-        activate_unix_version(&root, next_version.as_deref())?;
+        if let Some(active) = next_version.as_deref() {
+            fs::remove_dir_all(&version_dir).map_err(|error| {
+                format!(
+                    "Could not remove Mantra v{version} at {}: {error}",
+                    version_dir.display()
+                )
+            })?;
+            activate_unix_version(&root, Some(active))?;
+        } else {
+            uninstall_all_unix(&root)?;
+        }
     }
 
     println!("Uninstalled Mantra v{version} and its compiler, CLI, and language server binaries.");
@@ -50,6 +58,157 @@ pub fn run(args: &[String]) -> Result<(), String> {
         println!("Mantra v{active} is now the active installed version.");
     } else {
         println!("No Mantra versions remain installed.");
+    }
+    Ok(())
+}
+
+fn uninstall_all() -> Result<(), String> {
+    #[cfg(windows)]
+    {
+        schedule_windows_uninstall_all(&install_root()?)?;
+        println!(
+            "Mantra removal is scheduled. Its files and user PATH entry will be removed shortly."
+        );
+        return Ok(());
+    }
+
+    #[cfg(not(windows))]
+    {
+        uninstall_all_unix(&install_root()?)?;
+        println!("Mantra and all managed versions have been removed from this system.");
+        Ok(())
+    }
+}
+
+#[cfg(not(windows))]
+fn uninstall_all_unix(root: &Path) -> Result<(), String> {
+    uninstall_homebrew_formula()?;
+
+    let mut roots = vec![root.to_path_buf()];
+    if let Some(home) = env::var_os("HOME") {
+        roots.push(PathBuf::from(home).join(".mantra"));
+    }
+    roots.sort();
+    roots.dedup();
+    for path in roots {
+        if path.exists() {
+            if let Err(error) = fs::remove_dir_all(&path) {
+                remove_with_sudo(&path, error)?;
+            }
+        }
+    }
+
+    remove_profile_path_entries()?;
+    for directory in [
+        "/usr/local/bin",
+        "/usr/bin",
+        "/opt/homebrew/bin",
+        "/home/linuxbrew/.linuxbrew/bin",
+    ] {
+        for name in ["mantra", "mantrac", "mantra-lsp"] {
+            let path = Path::new(directory).join(name);
+            if path.exists() || path.symlink_metadata().is_ok() {
+                remove_file_or_link(&path)?;
+            }
+        }
+    }
+    for path in [
+        "/usr/share/applications/mantra.desktop",
+        "/usr/share/icons/hicolor/512x512/apps/mantra.png",
+    ] {
+        let path = Path::new(path);
+        if path.exists() {
+            remove_file_or_link(path)?;
+        }
+    }
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn uninstall_homebrew_formula() -> Result<(), String> {
+    if Command::new("brew")
+        .arg("list")
+        .arg("--formula")
+        .arg("mantra")
+        .output()
+        .is_ok_and(|result| result.status.success())
+    {
+        let result = Command::new("brew")
+            .args(["uninstall", "--formula", "mantra"])
+            .status()
+            .map_err(|error| format!("Could not run Homebrew uninstall: {error}"))?;
+        if !result.success() {
+            return Err(format!(
+                "Homebrew failed to uninstall Mantra (status {result})."
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(not(windows))]
+fn remove_file_or_link(path: &Path) -> Result<(), String> {
+    match fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::PermissionDenied => {
+            remove_with_sudo(path, error)
+        }
+        Err(error) => Err(format!("Could not remove {}: {error}", path.display())),
+    }
+}
+
+#[cfg(not(windows))]
+fn remove_with_sudo(path: &Path, original_error: std::io::Error) -> Result<(), String> {
+    if original_error.kind() != std::io::ErrorKind::PermissionDenied {
+        return Err(format!(
+            "Could not remove {}: {original_error}",
+            path.display()
+        ));
+    }
+    let status = Command::new("sudo")
+        .arg("rm")
+        .arg("-rf")
+        .arg(path)
+        .status()
+        .map_err(|error| format!("Could not remove {} with sudo: {error}", path.display()))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "Could not remove {} (sudo exited with {status}).",
+            path.display()
+        ))
+    }
+}
+
+#[cfg(not(windows))]
+fn remove_profile_path_entries() -> Result<(), String> {
+    let Some(home) = env::var_os("HOME").map(PathBuf::from) else {
+        return Ok(());
+    };
+    for filename in [
+        ".profile",
+        ".bash_profile",
+        ".bashrc",
+        ".zprofile",
+        ".zshrc",
+    ] {
+        let profile = home.join(filename);
+        let Ok(contents) = fs::read_to_string(&profile) else {
+            continue;
+        };
+        let filtered: Vec<&str> = contents
+            .lines()
+            .filter(|line| !line.contains("MANTRA_HOME") && !line.contains(".mantra/bin"))
+            .collect();
+        if filtered.len() != contents.lines().count() {
+            let mut rewritten = filtered.join("\n");
+            if contents.ends_with('\n') && !rewritten.is_empty() {
+                rewritten.push('\n');
+            }
+            fs::write(&profile, rewritten)
+                .map_err(|error| format!("Could not update {}: {error}", profile.display()))?;
+        }
     }
     Ok(())
 }
@@ -173,9 +332,11 @@ fn schedule_windows_removal(
     let root = powershell_literal(&root.to_string_lossy());
     let version = powershell_literal(version);
     let next = powershell_literal(next_version.unwrap_or(""));
-    let command = format!(
-        "$ErrorActionPreference='Stop'; Start-Sleep -Seconds 2; $root='{root}'; Remove-Item -LiteralPath (Join-Path $root 'versions\\{version}') -Recurse -Force; $active=Join-Path $root 'active-version.txt'; if ('{next}' -ne '') {{ Set-Content -LiteralPath $active -Value '{next}' -NoNewline }} else {{ Remove-Item -LiteralPath $active -Force -ErrorAction SilentlyContinue; Remove-Item -LiteralPath (Join-Path $root 'bin\\mantra.cmd'),(Join-Path $root 'bin\\mantrac.cmd'),(Join-Path $root 'bin\\mantra-lsp.cmd') -Force -ErrorAction SilentlyContinue }}",
-    );
+    let command = if next.is_empty() {
+        format!("$ErrorActionPreference='Stop'; Start-Sleep -Seconds 2; Remove-Item -LiteralPath '{root}' -Recurse -Force -ErrorAction SilentlyContinue")
+    } else {
+        format!("$ErrorActionPreference='Stop'; Start-Sleep -Seconds 2; $root='{root}'; Remove-Item -LiteralPath (Join-Path $root 'versions\\{version}') -Recurse -Force; $active=Join-Path $root 'active-version.txt'; Set-Content -LiteralPath $active -Value '{next}' -NoNewline")
+    };
     Command::new("powershell.exe")
         .args([
             "-NoProfile",
@@ -191,6 +352,31 @@ fn schedule_windows_removal(
         .creation_flags(0x08000000)
         .spawn()
         .map_err(|error| format!("Could not schedule version removal: {error}"))?;
+    Ok(())
+}
+
+#[cfg(windows)]
+fn schedule_windows_uninstall_all(root: &Path) -> Result<(), String> {
+    use std::os::windows::process::CommandExt;
+    let root = powershell_literal(&root.to_string_lossy());
+    let command = format!(
+        "$ErrorActionPreference='SilentlyContinue'; Start-Sleep -Seconds 2; $root='{root}'; $bin=Join-Path $root 'bin'; $path=[Environment]::GetEnvironmentVariable('PATH','User'); $entries=@($path -split ';' | Where-Object {{ $_ -and $_.TrimEnd('\\') -ine $bin.TrimEnd('\\') }}); [Environment]::SetEnvironmentVariable('PATH',($entries -join ';'),'User'); [Environment]::SetEnvironmentVariable('MANTRA_HOME',$null,'User'); if (Get-Command choco.exe -ErrorAction SilentlyContinue) {{ choco.exe uninstall mantra -y --limit-output | Out-Null }}; Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue"
+    );
+    Command::new("powershell.exe")
+        .args([
+            "-NoProfile",
+            "-NonInteractive",
+            "-WindowStyle",
+            "Hidden",
+            "-Command",
+            &command,
+        ])
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .creation_flags(0x08000000)
+        .spawn()
+        .map_err(|error| format!("Could not schedule complete Mantra removal: {error}"))?;
     Ok(())
 }
 

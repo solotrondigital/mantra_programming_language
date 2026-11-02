@@ -18,16 +18,16 @@ class Mantra < Formula
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.8.0/Mantra-0.8.0-macOS.dmg"
-      sha256 "REPLACE_WITH_AARCH64_DARWIN_SHA256"
+      sha256 "b71059378c2b4910e207df2a3bfc319a22ea3829c8596b593343ec45c9279716"
     else
       url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.8.0/Mantra-0.8.0-macOS.dmg"
-      sha256 "REPLACE_WITH_X86_64_DARWIN_SHA256"
+      sha256 "b71059378c2b4910e207df2a3bfc319a22ea3829c8596b593343ec45c9279716"
     end
   end
 
   on_linux do
     url "https://github.com/solotrondigital/mantra_programming_language/releases/download/v0.8.0/mantra-0.8.0-linux.tar.gz"
-    sha256 "REPLACE_WITH_LINUX_X86_64_SHA256"
+    sha256 "1369c72f1f8e227c79b8d4dc2510e5b0d4d085ff736bb60f292ee0f4e00f3311"
   end
 
   depends_on "llvm" => :recommended

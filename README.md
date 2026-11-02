@@ -17,6 +17,132 @@
 
 ---
 
+## Mantra CLI Command Reference (v0.8.0)
+
+The following terminal references show the command and usage text printed by `mantra` and `mantrac` when run without arguments. They are formatted as shell transcripts for quick scanning and copying.
+
+### `mantra` — Mantra Development Kit
+
+<div style="background-color:#000;color:#fff;padding:1.25rem;border-radius:8px;overflow-x:auto">
+<pre style="background-color:#000;color:#fff;white-space:pre;overflow-x:auto"><code>user@users-MacBook-Pro ~ % mantra
+Mantra Development Kit (MDK) CLI — v0.8.0 (Stable Language &amp; Production Toolchain)
+Usage:
+    mantra &lt;command&gt; [arguments] [options]
+
+Project Management &amp; Scaffolding:
+    create [OPTIONS]        Scaffold a new Mantra application (frontend, backend, standalone, or ai)
+                            Frontend hybrid:
+                              mantra create --type frontend --project-name &lt;NAME&gt; [--platforms ios,android,web]
+                            Backend REST:
+                              mantra create --type backend --service REST --project-name &lt;NAME&gt;
+                            Backend GraphQL:
+                              mantra create --type backend --service GRAPHQL --project-name &lt;NAME&gt;
+                            Standalone:
+                              mantra create --type standalone --project-name &lt;NAME&gt;
+                            Native AI:
+                              mantra create --type ai --org &lt;ORG&gt; --project-name &lt;NAME&gt;
+                            Options:
+                              --type &lt;frontend|backend|standalone|ai&gt;  Application type (required)
+                              --service &lt;REST|GRAPHQL&gt;                 Backend service (required for backend)
+                              --project-name &lt;NAME&gt;                    Application and package name (required)
+                              --org &lt;DOMAIN&gt;                           Organisation domain (default: com.example)
+                              --platforms &lt;LIST&gt;                       Frontend platforms (ios,android,web)
+                              --description &lt;DESC&gt;                     Project description in mantra.toml
+    new &lt;NAME&gt; [OPTIONS]    Create a new package
+    run [OPTIONS]           Build and run development target
+                            Flags:
+                              -d, --device-id &lt;ID&gt;   Target: android, ios, chrome, web, native
+                              --web-port &lt;PORT&gt;      Development server port (default: 8080)
+                              --mantra-define-from-file=&lt;FILE&gt;  Load environment defines (.env)
+    build &lt;TARGET&gt; [OPTS]   Compile target for release or debug
+                            Targets:
+                              web                    WebAssembly bundle (wasm32)
+                              apk                    Android APK package
+                              appbundle              Android App Bundle (AAB for Play Store)
+                              ios                    iOS application bundle
+                            Flags:
+                              --release              Optimize for release / production
+                              --mantra-define-from-file=&lt;FILE&gt;  Load environment defines (.env)
+    check [TARGET]          Parse and type-check without code generation
+    test                    Discover and run tests in test/ or tests/
+    bench [TARGET]          Run micro-benchmarks with cycle/throughput analysis
+
+Mobile &amp; Web Platforms:
+    build web               Compile WebAssembly bundle (wasm32) and update web/ shell
+    build apk               Build Android APK package
+    build appbundle         Build Android App Bundle (AAB)
+    mobile build [TARGET]   Prepare mobile web assets and builds (android, ios, all)
+    mobile test             Run mobile bridge security &amp; capability conformance test
+
+Package Management &amp; Distribution:
+    add &lt;PACKAGE&gt;          Add a dependency to mantra.toml
+    remove &lt;PACKAGE&gt;       Remove a dependency from mantra.toml
+    lock                   Generate mantra.lock with SHA-256 integrity hashes
+    audit                  Audit dependencies for security and edition compliance
+    package validate       Validate package structure and manifest
+    publish                Package project into distributable archive (.tar.gz/.nupkg)
+
+Toolchain Management:
+    install [--version &lt;VERSION&gt;]  Install the latest release or a selected version
+    uninstall --version &lt;VERSION&gt;  Remove that installed Mantra version and activate the newest remaining version
+    uninstall                       Remove Mantra and all managed versions from this system
+
+Developer Tools &amp; Quality:
+    fmt [FILES...]         Format Mantra source files with 4-space indentation
+    lint [FILES...]        Run static diagnostics on source files
+    doc [FILE]             Generate Markdown documentation for declarations
+    lsp [OPTIONS]          Start Language Server Protocol (LSP) daemon
+    doctor [-v]            Run toolchain &amp; environment diagnostic health check
+    ide &lt;install|list&gt;     Manage IDE integrations (vscode, intellij, neovim, sublime, emacs)
+
+Bootstrap &amp; Toolchain:
+    bootstrap              Run self-hosting bootstrap pipeline (stages 0→1→2 + verify)
+    regression             Run the canonical language regression suite
+    target list            List supported target architectures
+    -v, --version          Print MDK toolchain version
+    -h, --help             Display this help message
+
+### `mantrac` — Mantra Compiler
+
+user@users-MacBook-Pro ~ % mantrac
+Mantra Compiler (mantrac) v0.8.0 (MVP 3 — Self-Hosting Compiler)
+Usage:
+    mantrac &lt;input.mantra&gt; [options]
+
+Execution Modes:
+    --jit               Execute using high-performance JIT engine with Interpreter fallback
+    --interpret         Execute using the v0.1.0 tree-walking interpreter
+    --run               Run program immediately (JIT with automated fallback)
+    --debug             Launch interactive Mantra debugger (mantra-debugger)
+
+Compilation &amp; Target Options:
+    -o &lt;path&gt;           Specify the output executable or file path
+    --emit-c            Emit generated C intermediate source code
+    --emit wasm         Emit WebAssembly binary module (.wasm)
+    --emit wat          Emit WebAssembly Text format (.wat)
+    --target &lt;triple&gt;   Cross-compile target (e.g. wasm32-wasi, native)
+    --release           Build with native optimizations enabled (-O2)
+    --check             Parse and type-check the source without generating code
+
+Bootstrap &amp; Verification (MVP 3):
+    --bootstrap         Run self-hosting bootstrap pipeline (stages 0→1→2 + verify)
+    --regression        Run the canonical language regression suite
+    --version-metadata  Print compiler version metadata in artifact-header format
+
+Diagnostics &amp; Profiling:
+    --jit-diagnostics   Display detailed JIT compilation and execution metrics
+    --profile           Display pipeline stage duration breakdown
+
+Informational:
+    -v, --version       Print mantrac version
+    -h, --help          Display this help message
+</code></pre>
+</div>
+
+For the usage text from your installed release, run `mantra` or `mantrac` in a terminal. Some commands and platform builds require their relevant SDKs and toolchains.
+
+---
+
 ## What is Mantra?
 
 **Mantra** is a clean, Python-inspired programming language with static typing, object-oriented design, and a native compiler. It combines the readability of Python with the safety and performance guarantees of a compiled, type-checked system.
@@ -117,6 +243,32 @@ Verify your installation:
 ```bash
 mantra --version
 mantrac --version
+```
+
+### Manage the installed toolchain
+
+If an existing Mantra binary reports `Unknown command` for `install` or
+`uninstall`, bootstrap the current CLI from this checkout first:
+
+```bash
+./install.sh
+```
+
+Then use the CLI to update to the newest GitHub release, install a selected
+version, or remove Mantra:
+
+```bash
+mantra install
+mantra install --version 0.8.0
+mantra uninstall --version 0.8.0
+mantra uninstall
+```
+
+The repository-root `uninstall.sh` is also available if the global CLI is old or
+has already been removed:
+
+```bash
+./uninstall.sh
 ```
 
 ---
