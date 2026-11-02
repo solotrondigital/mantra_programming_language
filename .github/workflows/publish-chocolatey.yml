@@ -37,7 +37,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name || inputs.version || github.ref }}
+          ref: ${{ github.event.release.tag_name || (startsWith(inputs.version, 'v') && inputs.version) || format('v{0}', inputs.version) || github.ref }}
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
