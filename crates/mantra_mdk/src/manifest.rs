@@ -62,7 +62,10 @@ impl PackageManifest {
             }
 
             if let Some((key, val)) = trimmed.split_once('=') {
-                let k = key.trim();
+                // Dependency identifiers can be quoted in TOML when they
+                // contain dots (for example, "mantra.mobile"). Normalize the
+                // identifier just like the value before storing the key.
+                let k = key.trim().trim_matches('"');
                 let v = val.trim().trim_matches('"');
 
                 match current_section {

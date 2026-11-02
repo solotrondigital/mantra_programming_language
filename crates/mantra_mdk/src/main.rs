@@ -14,6 +14,7 @@ pub mod mobile_builder;
 pub mod project;
 pub mod runner;
 pub mod scaffold;
+pub mod uninstall;
 
 use audit::Auditor;
 use bench::BenchRunner;
@@ -90,6 +91,9 @@ Package Management & Distribution:
     package validate       Validate package structure and manifest
     publish                Package project into distributable archive (.tar.gz/.nupkg)
 
+Toolchain Management:
+    uninstall --version <VERSION>  Remove that installed Mantra version and activate the newest remaining version
+
 Developer Tools & Quality:
     fmt [FILES...]         Format Mantra source files with 4-space indentation
     lint [FILES...]        Run static diagnostics on source files
@@ -144,6 +148,12 @@ fn main() {
         "create" => {
             if let Err(e) = scaffold::CreateCommand::execute(&args[2..]) {
                 eprintln!("{}", e);
+                exit(1);
+            }
+        }
+        "uninstall" => {
+            if let Err(error) = uninstall::run(&args[2..]) {
+                eprintln!("{error}");
                 exit(1);
             }
         }

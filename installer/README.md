@@ -41,11 +41,11 @@ Or open `installer/macos/Mantra-0.8.0-macOS.dmg`.
 
 ### Linux:
 ```bash
-sudo ./installer/linux/install.sh
+./installer/linux/install.sh
 ```
 Or run the self-extracting installer:
 ```bash
-sudo ./installer/linux/mantra-installer-linux.sh
+./installer/linux/mantra-installer-linux.sh
 ```
 
 ### Windows:
@@ -62,3 +62,14 @@ Or double-click `installer\windows\install.bat`.
 mantra --version
 mantrac --help
 ```
+
+Installers keep each toolchain under `~/.mantra/versions/<version>` on macOS/Linux
+and `%LOCALAPPDATA%\Mantra\versions\<version>` on Windows. The `bin` directory
+selects the newest installed version. Remove one complete version with:
+
+```sh
+mantra uninstall --version 0.8.0
+```
+
+The command removes that version's `mantra`, `mantrac`, and `mantra-lsp` binaries,
+then activates the newest remaining version.

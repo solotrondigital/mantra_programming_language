@@ -1,76 +1,65 @@
 #!/bin/bash
-set -e
-
-echo "=========================================================="
-echo "   MANTRA PROGRAMMING LANGUAGE - LINUX INSTALLER          "
-echo "   Steward: Solotron Technologies Private Limited         "
-echo "=========================================================="
-
-PREFIX="${PREFIX:-/usr/local}"
-BINDIR="$PREFIX/bin"
-APPLICATIONS_DIR="/usr/share/applications"
-ICONS_DIR="/usr/share/icons/hicolor/512x512/apps"
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MANTRAC_SRC=""
-MANTRA_SRC=""
-
-CANDIDATES=(
-    "$SCRIPT_DIR/bin"
-    "$SCRIPT_DIR/../bin"
-    "$SCRIPT_DIR/../../target/release"
-)
-
-for dir in "${CANDIDATES[@]}"; do
-    if [ -f "$dir/mantrac" ] && [ -f "$dir/mantra" ]; then
-        MANTRAC_SRC="$dir/mantrac"
-        MANTRA_SRC="$dir/mantra"
-        break
-    fi
-done
-
-if [ -z "$MANTRAC_SRC" ] || [ -z "$MANTRA_SRC" ]; then
-    echo "Error: Could not locate Mantra binaries in $SCRIPT_DIR/bin"
+BIN_SOURCE="$SCRIPT_DIR/bin"
+if [[ ! -x "$BIN_SOURCE/mantra" || ! -x "$BIN_SOURCE/mantrac" ]]; then
+    echo "Mantra binaries were not found in $BIN_SOURCE." >&2
     exit 1
 fi
 
-SUDO=""
-if [ "$(id -u)" -ne 0 ]; then
-    if [ "$PREFIX" = "/usr/local" ] || [ "$PREFIX" = "/usr" ]; then
-        SUDO="sudo"
+VERSION="$("$BIN_SOURCE/mantra" --version | sed -n '1s/.*MDK) v\([^ ]*\).*/\1/p')"
+if [[ -z "$VERSION" || "$VERSION" == *[!A-Za-z0-9.+-]* ]]; then
+    echo "Could not determine a valid Mantra version from the bundled CLI." >&2
+    exit 1
+fi
+
+MANTRA_HOME="${MANTRA_HOME:-$HOME/.mantra}"
+mkdir -p "$MANTRA_HOME/versions"
+LEGACY_MANTRA="$(command -v mantra 2>/dev/null || true)"
+if [[ -n "$LEGACY_MANTRA" && "$LEGACY_MANTRA" != "$MANTRA_HOME/bin/mantra" ]]; then
+    LEGACY_VERSION="$("$LEGACY_MANTRA" --version 2>/dev/null | sed -n '1s/.*MDK) v\([^ ]*\).*/\1/p' || true)"
+    if [[ -n "$LEGACY_VERSION" && "$LEGACY_VERSION" != "$VERSION" && "$LEGACY_VERSION" != *[!A-Za-z0-9.+-]* ]]; then
+        LEGACY_BIN="$MANTRA_HOME/versions/$LEGACY_VERSION/bin"
+        mkdir -p "$LEGACY_BIN"
+        for name in mantra mantrac mantra-lsp; do
+            legacy_path="$(command -v "$name" 2>/dev/null || true)"
+            if [[ -n "$legacy_path" && -x "$legacy_path" ]]; then cp -n "$legacy_path" "$LEGACY_BIN/$name"; fi
+        done
+        echo "Preserved previously installed Mantra v$LEGACY_VERSION for version-aware uninstall."
     fi
 fi
+VERSION_BIN="$MANTRA_HOME/versions/$VERSION/bin"
+ACTIVE_BIN="$MANTRA_HOME/bin"
+mkdir -p "$VERSION_BIN" "$ACTIVE_BIN" "$MANTRA_HOME/examples" "$MANTRA_HOME/assets"
+cp -f "$BIN_SOURCE/"* "$VERSION_BIN/"
+chmod 755 "$VERSION_BIN/"*
 
-echo "Installing Mantra binaries to $BINDIR..."
-$SUDO mkdir -p "$BINDIR"
-$SUDO cp "$MANTRAC_SRC" "$BINDIR/mantrac"
-$SUDO cp "$MANTRA_SRC" "$BINDIR/mantra"
-$SUDO chmod 755 "$BINDIR/mantrac" "$BINDIR/mantra"
+for name in mantra mantrac mantra-lsp; do
+    if [[ -x "$VERSION_BIN/$name" ]]; then
+        ln -sfn "$VERSION_BIN/$name" "$ACTIVE_BIN/$name"
+    else
+        rm -f "$ACTIVE_BIN/$name"
+    fi
+done
 
-echo "Installing desktop entry and application logo..."
-LOGO_SRC="$SCRIPT_DIR/assets/images/mantra_logo.png"
-if [ -f "$LOGO_SRC" ] && [ -d "$ICONS_DIR" ]; then
-    $SUDO cp "$LOGO_SRC" "$ICONS_DIR/mantra.png" 2>/dev/null || true
+if [[ -d "$SCRIPT_DIR/examples" ]]; then
+    cp -R "$SCRIPT_DIR/examples/." "$MANTRA_HOME/examples/"
+fi
+if [[ -d "$SCRIPT_DIR/assets" ]]; then
+    cp -R "$SCRIPT_DIR/assets/." "$MANTRA_HOME/assets/"
 fi
 
-if [ -f "$SCRIPT_DIR/mantra.desktop" ] && [ -d "$APPLICATIONS_DIR" ]; then
-    $SUDO cp "$SCRIPT_DIR/mantra.desktop" "$APPLICATIONS_DIR/" 2>/dev/null || true
-    $SUDO update-desktop-database 2>/dev/null || true
-fi
+printf -v QUOTED_MANTRA_HOME '%q' "$MANTRA_HOME"
+printf -v PATH_LINE 'export MANTRA_HOME=%s\ncase ":${PATH}:" in\n    *":${MANTRA_HOME}/bin:"*) ;;\n    *) export PATH="${MANTRA_HOME}/bin:${PATH}" ;;\nesac' "$QUOTED_MANTRA_HOME"
+for profile in "$HOME/.profile" "$HOME/.bash_profile" "$HOME/.zprofile"; do
+    if [[ ! -f "$profile" ]] || ! grep -Fq 'export MANTRA_HOME=' "$profile"; then
+        printf '\n%s\n' "$PATH_LINE" >> "$profile"
+    fi
+done
 
-SAMPLE_DIR="$HOME/.mantra/examples"
-mkdir -p "$SAMPLE_DIR"
-if [ -d "$SCRIPT_DIR/examples" ]; then
-    cp -r "$SCRIPT_DIR/examples/"* "$SAMPLE_DIR/" 2>/dev/null || true
-fi
-
-echo ""
-echo "Installed components:"
-echo "  - Compiler:      $BINDIR/mantrac"
-echo "  - MDK CLI:       $BINDIR/mantra"
-echo "  - Examples:      $SAMPLE_DIR"
-echo ""
-echo "Verifying installation:"
-"$BINDIR/mantra" --version || true
-echo ""
-echo "Mantra successfully installed! Run 'mantra --help' to begin."
+echo "Installed Mantra v$VERSION with mantra, mantrac, and mantra-lsp."
+echo "Version files: $MANTRA_HOME/versions/$VERSION"
+echo "Active commands: $ACTIVE_BIN"
+echo "Open a new terminal or run: export PATH=\"$ACTIVE_BIN:\$PATH\""
+"$ACTIVE_BIN/mantra" --version

@@ -180,11 +180,15 @@ jobs:
         run: |
           mkdir -p "dist/releases/v$VERSION"
           cp dist/staging/* "dist/releases/v$VERSION/"
-          if [ -z "$RELEASE_GPG_PRIVATE_KEY" ]; then
-            echo "RELEASE_GPG_PRIVATE_KEY is required to sign release metadata." >&2
-            exit 1
+          if [ -n "$RELEASE_GPG_PRIVATE_KEY" ]; then
+            if [ -z "$GPG_KEY_ID" ]; then
+              echo "GPG_KEY_ID must be configured when RELEASE_GPG_PRIVATE_KEY is set." >&2
+              exit 1
+            fi
+            printf '%s' "$RELEASE_GPG_PRIVATE_KEY" | gpg --batch --import
+          else
+            echo "::warning::GPG signing secrets are not configured; checksums and release metadata will be generated without detached signatures."
           fi
-          printf '%s' "$RELEASE_GPG_PRIVATE_KEY" | gpg --batch --import
           bash ./scripts/release/sign_release.sh "$VERSION"
       - name: Create or update GitHub release
         uses: softprops/action-gh-release@v2

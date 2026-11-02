@@ -233,6 +233,9 @@ echo ""
 echo "Installation complete! Run 'mantra --help' to begin."
 EOF
 chmod 755 "$MACOS_DIR/install.sh"
+# Keep generated release installers aligned with the version-aware installer.
+cp "$PKG_DIR/installer/macos/install.sh" "$MACOS_DIR/install.sh"
+chmod 755 "$MACOS_DIR/install.sh"
 
 cat << EOF > "$MACOS_DIR/README.md"
 # Mantra Programming Language (v${VERSION}) — macOS Installer
@@ -245,13 +248,15 @@ Run the install script in terminal:
 \`\`\`bash
 ./install.sh
 \`\`\`
-Or copy \`bin/mantrac\` and \`bin/mantra\` to \`/usr/local/bin/\`.
+The installer stores this release under \`~/.mantra/versions/${VERSION}\` and selects it from \`~/.mantra/bin\`.
+Remove it later with \`mantra uninstall --version ${VERSION}\`.
 
 Verify:
 \`\`\`bash
 mantra --version
 mantrac --help
 \`\`\`
+
 EOF
 
 DMG_OUTPUT="$TMP_STAGE/Mantra-${VERSION}-macOS.dmg"
@@ -365,6 +370,9 @@ echo ""
 echo "Mantra successfully installed! Run 'mantra --help' to begin."
 EOF
 chmod 755 "$LINUX_DIR/install.sh"
+# Keep generated release installers aligned with the version-aware installer.
+cp "$PKG_DIR/installer/linux/install.sh" "$LINUX_DIR/install.sh"
+chmod 755 "$LINUX_DIR/install.sh"
 
 cat << EOF > "$LINUX_DIR/README.md"
 # Mantra Programming Language (v${VERSION}) — Linux Installer
@@ -374,7 +382,7 @@ Dual-licensed under MIT and GNU GPL v3.0.
 
 ### Installation:
 \`\`\`bash
-sudo ./install.sh
+./install.sh
 \`\`\`
 EOF
 
@@ -507,6 +515,9 @@ Write-Host "=======================================================" -Foreground
 EOF
 
 ZIP_OUTPUT="$TMP_STAGE/mantra-${VERSION}-windows.zip"
+# Use the shared version-aware Windows installers in generated release bundles.
+cp "$PKG_DIR/installer/windows/install.bat" "$WINDOWS_DIR/install.bat"
+cp "$PKG_DIR/installer/windows/Install-Mantra.ps1" "$WINDOWS_DIR/Install-Mantra.ps1"
 if command -v zip >/dev/null 2>&1; then
     (cd "$WINDOWS_DIR" && zip -r -q "$ZIP_OUTPUT" .)
 else
@@ -619,11 +630,11 @@ Or open \`installer/macos/Mantra-${VERSION}-macOS.dmg\`.
 
 ### Linux:
 \`\`\`bash
-sudo ./installer/linux/install.sh
+./installer/linux/install.sh
 \`\`\`
 Or run the self-extracting installer:
 \`\`\`bash
-sudo ./installer/linux/mantra-installer-linux.sh
+./installer/linux/mantra-installer-linux.sh
 \`\`\`
 
 ### Windows:
@@ -640,6 +651,10 @@ Or double-click \`installer\\windows\\install.bat\`.
 mantra --version
 mantrac --help
 \`\`\`
+
+Each release is stored separately under \`~/.mantra/versions\` on macOS/Linux
+or \`%LOCALAPPDATA%\\Mantra\\versions\` on Windows. To remove one version and
+activate the newest remaining version, run \`mantra uninstall --version ${VERSION}\`.
 EOF
 
 # ------------------------------------------------------------------------------

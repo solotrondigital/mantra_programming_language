@@ -23,13 +23,17 @@ if [ -z "${VERSION}" ]; then
     echo "Unable to resolve release version from Cargo.toml workspace.package.version" >&2
     exit 1
 fi
-if ! command -v gpg >/dev/null 2>&1 || [ -z "${GPG_KEY_ID:-}" ]; then
-    echo "A configured GPG signing key is required (GPG_KEY_ID); refusing to publish unsigned release artifacts." >&2
-    exit 1
-fi
-if ! gpg --batch --list-secret-keys "${GPG_KEY_ID}" >/dev/null 2>&1; then
-    echo "Signing key '${GPG_KEY_ID}' is not available in the GPG keyring." >&2
-    exit 1
+SIGN_RELEASE=false
+if [ -n "${GPG_KEY_ID:-}" ]; then
+    if ! command -v gpg >/dev/null 2>&1; then
+        echo "GPG_KEY_ID is configured but gpg is unavailable." >&2
+        exit 1
+    fi
+    if ! gpg --batch --list-secret-keys "${GPG_KEY_ID}" >/dev/null 2>&1; then
+        echo "Signing key '${GPG_KEY_ID}' is not available in the GPG keyring." >&2
+        exit 1
+    fi
+    SIGN_RELEASE=true
 fi
 DIST_DIR="${REPO_ROOT}/dist/releases/v${VERSION}"
 
@@ -67,19 +71,27 @@ for file in "${files[@]}"; do
     shasum -a 512 "$file" >> SHA512SUMS
 done
 
-# 3. GPG Signing. Never label an unsigned checksum digest as a signature.
-echo ">> [3/3] Generating detached signatures for release artifacts..."
-if [ -n "${GPG_PASSPHRASE:-}" ]; then
-    printf '%s' "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign -u "${GPG_KEY_ID}" SHA256SUMS
-    printf '%s' "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign -u "${GPG_KEY_ID}" release.json
+# 3. GPG Signing is optional; never label an unsigned checksum digest as signed.
+if [ "$SIGN_RELEASE" = true ]; then
+    echo ">> [3/3] Generating detached signatures for release artifacts..."
+    if [ -n "${GPG_PASSPHRASE:-}" ]; then
+        printf '%s' "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign -u "${GPG_KEY_ID}" SHA256SUMS
+        printf '%s' "$GPG_PASSPHRASE" | gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --armor --detach-sign -u "${GPG_KEY_ID}" release.json
+    else
+        gpg --batch --yes --armor --detach-sign -u "${GPG_KEY_ID}" SHA256SUMS
+        gpg --batch --yes --armor --detach-sign -u "${GPG_KEY_ID}" release.json
+    fi
+    echo "   ✓ Generated SHA256SUMS.asc and release.json.asc"
 else
-    gpg --batch --yes --armor --detach-sign -u "${GPG_KEY_ID}" SHA256SUMS
-    gpg --batch --yes --armor --detach-sign -u "${GPG_KEY_ID}" release.json
+    echo "   ! GPG signing skipped; no GPG_KEY_ID is configured. SHA-256 and SHA-512 checksums were generated."
 fi
-echo "   ✓ Generated SHA256SUMS.asc and release.json.asc"
 
 echo ""
 echo "Release Artifacts in ${DIST_DIR}:"
 ls -la "${DIST_DIR}"
 echo ""
-echo "✓ Release artifacts were checksummed and signed with GPG."
+if [ "$SIGN_RELEASE" = true ]; then
+    echo "✓ Release artifacts were checksummed and signed with GPG."
+else
+    echo "✓ Release artifacts were checksummed; detached GPG signatures were not generated."
+fi
