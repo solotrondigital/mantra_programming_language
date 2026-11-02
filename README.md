@@ -23,8 +23,8 @@ The following terminal references show the command and usage text printed by `ma
 
 ### `mantra` — Mantra Development Kit
 
-<div style="background-color:#fff;color:#000;padding:1.25rem;border-radius:8px;overflow-x:auto">
-<pre style="background-color:#fff;color:#000;white-space:pre;overflow-x:auto"><code>user@users-MacBook-Pro ~ % mantra
+<div style="background-color:#000;color:#fff;padding:1.25rem;border-radius:8px;overflow-x:auto">
+<pre style="background-color:#000;color:#fff;white-space:pre;overflow-x:auto"><code>user@users-MacBook-Pro ~ % mantra
 Mantra Development Kit (MDK) CLI — v0.8.0 (Stable Language &amp; Production Toolchain)
 Usage:
     mantra &lt;command&gt; [arguments] [options]
