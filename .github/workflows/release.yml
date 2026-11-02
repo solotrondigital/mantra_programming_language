@@ -1,37 +1,76 @@
-name: Production Release & Package Distribution
+name: Production Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    tags: ['v*']
     paths:
       - 'crates/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - 'scripts/release/**'
+      - '.github/workflows/**'
       - 'create_installers.sh'
-      - 'build_installers.sh'
       - 'distribution/**'
-    tags:
-      - 'v*'
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (leave blank to read from Cargo.toml)'
+        description: 'Must match workspace.package.version in Cargo.toml'
         required: false
         default: ''
 
 permissions:
   contents: write
-  packages: write
-  id-token: write
 
 env:
-  PYTHONIOENCODING: "utf-8"
+  PYTHONIOENCODING: utf-8
+  CARGO_TERM_COLOR: always
 
 jobs:
+  release-gate:
+    name: Resolve workspace version and release gate
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.gate.outputs.version }}
+      forced_update: ${{ steps.gate.outputs.forced_update }}
+      should_release: ${{ steps.gate.outputs.should_release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Synchronize and validate Cargo workspace versions
+        run: |
+          python scripts/release/sync_versions.py
+          python scripts/release/version_config.py verify
+      - name: Check release version and existing GitHub release
+        id: gate
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="$(python scripts/release/version_config.py version)"
+          FORCED_UPDATE="$(python scripts/release/version_config.py forced-update)"
+          REQUESTED_VERSION="${{ inputs.version }}"
+          if [[ -n "$REQUESTED_VERSION" && "${REQUESTED_VERSION#v}" != "$VERSION" ]]; then
+            echo "Requested version $REQUESTED_VERSION does not match Cargo workspace version $VERSION" >&2
+            exit 1
+          fi
+          if [[ "$GITHUB_REF" == refs/tags/* && "${GITHUB_REF_NAME#v}" != "$VERSION" ]]; then
+            echo "Git tag $GITHUB_REF_NAME does not match Cargo workspace version $VERSION" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "forced_update=$FORCED_UPDATE" >> "$GITHUB_OUTPUT"
+          python scripts/release/check_release_status.py
+
   build-and-package:
-    name: Build & Package (${{ matrix.os }})
+    name: Build & Package (${{ matrix.platform }})
+    needs: release-gate
+    if: needs.release-gate.outputs.should_release == 'true'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -43,349 +82,102 @@ jobs:
             platform: linux
           - os: windows-2022
             platform: windows
-
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Install Stable Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Synchronize Versions from Cargo.toml & Check Gate
-        id: get_version
+      - name: Synchronize and verify workspace package versions
+        shell: bash
+        run: |
+          python scripts/release/sync_versions.py
+          python scripts/release/version_config.py verify
+      - name: Build toolchain and platform installer
         shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.release-gate.outputs.version }}
         run: |
-          python3 scripts/release/sync_versions.py
-          python3 scripts/release/check_release_status.py
-          VER=$(python3 -c 'import tomllib; print(tomllib.load(open("crates/mantrac/Cargo.toml", "rb"))["package"]["version"])')
-          FORCED=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' Cargo.toml 2>/dev/null || echo "false")
-          VER="${VER#v}"
-          echo "VERSION=${VER}" >> $GITHUB_ENV
-          echo "VERSION=${VER}" >> $GITHUB_OUTPUT
-          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_ENV
-          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_OUTPUT
-          echo "Building Mantra Version: v${VER} (forced-update=${FORCED})"
-
-      - name: Build Toolchain Binaries
-        run: cargo build --release
-
-      - name: Generate Platform Installers
-        shell: bash
-        run: |
+          cargo build --release
           chmod +x create_installers.sh
-          ./create_installers.sh "${{ env.VERSION }}"
-
-      - name: Upload Platform Artifacts
+          ./create_installers.sh "$VERSION"
+          MANTRA_BIN=target/release/mantra
+          MANTRAC_BIN=target/release/mantrac
+          if [[ -f "${MANTRA_BIN}.exe" ]]; then MANTRA_BIN="${MANTRA_BIN}.exe"; fi
+          if [[ -f "${MANTRAC_BIN}.exe" ]]; then MANTRAC_BIN="${MANTRAC_BIN}.exe"; fi
+          "./$MANTRA_BIN" --version | grep -F "v$VERSION"
+          "./$MANTRAC_BIN" --version | grep -F "$VERSION"
+      - name: Upload macOS installer
+        if: matrix.platform == 'macos'
         uses: actions/upload-artifact@v4
         with:
-          name: installers-${{ matrix.platform }}
+          name: installer-macos
           path: |
-            dist/releases/v${{ env.VERSION }}/*
-            installer/macos/*.dmg
-            installer/linux/*.tar.gz
-            installer/linux/*.sh
-            installer/windows/*.zip
-          if-no-files-found: warn
+            dist/releases/v${{ needs.release-gate.outputs.version }}/Mantra-${{ needs.release-gate.outputs.version }}-macOS.dmg
+          if-no-files-found: error
+      - name: Upload Linux installer
+        if: matrix.platform == 'linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-linux
+          path: |
+            dist/releases/v${{ needs.release-gate.outputs.version }}/mantra-${{ needs.release-gate.outputs.version }}-linux.tar.gz
+            dist/releases/v${{ needs.release-gate.outputs.version }}/mantra-installer-linux.sh
+          if-no-files-found: error
+      - name: Upload Windows installer
+        if: matrix.platform == 'windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-windows
+          path: |
+            dist/releases/v${{ needs.release-gate.outputs.version }}/mantra-${{ needs.release-gate.outputs.version }}-windows.zip
+          if-no-files-found: error
 
-  release-homebrew:
-    name: Sign, Release, Homebrew
-    needs: [build-and-package]
+  publish-release:
+    name: Assemble and publish GitHub release
+    needs: [release-gate, build-and-package]
+    if: needs.release-gate.outputs.should_release == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Resolve Version and Gate Check
-        id: gate_check
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python3 scripts/release/sync_versions.py
-          python3 scripts/release/check_release_status.py
-          VER=$(python3 -c 'import tomllib; print(tomllib.load(open("crates/mantrac/Cargo.toml", "rb"))["package"]["version"])')
-          FORCED=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' Cargo.toml 2>/dev/null || echo "false")
-          VER="${VER#v}"
-          echo "VERSION=${VER}" >> $GITHUB_ENV
-          echo "VERSION=${VER}" >> $GITHUB_OUTPUT
-          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_ENV
-          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_OUTPUT
-          echo "Publishing Mantra Version: v${VER} (forced-update=${FORCED})"
-
-      - name: Download Built Artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
+          pattern: installer-*
           path: dist/staging
-
-      - name: Consolidate Release Distribution Folder
-        shell: bash
-        run: |
-          mkdir -p "dist/releases/v${{ env.VERSION }}"
-          find dist/staging -type f -exec cp -f {} "dist/releases/v${{ env.VERSION }}/" \;
-          echo "Consolidated release artifacts:"
-          ls -la "dist/releases/v${{ env.VERSION }}/"
-
-      - name: Generate Homebrew Formula
-        shell: bash
-        run: |
-          chmod +x scripts/release/*.sh scripts/release/*.py
-          ./scripts/release/update_distributions.sh "${{ env.VERSION }}"
-
-      - name: Import release signing key
+          merge-multiple: true
+      - name: Assemble release metadata
         shell: bash
         env:
+          VERSION: ${{ needs.release-gate.outputs.version }}
           RELEASE_GPG_PRIVATE_KEY: ${{ secrets.RELEASE_GPG_PRIVATE_KEY }}
-        run: |
-          if [ -z "${RELEASE_GPG_PRIVATE_KEY}" ]; then
-            echo "RELEASE_GPG_PRIVATE_KEY is required to publish a signed release." >&2
-            exit 1
-          fi
-          printf '%s' "${RELEASE_GPG_PRIVATE_KEY}" | gpg --batch --import
-
-      - name: Generate Manifest, SBOMs & Cryptographic Signatures
-        shell: bash
-        env:
           GPG_KEY_ID: ${{ secrets.RELEASE_GPG_KEY_ID }}
           GPG_PASSPHRASE: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
         run: |
-          ./scripts/release/sign_release.sh "${{ env.VERSION }}"
-
-      - name: Create or Update GitHub Release
-        if: steps.gate_check.outputs.should_release == 'true'
+          mkdir -p "dist/releases/v$VERSION"
+          cp dist/staging/* "dist/releases/v$VERSION/"
+          if [ -z "$RELEASE_GPG_PRIVATE_KEY" ]; then
+            echo "RELEASE_GPG_PRIVATE_KEY is required to sign release metadata." >&2
+            exit 1
+          fi
+          printf '%s' "$RELEASE_GPG_PRIVATE_KEY" | gpg --batch --import
+          bash ./scripts/release/sign_release.sh "$VERSION"
+      - name: Create or update GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.VERSION }}
-          name: Mantra v${{ env.VERSION }} — Production Release
-          files: |
-            dist/releases/v${{ env.VERSION }}/*
-          fail_on_unmatched_files: false
+          tag_name: v${{ needs.release-gate.outputs.version }}
+          name: Mantra v${{ needs.release-gate.outputs.version }} — Production Release
+          files: dist/releases/v${{ needs.release-gate.outputs.version }}/*
+          overwrite_files: true
+          fail_on_unmatched_files: true
           generate_release_notes: true
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Verify Homebrew Tap Access
-        if: steps.gate_check.outputs.should_release == 'true'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-        run: |
-          if [ -z "${GH_TOKEN}" ]; then
-            echo "::warning::HOMEBREW_TAP_TOKEN secret is not set."
-            exit 0
-          fi
-          echo "Checking GitHub authentication..."
-          curl -sS \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/user | python3 -c "import json,sys; print('Authenticated as:', json.load(sys.stdin).get('login','UNKNOWN'))"
-          echo "Checking repository write access..."
-          curl -sS \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            https://api.github.com/repos/solotrondigital/homebrew-tap | python3 -c "import json,sys; d=json.load(sys.stdin); print('Repository:', d.get('full_name')); print('Push permission:', d.get('permissions',{}).get('push','NOT AVAILABLE'))"
-
-      - name: Push to Homebrew Tap
-        shell: bash
-        if: steps.gate_check.outputs.should_release == 'true'
-        env:
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-        run: |
-          if [ -z "${HOMEBREW_TAP_TOKEN}" ]; then
-            echo "::warning::HOMEBREW_TAP_TOKEN secret is not set. Skipping live push to Homebrew tap."
-            echo ">> ACTION REQUIRED: Create a GitHub PAT with 'repo' write scope for solotrondigital/homebrew-tap"
-            echo ">> then add it as repository secret HOMEBREW_TAP_TOKEN at:"
-            echo ">> https://github.com/solotrondigital/mantra_programming_language/settings/secrets/actions"
-            exit 0
-          fi
-          echo ">> Pushing updated Formula to Homebrew tap repository..."
-          TMP_DIR=$(mktemp -d)
-          CLONED=0
-          TARGET_TAP=""
-          for TAP_REPO in "solotrondigital/homebrew-tap" "solotrontech/homebrew-tap"; do
-            echo ">> Checking tap repository: ${TAP_REPO}..."
-            rm -rf "${TMP_DIR}/tap"
-            if git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${TAP_REPO}.git" "${TMP_DIR}/tap" 2>/dev/null; then
-              CLONED=1
-              TARGET_TAP="${TAP_REPO}"
-              echo ">> Connected to ${TARGET_TAP}"
-              break
-            fi
-          done
-
-          if [ "$CLONED" -eq 1 ]; then
-            FORMULA_SRC="dist/releases/v${{ env.VERSION }}/mantra.rb"
-            if [ ! -f "$FORMULA_SRC" ]; then
-              FORMULA_SRC="distribution/homebrew-tap/Formula/mantra.rb"
-            fi
-            if [ ! -f "$FORMULA_SRC" ]; then
-              echo "::warning::mantra.rb formula file not found. Expected at dist/releases/v${{ env.VERSION }}/mantra.rb"
-              exit 0
-            fi
-
-            cd "${TMP_DIR}/tap"
-            git remote set-url origin "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/${TARGET_TAP}.git"
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-            # Check if remote has branches
-            git fetch origin 2>/dev/null || true
-            if git rev-parse --verify origin/main >/dev/null 2>&1; then
-              git checkout -B main origin/main
-              git pull origin main --rebase 2>/dev/null || true
-            elif git rev-parse --verify origin/master >/dev/null 2>&1; then
-              git checkout -B master origin/master
-              git pull origin master --rebase 2>/dev/null || true
-            else
-              git checkout -B main 2>/dev/null || true
-            fi
-
-            mkdir -p Formula
-            cp "${GITHUB_WORKSPACE}/${FORMULA_SRC}" Formula/mantra.rb
-            git add Formula/mantra.rb
-
-            if ! git diff --cached --quiet; then
-              git commit -m "feat(formula): bump mantra to v${{ env.VERSION }}"
-              echo ">> Pushing formula to ${TARGET_TAP}..."
-              if git push origin HEAD:main; then
-                TAP_ORG=$(echo "$TARGET_TAP" | cut -d'/' -f1)
-                echo "[OK] Homebrew tap updated: brew install ${TAP_ORG}/tap/mantra"
-              elif git push origin HEAD:master; then
-                TAP_ORG=$(echo "$TARGET_TAP" | cut -d'/' -f1)
-                echo "[OK] Homebrew tap updated: brew install ${TAP_ORG}/tap/mantra"
-              else
-                echo "::warning::Failed to push to ${TARGET_TAP}. Verify that HOMEBREW_TAP_TOKEN has 'repo' write access to ${TARGET_TAP}."
-              fi
-            else
-              echo ">> Homebrew formula is already up to date in ${TARGET_TAP} (v${{ env.VERSION }})."
-            fi
-            cd "${GITHUB_WORKSPACE}"
-            rm -rf "${TMP_DIR}"
-          else
-            echo "::warning::Could not clone Homebrew tap repository (tried solotrondigital/homebrew-tap and solotrontech/homebrew-tap)."
-            echo ">> To enable automated tap updates:"
-            echo ">>   1. Create the repository 'homebrew-tap' on GitHub (under solotrondigital or solotrontech)."
-            echo ">>   2. Ensure HOMEBREW_TAP_TOKEN has 'repo' write access to it."
-            echo ">> The generated Formula is available in release artifacts at dist/releases/v${{ env.VERSION }}/mantra.rb."
-            exit 0
-          fi
-
-  release-chocolatey:
-    name: Sign, Release, Chocolatey
-    needs: [build-and-package, release-homebrew]
-    if: always() && needs.build-and-package.result == 'success'
-    runs-on: windows-2022
-    steps:
-      - name: Checkout Source Code
-        uses: actions/checkout@v4
-
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Resolve Version and Gate Check
-        id: gate_check
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python3 scripts/release/sync_versions.py
-          python3 scripts/release/check_release_status.py
-          VER=$(python3 -c 'import tomllib; print(tomllib.load(open("crates/mantrac/Cargo.toml", "rb"))["package"]["version"])')
-          FORCED=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' Cargo.toml 2>/dev/null || echo "false")
-          VER="${VER#v}"
-          echo "VERSION=${VER}" >> $GITHUB_ENV
-          echo "VERSION=${VER}" >> $GITHUB_OUTPUT
-          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_ENV
-          echo "FORCED_UPDATE=${FORCED}" >> $GITHUB_OUTPUT
-          echo "Chocolatey Release Mantra Version: v${VER} (forced-update=${FORCED})"
-
-      - name: Download Built Artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: dist/staging
-
-      - name: Consolidate Release Distribution Folder
-        shell: bash
-        run: |
-          mkdir -p "dist/releases/v${{ env.VERSION }}"
-          find dist/staging -type f -exec cp -f {} "dist/releases/v${{ env.VERSION }}/" \;
-          echo "Consolidated release artifacts for Chocolatey:"
-          ls -la "dist/releases/v${{ env.VERSION }}/"
-
-      - name: Generate Chocolatey Package (.nupkg)
-        shell: bash
-        run: |
-          python scripts/release/package_chocolatey.py "${{ env.VERSION }}"
-          if command -v choco >/dev/null 2>&1; then
-            choco pack distribution/choco-mantra/mantra.nuspec --outputdirectory "dist/releases/v${{ env.VERSION }}" || true
-          fi
-          ls -la "dist/releases/v${{ env.VERSION }}"
-
-      - name: Upload Chocolatey Package to GitHub Release
-        if: steps.gate_check.outputs.should_release == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ env.VERSION }}
-          name: Mantra v${{ env.VERSION }} — Production Release
-          files: |
-            dist/releases/v${{ env.VERSION }}/*.nupkg
-          fail_on_unmatched_files: false
-          generate_release_notes: true
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Push to Chocolatey Gallery
-        if: steps.gate_check.outputs.should_release == 'true'
-        shell: pwsh
-        env:
-          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
-        run: |
-          $apiKey = $env:CHOCOLATEY_API_KEY
-
-          if ([string]::IsNullOrWhiteSpace($apiKey)) {
-              Write-Warning "CHOCOLATEY_API_KEY is missing."
-              exit 0
-          }
-
-          $nupkg = Get-ChildItem `
-              -Path "dist/releases/v${{ env.VERSION }}" `
-              -Filter "*.nupkg" `
-              -ErrorAction SilentlyContinue |
-              Select-Object -First 1
-
-          if (-not $nupkg) {
-              $nupkg = Get-ChildItem -Path "." -Filter "*.nupkg" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-          }
-
-          if (-not $nupkg) {
-              Write-Error "Chocolatey .nupkg package not found."
-              exit 1
-          }
-
-          choco push $nupkg.FullName `
-              --source https://push.chocolatey.org/ `
-              --api-key $apiKey
-
-          if ($LASTEXITCODE -ne 0) {
-              throw "Chocolatey package upload failed with exit code $LASTEXITCODE"
-          }
-
-          Write-Host "[OK] Chocolatey package successfully published."
-            

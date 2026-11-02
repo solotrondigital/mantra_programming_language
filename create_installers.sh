@@ -31,6 +31,8 @@ PKG_DIR="$WORKSPACE_ROOT/mantra_programming_language"
 WEB_DIR="$WORKSPACE_ROOT/mantra_website/mantra_web"
 EXAMPLES_REPO_DIR="$WORKSPACE_ROOT/mantra_programming_language_examples"
 TARGET_RELEASE="$PKG_DIR/target/release"
+PYTHON_BIN=python3
+if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then PYTHON_BIN=python; fi
 
 DEST_PKG_INSTALLER="$PKG_DIR/installer"
 DEST_PKG_DIST="$PKG_DIR/dist"
@@ -51,7 +53,7 @@ for arg in "$@"; do
 done
 
 if [ -f "$PKG_DIR/scripts/release/sync_versions.py" ]; then
-    python3 "$PKG_DIR/scripts/release/sync_versions.py"
+    "$PYTHON_BIN" "$PKG_DIR/scripts/release/sync_versions.py"
 fi
 
 if [ -z "$VERSION_ARG" ]; then
@@ -63,12 +65,12 @@ if [ -z "$VERSION_ARG" ]; then
     fi
 fi
 if [ -z "$VERSION_ARG" ]; then
-    VERSION_ARG=$(python3 -c 'import sys,tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["workspace"]["package"]["version"])' "$PKG_DIR/Cargo.toml")
+    VERSION_ARG=$("$PYTHON_BIN" -c 'import sys,tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["workspace"]["package"]["version"])' "$PKG_DIR/Cargo.toml")
 fi
 VERSION="${VERSION_ARG#v}"
 VERSION="${VERSION#V}"
 
-FORCED_UPDATE=$(python3 -c 'import sys,tomllib; print(str(tomllib.load(open(sys.argv[1], "rb")).get("workspace", {}).get("metadata", {}).get("mantra", {}).get("forced-update", False)).lower())' "$PKG_DIR/Cargo.toml")
+FORCED_UPDATE=$("$PYTHON_BIN" -c 'import sys,tomllib; print(str(tomllib.load(open(sys.argv[1], "rb")).get("workspace", {}).get("metadata", {}).get("mantra", {}).get("forced-update", False)).lower())' "$PKG_DIR/Cargo.toml")
 
 DEST_RELEASE_DIR="$PKG_DIR/dist/releases/v${VERSION}"
 if [ "$FORCED_UPDATE" != "true" ] && [ -d "$DEST_RELEASE_DIR" ] && [ -n "$(ls -A "$DEST_RELEASE_DIR" 2>/dev/null)" ]; then

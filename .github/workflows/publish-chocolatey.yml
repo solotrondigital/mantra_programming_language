@@ -1,0 +1,72 @@
+name: Publish Chocolatey Package
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (must match Cargo.toml)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Resolve workspace version and download Windows installer
+        id: version
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="$(python scripts/release/version_config.py version)"
+          REQUESTED="${{ inputs.version || github.event.release.tag_name }}"
+          REQUESTED="${REQUESTED#v}"
+          if [[ -n "$REQUESTED" && "$REQUESTED" != "$VERSION" ]]; then
+            echo "Requested release $REQUESTED does not match Cargo.toml version $VERSION" >&2
+            exit 1
+          fi
+          mkdir -p "dist/releases/v$VERSION"
+          gh release download "v$VERSION" --pattern "mantra-${VERSION}-windows.zip" --dir "dist/releases/v$VERSION"
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Build and validate versioned Chocolatey package
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          python scripts/release/package_chocolatey.py "$VERSION"
+          python - "$VERSION" <<'PY'
+          import sys, zipfile, xml.etree.ElementTree as ET
+          version = sys.argv[1]
+          package = f"dist/releases/v{version}/mantra.{version}.nupkg"
+          with zipfile.ZipFile(package) as archive:
+              nuspec_name = next(name for name in archive.namelist() if name.endswith(".nuspec"))
+              root = ET.fromstring(archive.read(nuspec_name))
+          namespace = {"n": "http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd"}
+          actual = root.findtext("n:metadata/n:version", namespaces=namespace)
+          if actual != version:
+              raise SystemExit(f"Package version {actual!r} does not match workspace version {version!r}")
+          print(f"Validated Chocolatey package v{actual}")
+          PY
+      - name: Publish package to Chocolatey Gallery
+        shell: pwsh
+        env:
+          CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CHOCOLATEY_API_KEY)) {
+            throw "CHOCOLATEY_API_KEY is required to publish the Chocolatey package."
+          }
+          $package = "dist/releases/v$env:VERSION/mantra.$env:VERSION.nupkg"
+          choco push $package --source https://push.chocolatey.org/ --api-key $env:CHOCOLATEY_API_KEY
+          if ($LASTEXITCODE -ne 0) { throw "Chocolatey publish failed with exit code $LASTEXITCODE" }

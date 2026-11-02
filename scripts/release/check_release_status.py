@@ -11,7 +11,10 @@ import os
 import sys
 import urllib.request
 import urllib.error
-import tomllib
+try:
+    from .version_config import read_config
+except ImportError:
+    from version_config import read_config
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -21,14 +24,7 @@ if hasattr(sys.stderr, "reconfigure"):
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 def get_config():
-    cargo_path = os.path.join(REPO_ROOT, "Cargo.toml")
-    with open(cargo_path, "rb") as f:
-        config = tomllib.load(f)
-    compiler_path = os.path.join(REPO_ROOT, "crates", "mantrac", "Cargo.toml")
-    with open(compiler_path, "rb") as f:
-        version = tomllib.load(f)["package"]["version"]
-    forced_update = config.get("workspace", {}).get("package", {}).get("forced-update", False)
-    return version, bool(forced_update)
+    return read_config()
 
 def release_exists_on_github(repo, version, token=None):
     url = f"https://api.github.com/repos/{repo}/releases/tags/v{version}"

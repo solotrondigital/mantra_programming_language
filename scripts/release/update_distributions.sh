@@ -24,7 +24,7 @@ else
     VERSION=$(python3 -c 'import sys,tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["workspace"]["package"]["version"])' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || true)
 fi
 if [ -z "${VERSION}" ]; then
-    echo "Unable to resolve release version from crates/mantrac/Cargo.toml" >&2
+    echo "Unable to resolve release version from Cargo.toml workspace.package.version" >&2
     exit 1
 fi
 FORCED_UPDATE=$(awk -F'=' '/forced-update *=/ {gsub(/[ "]/, "", $2); print tolower($2); exit}' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || echo "false")
