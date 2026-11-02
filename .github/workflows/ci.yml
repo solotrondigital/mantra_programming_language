@@ -3,8 +3,6 @@ name: Mantra Cross-Platform Build, Test & Install CI
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -23,7 +21,7 @@ jobs:
             target: aarch64-apple-darwin
             c_compiler: clang
           # macOS Intel
-          - os: macos-13
+          - os: macos-15-intel
             target: x86_64-apple-darwin
             c_compiler: clang
           # Linux x86_64
@@ -31,7 +29,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             c_compiler: gcc
           # Linux aarch64
-          - os: ubuntu-24.04-arm64
+          - os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             c_compiler: gcc
           # Windows MSVC

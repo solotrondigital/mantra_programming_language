@@ -8,13 +8,6 @@ on:
       - 'tooling/grammars/**'
       - 'tooling/themes/**'
       - '.github/workflows/publish-extensions.yml'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'tooling/ide/**'
-      - 'tooling/grammars/**'
-      - 'tooling/themes/**'
-      - '.github/workflows/publish-extensions.yml'
   workflow_dispatch:
     inputs:
       force_publish:
@@ -84,7 +77,7 @@ jobs:
       # publish step for changed packages, then report a clear warning if its token
       # has not been configured.
       - name: Publish to Visual Studio Marketplace
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (steps.version_check.outputs.publish_lang_marketplace == 'true' || steps.version_check.outputs.publish_cli_marketplace == 'true')
+        if: github.ref == 'refs/heads/main' && (steps.version_check.outputs.publish_lang_marketplace == 'true' || steps.version_check.outputs.publish_cli_marketplace == 'true')
         env:
           VS_MARKETPLACE_TOKEN: ${{ secrets.VS_MARKETPLACE_TOKEN }}
           LANG_VERSION: ${{ steps.version_check.outputs.lang_version }}
@@ -105,7 +98,7 @@ jobs:
           fi
 
       - name: Publish to Open VSX Registry
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && (steps.version_check.outputs.publish_lang_open_vsx == 'true' || steps.version_check.outputs.publish_cli_open_vsx == 'true')
+        if: github.ref == 'refs/heads/main' && (steps.version_check.outputs.publish_lang_open_vsx == 'true' || steps.version_check.outputs.publish_cli_open_vsx == 'true')
         env:
           OPEN_VSX_TOKEN: ${{ secrets.OPEN_VSX_TOKEN }}
           LANG_VERSION: ${{ steps.version_check.outputs.lang_version }}
