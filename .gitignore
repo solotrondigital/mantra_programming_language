@@ -21,6 +21,7 @@ Thumbs.db
 # IDE configurations
 .idea/
 .vscode/
+.sf/
 
 # Ignore all markdown files in root and subdirectories
 *.md
