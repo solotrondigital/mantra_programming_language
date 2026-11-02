@@ -2,9 +2,9 @@ name: Mantra Cross-Platform Build, Test & Install CI
 
 on:
   push:
-    branches: [ main, release-*, mantra_intelligence ]
+    branches: [main]
   pull_request:
-    branches: [ main, mantra_intelligence ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
