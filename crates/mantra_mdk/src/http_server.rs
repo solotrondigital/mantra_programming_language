@@ -212,8 +212,8 @@ fn handle_rest_request(stream: &mut TcpStream, method: &str, path: &str, _body: 
     match (method, path) {
         ("GET", "/health") => {
             let json = format!(
-                r#"{{"status":"ok","engine":"mantra-0.5.0","service":"movie_rest_api_service","port":{},"database":"connected (sqlite3://movies.db)"}}"#,
-                port
+                r#"{{"status":"ok","engine":"mantra-{}","service":"movie_rest_api_service","port":{},"database":"connected (sqlite3://movies.db)"}}"#,
+                env!("CARGO_PKG_VERSION"), port
             );
             send_json(stream, 200, &json);
         }
@@ -381,8 +381,8 @@ fn handle_graphql_request(stream: &mut TcpStream, method: &str, path: &str, body
 
     if method == "GET" && path == "/health" {
         let json = format!(
-            r#"{{"status":"ok","engine":"mantra-0.5.0","service":"movie_gql_service","port":{}}}"#,
-            port
+            r#"{{"status":"ok","engine":"mantra-{}","service":"movie_gql_service","port":{}}}"#,
+            env!("CARGO_PKG_VERSION"), port
         );
         send_json(stream, 200, &json);
         return;

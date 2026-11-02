@@ -528,7 +528,7 @@ checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
 name = "mantra_agents"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantra_ai",
  "serde",
@@ -537,7 +537,7 @@ dependencies = [
 
 [[package]]
 name = "mantra_ai"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "reqwest",
  "serde",
@@ -546,7 +546,7 @@ dependencies = [
 
 [[package]]
 name = "mantra_bootstrap"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_checker",
@@ -559,7 +559,7 @@ dependencies = [
 
 [[package]]
 name = "mantra_debugger"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_lexer",
@@ -569,18 +569,18 @@ dependencies = [
 
 [[package]]
 name = "mantra_email"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantrac_vm",
 ]
 
 [[package]]
 name = "mantra_graphql"
-version = "0.7.0"
+version = "0.8.0"
 
 [[package]]
 name = "mantra_intelligence"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantra_ai",
  "mantrac_ast",
@@ -593,7 +593,7 @@ dependencies = [
 
 [[package]]
 name = "mantra_lsp"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantra_intelligence",
  "mantrac_ast",
@@ -605,7 +605,7 @@ dependencies = [
 
 [[package]]
 name = "mantra_mdk"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantra_ai",
  "mantra_intelligence",
@@ -622,7 +622,7 @@ dependencies = [
 
 [[package]]
 name = "mantra_ml"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantra_ai",
  "reqwest",
@@ -632,14 +632,14 @@ dependencies = [
 
 [[package]]
 name = "mantra_mobile"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "serde_json",
 ]
 
 [[package]]
 name = "mantra_rest"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantra_sql_orm",
  "mantra_web",
@@ -648,21 +648,21 @@ dependencies = [
 
 [[package]]
 name = "mantra_sql_orm"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantrac_vm",
 ]
 
 [[package]]
 name = "mantra_util"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantrac_vm",
 ]
 
 [[package]]
 name = "mantra_web"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantra_sql_orm",
  "mantrac_vm",
@@ -671,11 +671,11 @@ dependencies = [
 
 [[package]]
 name = "mantra_widgets"
-version = "0.7.0"
+version = "0.8.0"
 
 [[package]]
 name = "mantrac"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantra_bootstrap",
  "mantra_debugger",
@@ -690,14 +690,14 @@ dependencies = [
 
 [[package]]
 name = "mantrac_ast"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantrac_lexer",
 ]
 
 [[package]]
 name = "mantrac_checker"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_lexer",
@@ -705,7 +705,7 @@ dependencies = [
 
 [[package]]
 name = "mantrac_codegen"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_checker",
@@ -714,7 +714,7 @@ dependencies = [
 
 [[package]]
 name = "mantrac_ir"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_checker",
@@ -723,11 +723,11 @@ dependencies = [
 
 [[package]]
 name = "mantrac_lexer"
-version = "0.7.0"
+version = "0.8.0"
 
 [[package]]
 name = "mantrac_parser"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantrac_ast",
  "mantrac_lexer",
@@ -735,10 +735,12 @@ dependencies = [
 
 [[package]]
 name = "mantrac_vm"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "mantra_agents",
  "mantra_ai",
+ "mantra_intelligence",
+ "mantra_ml",
  "mantrac_ast",
  "mantrac_checker",
  "mantrac_lexer",

@@ -238,10 +238,10 @@ def main() -> Int:
         };
         manifest
             .dependencies
-            .insert("mantra.web".to_string(), "0.6.0".to_string());
+            .insert("mantra.web".to_string(), env!("CARGO_PKG_VERSION").to_string());
         manifest
             .dependencies
-            .insert("mantra.rest".to_string(), "0.6.0".to_string());
+            .insert("mantra.rest".to_string(), env!("CARGO_PKG_VERSION").to_string());
         manifest.save_to_dir(root)?;
 
         let main_src = format!(
@@ -413,7 +413,7 @@ def main() -> Int:
         };
         manifest
             .dependencies
-            .insert("mantra.mobile".to_string(), "0.6.0".to_string());
+            .insert("mantra.mobile".to_string(), env!("CARGO_PKG_VERSION").to_string());
         manifest.save_to_dir(root)?;
 
         // 1. Shared Models
@@ -639,7 +639,7 @@ window.MantraBridge = {
 
 document.addEventListener("DOMContentLoaded", () => {
     const status = document.getElementById("bridge-status");
-    status.innerText = "Native Bridge Ready (Mantra v0.6.0)";
+    status.innerText = "Native Bridge Ready (Mantra v@VERSION@)";
 
     document.getElementById("btn-info").addEventListener("click", async () => {
         try {
@@ -657,7 +657,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 "#;
-        fs::write(root.join("www/app.js"), www_js)
+        fs::write(root.join("www/app.js"), www_js.replace("@VERSION@", env!("CARGO_PKG_VERSION")))
             .map_err(|e| format!("Failed to write www/app.js: {}", e))?;
 
         // 6. Android Platform Templates
@@ -841,15 +841,16 @@ entry = "lib/main.mantra"
 [targets]
 {targets_toml}
 [dependencies]
-"mantra.mobile" = "0.6.0"
-"mantra.web"    = "0.6.0"
-"#,
+"mantra.mobile" = "{runtime_version}"
+"mantra.web"    = "{runtime_version}"
+        "#,
             project_name = project_name,
             org = org,
             bundle_id = bundle_id,
             desc = desc,
             template = template,
             targets_toml = targets_toml,
+            runtime_version = env!("CARGO_PKG_VERSION"),
         );
         fs::write(root.join("mantra.toml"), toml)
             .map_err(|e| format!("Failed to write mantra.toml: {}", e))?;
@@ -871,7 +872,7 @@ def main() -> Int:
 # Entry point: runs on native, web (WASM), Android, and iOS.
 
 def get_platform_info() -> String:
-    return "Mantra v0.6.0 Cross-Platform"
+    return "Mantra v{runtime_version} Cross-Platform"
 
 def main() -> Int:
     print("⚡ {project_name} initialized")
@@ -879,6 +880,7 @@ def main() -> Int:
     return 0
 "#,
                 project_name = project_name,
+                runtime_version = env!("CARGO_PKG_VERSION"),
             )
         };
         fs::write(root.join("lib/main.mantra"), main_src)

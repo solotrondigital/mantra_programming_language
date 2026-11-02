@@ -56,7 +56,7 @@ impl DebugSession {
 
     pub fn start_repl(&mut self, program: &Program) -> Result<(), String> {
         println!("==================================================");
-        println!("      Mantra Interactive Debugger (v0.2.0)       ");
+        println!("      Mantra Interactive Debugger (v{})       ", env!("CARGO_PKG_VERSION"));
         println!("==================================================");
         println!("Target file: {}", self.file_path);
         println!("Type 'help' or 'h' for a list of debugging commands.\n");

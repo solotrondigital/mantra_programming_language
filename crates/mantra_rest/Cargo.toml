@@ -1,6 +1,6 @@
 [package]
 name = "mantra_rest"
-version = "0.7.0"
+version.workspace = true
 edition = "2021"
 description = "Native REST framework runtime for the Mantra programming language — controllers, JSON serialization, and API routing."
 license = "MIT"

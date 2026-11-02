@@ -16,7 +16,7 @@ use std::time::Instant;
 
 fn print_help() {
     println!(
-        r#"Mantra Compiler (mantrac) v0.3.0 (MVP 3 — Self-Hosting Compiler)
+        r#"Mantra Compiler (mantrac) v{} (MVP 3 — Self-Hosting Compiler)
 Usage:
     mantrac <input.mantra> [options]
 
@@ -47,7 +47,8 @@ Diagnostics & Profiling:
 Informational:
     -v, --version       Print mantrac version
     -h, --help          Display this help message
-"#
+"#,
+        env!("CARGO_PKG_VERSION")
     );
 }
 
@@ -198,7 +199,7 @@ fn main() {
     }
 
     if run_regression {
-        println!("Running Mantra v0.3.0 Regression Suite...\n");
+        println!("Running Mantra v{} Regression Suite...\n", env!("CARGO_PKG_VERSION"));
         let suite = RegressionSuite::canonical();
         let results = suite.run();
         print!("{}", RegressionSuite::summary(&results));
@@ -209,7 +210,7 @@ fn main() {
     }
 
     if run_bootstrap {
-        println!("Running Mantra v0.3.0 Bootstrap Pipeline...\n");
+        println!("Running Mantra v{} Bootstrap Pipeline...\n", env!("CARGO_PKG_VERSION"));
         let workspace = std::env::current_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
         let pipeline = BootstrapPipeline::new(&workspace);
         let report = pipeline.run_all();

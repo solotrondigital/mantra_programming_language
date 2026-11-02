@@ -33,8 +33,7 @@ use std::path::Path;
 use std::process::exit;
 
 fn print_help() {
-    println!(
-        r#"Mantra Development Kit (MDK) CLI — v0.7.0 (Stable Language & Production Toolchain)
+    let help = r#"Mantra Development Kit (MDK) CLI — v@VERSION@ (Stable Language & Production Toolchain)
 Usage:
     mantra <command> [arguments] [options]
 
@@ -105,15 +104,15 @@ Bootstrap & Toolchain:
     target list            List supported target architectures
     -v, --version          Print MDK toolchain version
     -h, --help             Display this help message
-"#
-    );
+"#;
+    println!("{}", help.replace("@VERSION@", env!("CARGO_PKG_VERSION")));
 }
 
 fn print_version() {
-    println!("Mantra Development Kit (MDK) v0.7.0 (Stable Language & Production Toolchain)");
-    println!("Compiler: mantrac 0.6.0");
-    println!("Language Server: mantra-lsp 0.6.0");
-    println!("Mobile Engine: mantra_mobile 0.6.0 (Android & iOS Bridge)");
+    println!("Mantra Development Kit (MDK) v{} (Stable Language & Production Toolchain)", env!("CARGO_PKG_VERSION"));
+    println!("Compiler: mantrac {}", env!("CARGO_PKG_VERSION"));
+    println!("Language Server: mantra-lsp {}", env!("CARGO_PKG_VERSION"));
+    println!("Mobile Engine: mantra_mobile {} (Android & iOS Bridge)", env!("CARGO_PKG_VERSION"));
     println!("Host Target: {}-{}", env::consts::ARCH, env::consts::OS);
 }
 

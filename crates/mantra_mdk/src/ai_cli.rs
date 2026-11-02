@@ -408,7 +408,7 @@ Examples:
             r#"==================================================================
            MANTRA INTELLIGENCE (MVP 2) — IMPLEMENTATION STATUS
 ==================================================================
-Status: v0.7.0 / v0.8.0-dev (Production Core Ready)
+Status: v{version} (Production Core Ready)
 Modules Activated:
   ✓ Code Intelligence Engine     (mantra_intelligence::context)
   ✓ Context-Aware Code Completion (mantra_intelligence::completion)
@@ -422,7 +422,8 @@ Modules Activated:
   ✓ Project Graph Indexer         (mantra_intelligence::project_graph)
   ✓ LSP Daemon AI Endpoints       (mantra-lsp: mantra/*)
   ✓ MDK CLI Commands              (mantra ai <explain|fix|generate|...>)
-=================================================================="#
+=================================================================="#,
+            version = env!("CARGO_PKG_VERSION")
         );
     }
 }

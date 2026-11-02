@@ -1,6 +1,6 @@
 [package]
 name = "mantra_ml"
-version = "0.7.0"
+version.workspace = true
 edition = "2021"
 authors = ["Solotron Technologies Private Limited"]
 description = "Model inference, embeddings, vector search, document processing, evaluation, and RAG for Mantra"

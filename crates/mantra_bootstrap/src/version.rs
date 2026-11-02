@@ -6,11 +6,11 @@
 // that stage-0, stage-1 and stage-2 outputs carry an unambiguous identity.
 // The version number follows Mantra's own semver policy.
 
-/// Canonical version constants for Mantra v0.3.0 (Self-Hosting Compiler).
+/// Canonical version constants synchronized from the Cargo workspace version (Self-Hosting Compiler).
 pub const MANTRA_VERSION_MAJOR: u32 = 0;
-pub const MANTRA_VERSION_MINOR: u32 = 7;
+pub const MANTRA_VERSION_MINOR: u32 = 8;
 pub const MANTRA_VERSION_PATCH: u32 = 0;
-pub const MANTRA_VERSION_STR: &str = "0.7.0";
+pub const MANTRA_VERSION_STR: &str = env!("CARGO_PKG_VERSION");
 pub const MANTRA_EDITION: &str = "2026";
 pub const MANTRA_CODENAME: &str = "production-stable";
 
@@ -113,8 +113,8 @@ mod tests {
         let v = CompilerVersion::current(BootstrapStage::RustBootstrap);
         let s = v.to_version_string();
         assert!(
-            s.contains("0.7.0"),
-            "Expected 0.3.0 in version string: {}",
+            s.contains(MANTRA_VERSION_STR),
+            "Expected the Cargo package version in version string: {}",
             s
         );
     }

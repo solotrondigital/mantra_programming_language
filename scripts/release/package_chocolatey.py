@@ -25,12 +25,10 @@ def get_version():
         return sys.argv[1].lstrip("vV")
     cargo_path = os.path.join(REPO_ROOT, "Cargo.toml")
     if os.path.exists(cargo_path):
-        with open(cargo_path, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith("version") and "=" in line:
-                    return line.split("=", 1)[1].strip().strip('"').strip("'")
-    return "0.5.0"
+        import tomllib
+        with open(cargo_path, "rb") as f:
+            return tomllib.load(f)["workspace"]["package"]["version"]
+    raise RuntimeError("Unable to read workspace version from Cargo.toml")
 
 def update_nuspec(version):
     nuspec_path = os.path.join(REPO_ROOT, "distribution/choco-mantra/mantra.nuspec")

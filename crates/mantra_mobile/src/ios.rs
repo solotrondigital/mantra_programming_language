@@ -185,7 +185,7 @@ class ViewController: UIViewController {
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.5.0</string>
+    <string>{version}</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>LSRequiresIPhoneOS</key>
@@ -204,7 +204,8 @@ class ViewController: UIViewController {
 </plist>
 "#,
             bundle_id = bundle_id,
-            app_name = app_name
+            app_name = app_name,
+            version = env!("CARGO_PKG_VERSION")
         )
     }
 }

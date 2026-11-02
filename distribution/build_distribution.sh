@@ -13,11 +13,21 @@
 # ==============================================================================
 set -e
 
-VERSION="${1:-0.4.0}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+if [ -n "${1:-}" ]; then
+    VERSION="${1#v}"
+else
+    VERSION="$(python3 -c 'import sys,tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["workspace"]["package"]["version"])' "${REPO_ROOT}/Cargo.toml")"
+fi
+FORCED_UPDATE="$(python3 -c 'import sys,tomllib; print(str(tomllib.load(open(sys.argv[1], "rb")).get("workspace", {}).get("metadata", {}).get("mantra", {}).get("forced-update", False)).lower())' "${REPO_ROOT}/Cargo.toml")"
 DIST_DIR="${REPO_ROOT}/dist/releases/v${VERSION}"
 SDK_STAGE="${REPO_ROOT}/target/sdk_stage"
+
+if [ "${FORCED_UPDATE}" = "true" ]; then
+    echo ">> [Forced Update] Replacing distribution outputs for v${VERSION}."
+    rm -rf "${DIST_DIR}"
+fi
 
 echo "=================================================================="
 echo "   MANTRA DISTRIBUTION & PACKAGE MANAGER BUILDER (v${VERSION})   "

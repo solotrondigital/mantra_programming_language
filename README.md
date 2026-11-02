@@ -8,7 +8,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE-MIT)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE-GPL)
-[![Version](https://img.shields.io/badge/version-0.7.0-cyan.svg)](#)
+[![Version](https://img.shields.io/badge/version-0.8.0-cyan.svg)](#)
 [![Maintained by Solotron](https://img.shields.io/badge/maintained%20by-Solotron%20Technologies-blueviolet.svg)](https://github.com/solotrondigital)
 
 [Website](https://solotrondigital.github.io/mantra_website/mantra_web/) · [Docs](https://solotrondigital.github.io/mantra_website/mantra_web/mantra_docs/) · [Examples](#examples) · [Download](#installation)
@@ -72,7 +72,7 @@ mantra_programming_language/
 │   ├── mantra_rest/        # REST framework (Controllers, JSON, Routes)
 │   ├── mantra_graphql/     # Native GraphQL runtime engine, SchemaBuilder, AST & SDL
 │   └── mantra_sql_orm/     # Enterprise ORM (Oracle, MSSQL, MongoDB, SQLite, Postgres, MySQL)
-├── examples/               # Sample Mantra programs
+├── examples/               # Examples are maintained in mantra_programming_language_examples
 ├── tests/                  # Conformance + negative test suite
 ├── installer/              # Platform installer scripts
 ├── images/                 # Logo and branding assets
@@ -83,6 +83,12 @@ mantra_programming_language/
 ```
 
 ---
+
+## Mantra Examples
+
+Runnable language, AI, WebAssembly, mobile, and application examples are maintained in the separate
+[Mantra Examples repository](https://github.com/solotrondigital/mantra_programming_language_examples). Its
+`programming_language/` and `website/` directories preserve the examples from both former project locations.
 
 ## 🚀 Getting Started
 
@@ -569,11 +575,11 @@ authors     = ["Your Name <you@example.com>"]
 edition     = "2026"
 
 [dependencies]
-mantra.io      = "0.7.0"
-mantra.lang    = "0.7.0"
-mantra.web     = "0.7.0"
-mantra.rest    = "0.7.0"
-mantra.graphql = "0.7.0"
+mantra.io      = "0.8.0"
+mantra.lang    = "0.8.0"
+mantra.web     = "0.8.0"
+mantra.rest    = "0.8.0"
+mantra.graphql = "0.8.0"
 
 [build]
 target  = "native"   # native | wasm | jit

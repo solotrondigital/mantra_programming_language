@@ -29,3 +29,4 @@ Thumbs.db
 !README.md
 !**/README.md
 components_docs/*.md
+/examples/

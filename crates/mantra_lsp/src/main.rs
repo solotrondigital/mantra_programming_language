@@ -8,8 +8,7 @@ use std::env;
 use std::io::{self, BufRead, Read, Write};
 
 fn print_help() {
-    eprintln!(
-        "Mantra Language Server (mantra-lsp) v0.7.0
+    let help = "Mantra Language Server (mantra-lsp) v@VERSION@
 Usage:
     mantra-lsp [options]
 
@@ -21,8 +20,8 @@ Options:
 
 The server communicates via JSON-RPC 2.0 over stdin/stdout using
 HTTP Content-Length framing as specified by LSP 3.17.
-"
-    );
+";
+    eprintln!("{}", help.replace("@VERSION@", env!("CARGO_PKG_VERSION")));
 }
 
 fn main() {
@@ -35,7 +34,7 @@ fn main() {
                 return;
             }
             "-v" | "--version" => {
-                println!("mantra-lsp 0.5.0");
+                println!("mantra-lsp {}", env!("CARGO_PKG_VERSION"));
                 return;
             }
             "--test" => {

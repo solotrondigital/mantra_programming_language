@@ -235,9 +235,10 @@ impl LspServer {
 
         let id_val = id.as_i64().unwrap_or(1);
         format!(
-            r#"{{"jsonrpc":"2.0","id":{id_val},"result":{{"capabilities":{{"textDocumentSync":{{"openClose":true,"change":1,"save":{{"includeText":true}}}},"completionProvider":{{"resolveProvider":false,"triggerCharacters":[".",":"," ","("]}},"hoverProvider":true,"definitionProvider":true,"declarationProvider":true,"implementationProvider":true,"referencesProvider":true,"documentSymbolProvider":true,"workspaceSymbolProvider":true,"documentFormattingProvider":true,"documentRangeFormattingProvider":true,"documentOnTypeFormattingProvider":{{"firstTriggerCharacter":"\n","moreTriggerCharacter":[":"]}},"semanticTokensProvider":{{"legend":{{"tokenTypes":[{}],"tokenModifiers":[{}]}},"full":true,"range":false}},"renameProvider":{{"prepareProvider":true}},"codeActionProvider":true,"signatureHelpProvider":{{"triggerCharacters":["(",","," "]}}}},"serverInfo":{{"name":"mantra-lsp","version":"0.7.0"}}}}}}"#,
+            r#"{{"jsonrpc":"2.0","id":{id_val},"result":{{"capabilities":{{"textDocumentSync":{{"openClose":true,"change":1,"save":{{"includeText":true}}}},"completionProvider":{{"resolveProvider":false,"triggerCharacters":[".",":"," ","("]}},"hoverProvider":true,"definitionProvider":true,"declarationProvider":true,"implementationProvider":true,"referencesProvider":true,"documentSymbolProvider":true,"workspaceSymbolProvider":true,"documentFormattingProvider":true,"documentRangeFormattingProvider":true,"documentOnTypeFormattingProvider":{{"firstTriggerCharacter":"\n","moreTriggerCharacter":[":"]}},"semanticTokensProvider":{{"legend":{{"tokenTypes":[{}],"tokenModifiers":[{}]}},"full":true,"range":false}},"renameProvider":{{"prepareProvider":true}},"codeActionProvider":true,"signatureHelpProvider":{{"triggerCharacters":["(",","," "]}}}},"serverInfo":{{"name":"mantra-lsp","version":"{version}"}}}}}}"#,
             token_types.join(","),
             token_mods.join(","),
+            version = env!("CARGO_PKG_VERSION"),
         )
     }
 

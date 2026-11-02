@@ -1,6 +1,6 @@
 [package]
 name = "mantra_ai"
-version = "0.7.0"
+version.workspace = true
 edition = "2021"
 authors = ["Solotron Technologies Private Limited"]
 description = "Native AI integration package for the Mantra Programming Language — Model Registry, Unified Providers (OpenAI, Gemini, Anthropic), Structured Output, Streaming, and Configuration"

@@ -18,7 +18,7 @@ impl MobileBuilder {
         }
 
         println!("==================================================");
-        println!("   Mantra Mobile Application Platform (v0.6.0)   ");
+        println!("   Mantra Mobile Application Platform (v{})   ", env!("CARGO_PKG_VERSION"));
         println!("==================================================");
         println!("Target Platform : {}", target);
         println!(

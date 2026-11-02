@@ -17,10 +17,10 @@ if [ -n "$1" ]; then
     VERSION="${RAW_VER#v}"
     VERSION="${VERSION#V}"
 else
-    VERSION=$(python3 -c 'import sys,tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["package"]["version"])' "${REPO_ROOT}/crates/mantrac/Cargo.toml" 2>/dev/null || true)
+    VERSION=$(python3 -c 'import sys,tomllib; print(tomllib.load(open(sys.argv[1], "rb"))["workspace"]["package"]["version"])' "${REPO_ROOT}/Cargo.toml" 2>/dev/null || true)
 fi
 if [ -z "${VERSION}" ]; then
-    echo "Unable to resolve release version from crates/mantrac/Cargo.toml" >&2
+    echo "Unable to resolve release version from Cargo.toml workspace.package.version" >&2
     exit 1
 fi
 if ! command -v gpg >/dev/null 2>&1 || [ -z "${GPG_KEY_ID:-}" ]; then

@@ -1,6 +1,6 @@
 [package]
 name = "mantra_intelligence"
-version = "0.7.0"
+version.workspace = true
 edition = "2021"
 authors = ["Solotron Technologies Private Limited"]
 description = "Mantra Intelligence (MVP 2) — AI-driven coding intelligence engine, context analysis, code completion, error explanation, quick fixes, test generation, and doc generation"

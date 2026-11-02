@@ -629,7 +629,7 @@ fn test_ai_creation_and_run() {
     let manifest = fs::read_to_string(root.join("mantra.toml")).unwrap();
     assert!(manifest.contains("type = \"ai\""));
     assert!(manifest.contains("entry = \"src/main.mantra\""));
-    assert!(manifest.contains("\"mantra.ai\" = \"0.7.0\""));
+    assert!(manifest.contains(&format!("\"mantra.ai\" = \"{}\"", env!("CARGO_PKG_VERSION"))));
     assert!(manifest.contains("[ai]"));
     assert!(manifest.contains("default_provider = \"openai\""));
     assert!(manifest.contains("[ai.models.assistant]"));

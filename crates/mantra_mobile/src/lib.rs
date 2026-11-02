@@ -45,10 +45,10 @@ impl MobileRuntime {
 
         // Register default platform handlers
         router.register("device.info", Capability::DeviceInfo, |_req| {
-            Ok(
-                r#"{"platform":"hybrid","engine":"mantra_v0.5.0","arch":"wasm32/arm64"}"#
-                    .to_string(),
-            )
+            Ok(format!(
+                r#"{{"platform":"hybrid","engine":"mantra_v{}","arch":"wasm32/arm64"}}"#,
+                env!("CARGO_PKG_VERSION")
+            ))
         });
 
         router.register("lifecycle.status", Capability::DeviceInfo, |_req| {

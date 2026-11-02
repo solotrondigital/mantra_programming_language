@@ -42,30 +42,31 @@ type = "{app_type}"
         }
 
         manifest.push_str("[dependencies]\n");
+        let runtime_version = env!("CARGO_PKG_VERSION");
         match opts.app_type {
             AppType::Frontend => {
-                manifest.push_str("\"mantra.web\" = \"0.7.0\"\n");
-                manifest.push_str("\"mantra.mobile\" = \"0.7.0\"\n");
-                manifest.push_str("\"mantra.widgets\" = \"0.7.0\"\n");
+                manifest.push_str(&format!("\"mantra.web\" = \"{runtime_version}\"\n"));
+                manifest.push_str(&format!("\"mantra.mobile\" = \"{runtime_version}\"\n"));
+                manifest.push_str(&format!("\"mantra.widgets\" = \"{runtime_version}\"\n"));
             }
             AppType::Backend => match opts.service {
                 Some(BackendService::Rest) => {
-                    manifest.push_str("\"mantra.rest\" = \"0.7.0\"\n");
-                    manifest.push_str("\"mantra.sql_orm\" = \"0.7.0\"\n");
+                    manifest.push_str(&format!("\"mantra.rest\" = \"{runtime_version}\"\n"));
+                    manifest.push_str(&format!("\"mantra.sql_orm\" = \"{runtime_version}\"\n"));
                 }
                 Some(BackendService::Graphql) => {
-                    manifest.push_str("\"mantra.graphql\" = \"0.7.0\"\n");
-                    manifest.push_str("\"mantra.sql_orm\" = \"0.7.0\"\n");
+                    manifest.push_str(&format!("\"mantra.graphql\" = \"{runtime_version}\"\n"));
+                    manifest.push_str(&format!("\"mantra.sql_orm\" = \"{runtime_version}\"\n"));
                 }
                 None => {
-                    manifest.push_str("\"mantra.rest\" = \"0.7.0\"\n");
+                    manifest.push_str(&format!("\"mantra.rest\" = \"{runtime_version}\"\n"));
                 }
             },
             AppType::Standalone => {
-                manifest.push_str("\"mantra.core\" = \"0.7.0\"\n");
+                manifest.push_str(&format!("\"mantra.core\" = \"{runtime_version}\"\n"));
             }
             AppType::Ai => {
-                manifest.push_str("\"mantra.ai\" = \"0.7.0\"\n\n");
+                manifest.push_str(&format!("\"mantra.ai\" = \"{runtime_version}\"\n\n"));
                 manifest.push_str(
                     r#"[ai]
 default_provider = "openai"

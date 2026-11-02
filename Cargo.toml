@@ -28,9 +28,9 @@ members = [
 resolver = "2"
 
 [workspace.package]
-name = "mantra_programming_languague"
-version = "0.7.0"
-edition = "2025"
-forced-update = true
-description = "Mantra v0.7.0— Mantra a Programming Language"
+version = "0.8.0"
+description = "AI-native programming language and toolchain"
 license = "MIT OR GPL-3.0"
+
+[workspace.metadata.mantra]
+forced-update = true
