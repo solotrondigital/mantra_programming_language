@@ -4,7 +4,7 @@
 
 # Mantra Programming Language
 
-**A statically typed language for building backend services.**
+**A statically typed language .**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE-MIT)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE-GPL)
@@ -823,7 +823,7 @@ The MIT option permits closed-source redistribution. The GPL v3.0 option applies
 
 Mantra is developed and maintained by **[Solotron Technologies Private Limited](https://github.com/solotrondigital)**.
 
-> A statically typed language for building backend services.
+> A statically typed language .
 
 ---
 
