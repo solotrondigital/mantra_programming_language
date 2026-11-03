@@ -41,15 +41,40 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Checkout Website Examples
+      - name: Verify Website Access
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.MANTRA_WEBSITE_READ_TOKEN }}
+        run: |
+          if [[ -z "$GH_TOKEN" ]]; then
+            echo "::error::MANTRA_WEBSITE_READ_TOKEN is missing from repository Actions secrets."
+            exit 1
+          fi
+
+          STATUS="$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/solotrondigital/mantra_website)"
+          echo "Repository API status: $STATUS"
+          if [[ "$STATUS" != "200" ]]; then
+            echo "::error::The configured token cannot read solotrondigital/mantra_website. Check the repository selection, Contents: Read permission, and organization approval."
+            exit 1
+          fi
+
+      - name: Checkout Mantra Website
         uses: actions/checkout@v4
         with:
           repository: solotrondigital/mantra_website
           ref: main
           path: mantra_website
-          # Use a cross-repository read token when mantra_website is private.
-          token: ${{ secrets.MANTRA_WEBSITE_READ_TOKEN || github.token }}
+          token: ${{ secrets.MANTRA_WEBSITE_READ_TOKEN }}
           persist-credentials: false
+
+      - name: Verify Website Checkout
+        shell: bash
+        run: |
+          echo "Website repository checked out successfully"
+          ls -la mantra_website
 
       - name: Verify Website Examples Match Tested Sources
         run: |
