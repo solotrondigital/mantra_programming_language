@@ -1,21 +1,21 @@
 {
   "name": "mantra-language-support",
   "displayName": "Mantra Language Support",
-  "description": "Official IDE ecosystem for the Mantra Programming Language: Universal LSP, IntelliSense, rich syntax highlighting, and semantic navigation. Owned by Solotron Technologies (http://www.solotrontech.com).",
+  "description": "Official IDE ecosystem for the Mantra Programming Language: Universal LSP, IntelliSense, rich syntax highlighting, and semantic navigation. Owned by Solotron Technologies (https://mantra.solotrontech.com).",
   "version": "0.8.0",
   "publisher": "solotrondigital",
   "icon": "images/mantra_color_logo.png",
-  "homepage": "http://www.solotrontech.com",
+  "homepage": "https://mantra.solotrontech.com/",
   "repository": {
     "type": "git",
-    "url": "http://www.solotrontech.com"
+    "url": "https://github.com/solotrondigital/mantra_programming_language.git"
   },
   "bugs": {
-    "url": "http://www.solotrontech.com"
+    "url": "https://github.com/solotrondigital/mantra_programming_language/issues"
   },
   "author": {
     "name": "Solotron Technologies Private Limited",
-    "url": "http://www.solotrontech.com"
+    "url": "https://mantra.solotrontech.com/"
   },
   "engines": {
     "vscode": "^1.85.0"
@@ -122,4 +122,3 @@
     "vscode-languageclient": "^9.0.1"
   }
 }
-

@@ -35,7 +35,7 @@ use std::path::Path;
 use std::process::exit;
 
 fn print_help() {
-    let help = r#"Mantra Development Kit (MDK) CLI — v@VERSION@ (Stable Language & Production Toolchain)
+    let help = r#"Mantra Development Kit (MDK) CLI — v@VERSION@ (Preview Toolchain)
 Usage:
     mantra <command> [arguments] [options]
 
@@ -106,7 +106,7 @@ Developer Tools & Quality:
     ide <install|list>     Manage IDE integrations (vscode, intellij, neovim, sublime, emacs)
 
 Bootstrap & Toolchain:
-    bootstrap              Run self-hosting bootstrap pipeline (stages 0→1→2 + verify)
+    bootstrap              Run compiler bootstrap verification and regression pipeline
     regression             Run the canonical language regression suite
     target list            List supported target architectures
     -v, --version          Print MDK toolchain version
@@ -116,7 +116,7 @@ Bootstrap & Toolchain:
 }
 
 fn print_version() {
-    println!("Mantra Development Kit (MDK) v{} (Stable Language & Production Toolchain)", env!("CARGO_PKG_VERSION"));
+    println!("Mantra Development Kit (MDK) v{} (Preview Toolchain)", env!("CARGO_PKG_VERSION"));
     println!("Compiler: mantrac {}", env!("CARGO_PKG_VERSION"));
     println!("Language Server: mantra-lsp {}", env!("CARGO_PKG_VERSION"));
     println!("Mobile Engine: mantra_mobile {} (Android & iOS Bridge)", env!("CARGO_PKG_VERSION"));

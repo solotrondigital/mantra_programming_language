@@ -1,0 +1,9 @@
+# Conformance Test 12: Immutable and Mutable Bindings
+
+def main() -> Int:
+    let greeting = "Hello"
+    mut count = 1
+    count = count + 1
+    print(greeting + " " + str(count))
+    assert(count == 2)
+    return 0

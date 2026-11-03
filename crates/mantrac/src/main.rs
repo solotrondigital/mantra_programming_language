@@ -16,13 +16,13 @@ use std::time::Instant;
 
 fn print_help() {
     println!(
-        r#"Mantra Compiler (mantrac) v{} (MVP 3 — Self-Hosting Compiler)
+        r#"Mantra Compiler (mantrac) v{} (MVP 3 — Bootstrap Verification)
 Usage:
     mantrac <input.mantra> [options]
 
 Execution Modes:
     --jit               Execute using high-performance JIT engine with Interpreter fallback
-    --interpret         Execute using the v0.1.0 tree-walking interpreter
+    --interpret         Execute using the tree-walking interpreter
     --run               Run program immediately (JIT with automated fallback)
     --debug             Launch interactive Mantra debugger (mantra-debugger)
 
@@ -36,7 +36,7 @@ Compilation & Target Options:
     --check             Parse and type-check the source without generating code
 
 Bootstrap & Verification (MVP 3):
-    --bootstrap         Run self-hosting bootstrap pipeline (stages 0→1→2 + verify)
+    --bootstrap         Run compiler bootstrap verification and regression pipeline
     --regression        Run the canonical language regression suite
     --version-metadata  Print compiler version metadata in artifact-header format
 

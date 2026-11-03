@@ -24,6 +24,10 @@ if [ -z "${VERSION}" ]; then
     exit 1
 fi
 SIGN_RELEASE=false
+if [ "${REQUIRE_GPG_SIGNATURE:-false}" = true ] && { [ -z "${GPG_KEY_ID:-}" ] || [ -z "${RELEASE_GPG_PRIVATE_KEY:-}" ]; }; then
+    echo "REQUIRE_GPG_SIGNATURE=true but the GPG signing key is not configured." >&2
+    exit 1
+fi
 if [ -n "${GPG_KEY_ID:-}" ]; then
     if ! command -v gpg >/dev/null 2>&1; then
         echo "GPG_KEY_ID is configured but gpg is unavailable." >&2
@@ -82,6 +86,8 @@ if [ "$SIGN_RELEASE" = true ]; then
         gpg --batch --yes --armor --detach-sign -u "${GPG_KEY_ID}" release.json
     fi
     echo "   ✓ Generated SHA256SUMS.asc and release.json.asc"
+    gpg --batch --verify SHA256SUMS.asc SHA256SUMS
+    gpg --batch --verify release.json.asc release.json
 else
     echo "   ! GPG signing skipped; no GPG_KEY_ID is configured. SHA-256 and SHA-512 checksums were generated."
 fi

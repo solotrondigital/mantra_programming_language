@@ -14,7 +14,7 @@ class Temperature:
 
 def main() -> Int:
     print("Testing Properties...")
-    temp = Temperature(25.0)
+    let temp = Temperature(25.0)
     assert(temp.celsius == 25.0)
     assert(temp.fahrenheit == 77.0)
     print("Celsius: " + str(temp.celsius))

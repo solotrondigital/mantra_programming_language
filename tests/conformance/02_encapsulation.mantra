@@ -19,7 +19,7 @@ class BankAccount:
 
 def main() -> Int:
     print("Testing Encapsulation...")
-    account = BankAccount(100.0)
+    let account = BankAccount(100.0)
     assert(account.balance() == 100.0)
     account.deposit(50.0)
     assert(account.balance() == 150.0)

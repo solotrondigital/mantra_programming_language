@@ -41,6 +41,19 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
+      - name: Checkout Website Examples
+        uses: actions/checkout@v4
+        with:
+          repository: solotrondigital/mantra_website
+          ref: main
+          path: mantra_website
+          persist-credentials: false
+
+      - name: Verify Website Examples Match Tested Sources
+        run: |
+          python3 scripts/check_site_examples.py mantra_website/mantra_web/examples.html
+          python3 scripts/check_site_examples.py mantra_website/mantra_web/mantra_docs/style-guide.html
+
       - name: Install Stable Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -98,6 +111,7 @@ jobs:
           EXPECTED_VERSION="$(python scripts/release/version_config.py version)"
           mantra --version | tee /tmp/mantra-version.txt
           mantrac --version | tee /tmp/mantrac-version.txt
+          mantrac "$ROOT_DIR/tests/site_examples/agent_preview.mantra" --check
           grep -F "v${EXPECTED_VERSION}" /tmp/mantra-version.txt
           grep -F "${EXPECTED_VERSION}" /tmp/mantrac-version.txt
           TEST_APP_DIR="$RUNNER_TEMP/ci_test_app"
