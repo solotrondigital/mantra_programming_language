@@ -47,6 +47,8 @@ jobs:
           repository: solotrondigital/mantra_website
           ref: main
           path: mantra_website
+          # Use a cross-repository read token when mantra_website is private.
+          token: ${{ secrets.MANTRA_WEBSITE_READ_TOKEN || github.token }}
           persist-credentials: false
 
       - name: Verify Website Examples Match Tested Sources
