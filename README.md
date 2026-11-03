@@ -4,14 +4,17 @@
 
 # Mantra Programming Language
 
-**A modern, expressive, statically-typed programming language built for clarity, safety, and performance.**
+**A statically typed language for building backend services.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE-MIT)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE-GPL)
 [![Version](https://img.shields.io/badge/version-0.8.0-cyan.svg)](#)
+[![CI](https://github.com/solotrondigital/mantra_programming_language/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/solotrondigital/mantra_programming_language/actions/workflows/ci.yml)
 [![Maintained by Solotron](https://img.shields.io/badge/maintained%20by-Solotron%20Technologies-blueviolet.svg)](https://github.com/solotrondigital)
 
-[Website](https://solotrondigital.github.io/mantra_website/mantra_web/) · [Docs](https://solotrondigital.github.io/mantra_website/mantra_web/mantra_docs/) · [Examples](#examples) · [Download](#installation)
+**Release status: Preview.** Mantra is under active development; compatibility and security guarantees are still evolving.
+
+[Website](https://mantra.solotrontech.com/) · [Docs](https://mantra.solotrontech.com/mantra_docs/) · [Changelog](https://mantra.solotrontech.com/changelog.html) · [Roadmap](https://mantra.solotrontech.com/roadmap.html) · [Examples](#examples) · [Download](#installation)
 
 </div>
 
@@ -24,8 +27,8 @@ The following terminal references show the command and usage text printed by `ma
 ### `mantra` — Mantra Development Kit
 
 <div style="background-color:#000;color:#fff;padding:1.25rem;border-radius:8px;overflow-x:auto">
-<pre style="background-color:#000;color:#fff;white-space:pre;overflow-x:auto"><code>user@users-MacBook-Pro ~ % mantra
-Mantra Development Kit (MDK) CLI — v0.8.0 (Stable Language &amp; Production Toolchain)
+<pre style="background-color:#000;color:#fff;white-space:pre;overflow-x:auto"><code>developer@mantra-dev ~ % mantra
+Mantra Development Kit (MDK) CLI — v0.8.0 (Preview Toolchain)
 Usage:
     mantra &lt;command&gt; [arguments] [options]
 
@@ -96,7 +99,7 @@ Developer Tools &amp; Quality:
     ide &lt;install|list&gt;     Manage IDE integrations (vscode, intellij, neovim, sublime, emacs)
 
 Bootstrap &amp; Toolchain:
-    bootstrap              Run self-hosting bootstrap pipeline (stages 0→1→2 + verify)
+    bootstrap              Run compiler bootstrap verification and regression pipeline
     regression             Run the canonical language regression suite
     target list            List supported target architectures
     -v, --version          Print MDK toolchain version
@@ -104,14 +107,14 @@ Bootstrap &amp; Toolchain:
 
 ### `mantrac` — Mantra Compiler
 
-user@users-MacBook-Pro ~ % mantrac
-Mantra Compiler (mantrac) v0.8.0 (MVP 3 — Self-Hosting Compiler)
+developer@mantra-dev ~ % mantrac
+Mantra Compiler (mantrac) v0.8.0 (MVP 3 — Bootstrap Verification)
 Usage:
     mantrac &lt;input.mantra&gt; [options]
 
 Execution Modes:
     --jit               Execute using high-performance JIT engine with Interpreter fallback
-    --interpret         Execute using the v0.1.0 tree-walking interpreter
+    --interpret         Execute using the tree-walking interpreter
     --run               Run program immediately (JIT with automated fallback)
     --debug             Launch interactive Mantra debugger (mantra-debugger)
 
@@ -125,7 +128,7 @@ Compilation &amp; Target Options:
     --check             Parse and type-check the source without generating code
 
 Bootstrap &amp; Verification (MVP 3):
-    --bootstrap         Run self-hosting bootstrap pipeline (stages 0→1→2 + verify)
+    --bootstrap         Run compiler bootstrap verification and regression pipeline
     --regression        Run the canonical language regression suite
     --version-metadata  Print compiler version metadata in artifact-header format
 
@@ -169,7 +172,7 @@ def main() -> Int:
 | **OOP First-Class** | Classes, inheritance, interfaces, abstract classes, polymorphism |
 | **Python-like Syntax** | Indentation-based, readable, no braces or semicolons |
 | **Native Compilation** | Compiles to C then to native binaries via `mantrac` |
-| **VM / Interpreter** | Run directly with `--run` for fast iteration and scripting |
+| **VM / Interpreter** | Run with `--run` using the JIT path with interpreter fallback |
 | **Type Inference** | `let x = 42` — types inferred where obvious |
 | **Immutable by Default** | Use `mut` to declare mutable variables explicitly |
 | **Standard Library** | Built-in packages for I/O, HTTP, REST, SQL ORM, collections |
@@ -193,7 +196,7 @@ mantra_programming_language/
 │   ├── mantra_mdk/         # Mantra Development Kit (CLI: mantra)
 │   ├── mantra_mobile/      # Hybrid Mobile Engine (Android & iOS Bridges)
 │   ├── mantra_lsp/         # Language Server Protocol daemon
-│   ├── mantra_bootstrap/   # Self-hosting bootstrap verification harness
+│   ├── mantra_bootstrap/   # Compiler bootstrap and regression verification
 │   ├── mantra_web/         # Web framework (Router, Server, Middleware)
 │   ├── mantra_rest/        # REST framework (Controllers, JSON, Routes)
 │   ├── mantra_graphql/     # Native GraphQL runtime engine, SchemaBuilder, AST & SDL
@@ -205,7 +208,8 @@ mantra_programming_language/
 ├── create_installers.sh    # Build versioned installer packages
 ├── Cargo.toml              # Rust workspace manifest
 ├── LICENSE-MIT             # MIT License
-└── LICENSE-GPL             # GNU GPL v3.0 License
+├── LICENSE-GPL             # Unmodified GNU GPL v3.0 text
+└── COPYRIGHT               # Project copyright and authorship notice
 ```
 
 ---
@@ -275,7 +279,7 @@ has already been removed:
 
 ## ⚡ Application Scaffolding CLI (`mantra create`)
 
-Mantra provides a production-ready application scaffolding CLI (`mantra create`) supporting frontend hybrid applications and modular backend APIs (REST and GraphQL).
+Mantra provides the `mantra create` scaffolding command for frontend hybrid applications and backend API projects. Feature support depends on the selected template and platform.
 
 ### 1. Frontend Hybrid Application (iOS, Android, Web)
 
@@ -690,10 +694,10 @@ The `mantra` CLI is the all-in-one developer toolchain for standalone applicatio
 # Create a new standalone application
 mantra create \
   --type standalone \
-  --org com.raghav \
-  --project-name movie_standalone_proj
+  --org com.example \
+  --project-name hello_app
 
-cd movie_standalone_proj
+cd hello_app
 
 # Run the project (dev mode)
 mantra run
@@ -796,7 +800,7 @@ Source (.mantra)
 - [x] Standard library: mantra.web, mantra.rest, mantra.sql.orm
 - [x] MVP 4: Package Ecosystem, Lockfile, Homebrew/Chocolatey Distribution
 - [x] MVP 5: Web & Mobile Application Platform (Browser WASM, Android Kotlin Bridge, iOS Swift Bridge)
-- [ ] MVP 6: Stable Language & Production Toolchain (specification, ABI, security, release provenance, multi-target CI, fuzzing & stress verification in progress)
+- [ ] MVP 6: Stability and Release Verification (language specification, ABI, security review, release provenance, CI, fuzzing, and stress work remain in progress)
 - [x] Unified Cross-Platform CLI Scaffolding (`mantra create --org ... --project-name ...`)
 - [x] Multi-Environment Support (`.env`, `.env.development`, `.env.test`, `.env.production`)
 - [x] WebAssembly Target Build (`mantra build web`)
@@ -809,12 +813,9 @@ Source (.mantra)
 
 ## 📄 License
 
-Mantra is dual-licensed. You may use it under either:
+Mantra is available under either the MIT License or GNU GPL v3.0; see [LICENSE](LICENSE), [LICENSE-MIT](LICENSE-MIT), and [LICENSE-GPL](LICENSE-GPL).
 
-- **MIT License** — See [LICENSE-MIT](LICENSE-MIT)
-- **GNU General Public License v3.0** — See [LICENSE-GPL](LICENSE-GPL)
-
-You may choose whichever license best suits your use case.
+The MIT option permits closed-source redistribution. The GPL v3.0 option applies its copyleft conditions to distributions made under that license. Choosing MIT does not impose GPL obligations.
 
 ---
 
@@ -822,7 +823,7 @@ You may choose whichever license best suits your use case.
 
 Mantra is developed and maintained by **[Solotron Technologies Private Limited](https://github.com/solotrondigital)**.
 
-> Designed for developers who value clarity, safety, and performance.
+> A statically typed language for building backend services.
 
 ---
 
@@ -830,6 +831,6 @@ Mantra is developed and maintained by **[Solotron Technologies Private Limited](
 
 **© 2026 Mantra Programming Language · Solotron Technologies Private Limited**
 
-[Website](https://solotrondigital.github.io/mantra_website/mantra_web/) · [Report a Bug](https://github.com/solotrondigital/mantra_programming_language/issues) · [Request a Feature](https://github.com/solotrondigital/mantra_programming_language/issues)
+[Website](https://mantra.solotrontech.com/) · [Report a Bug](https://github.com/solotrondigital/mantra_programming_language/issues) · [Request a Feature](https://github.com/solotrondigital/mantra_programming_language/issues)
 
 </div>

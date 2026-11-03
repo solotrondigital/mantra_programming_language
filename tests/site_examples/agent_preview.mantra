@@ -1,0 +1,17 @@
+# Run with OPENAI_MODEL and OPENAI_API_KEY set to provider credentials.
+
+def main() -> Int:
+    let assistant = Agent.create(
+        "Helper",
+        "openai",
+        get_env("OPENAI_MODEL", ""),
+        get_env("OPENAI_API_KEY", ""),
+        "Answer questions briefly.",
+        "",
+        2,
+        2,
+        30
+    )
+    let result = Agent.run(assistant, "demo", "Say hello")
+    print(result["output"])
+    return 0

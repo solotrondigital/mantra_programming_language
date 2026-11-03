@@ -31,8 +31,8 @@ class Button extends UIElement:
 
 def main() -> Int:
     print("Testing Constructors and Super Calls...")
-    btn = Button("btn_submit", 100, 200, "Submit")
-    
+    let btn = Button("btn_submit", 100, 200, "Submit")
+
     assert(btn.id == "btn_submit")
     assert(btn.enabled == True)
     assert(btn.x == 100)

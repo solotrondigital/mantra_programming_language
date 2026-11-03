@@ -1,21 +1,21 @@
 {
   "name": "mantra-cli",
   "displayName": "Mantra CLI & Project Manager",
-  "description": "Official Visual Studio Code extension for the Mantra Development Kit (MDK) CLI: Project scaffolding, multi-platform builds (Web, Android, iOS), testing, formatting, and toolchain diagnostics. Owned by Solotron Technologies (http://www.solotrontech.com).",
+  "description": "Official Visual Studio Code extension for the Mantra Development Kit (MDK) CLI: Project scaffolding, multi-platform builds (Web, Android, iOS), testing, formatting, and toolchain diagnostics. Owned by Solotron Technologies (https://mantra.solotrontech.com).",
   "version": "0.8.0",
   "publisher": "solotrondigital",
   "icon": "images/mantra_color_logo.png",
-  "homepage": "http://www.solotrontech.com",
+  "homepage": "https://mantra.solotrontech.com/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/solotrontech/mantra.git"
+    "url": "https://github.com/solotrondigital/mantra_programming_language.git"
   },
   "bugs": {
-    "url": "http://www.solotrontech.com"
+    "url": "https://github.com/solotrondigital/mantra_programming_language/issues"
   },
   "author": {
     "name": "Solotron Technologies Private Limited",
-    "url": "http://www.solotrontech.com"
+    "url": "https://mantra.solotrontech.com/"
   },
   "engines": {
     "vscode": "^1.85.0"

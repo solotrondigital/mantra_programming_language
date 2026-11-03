@@ -65,6 +65,29 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "forced_update=$FORCED_UPDATE" >> "$GITHUB_OUTPUT"
           python scripts/release/check_release_status.py
+      - name: Require release signing credentials
+        if: steps.gate.outputs.should_release == 'true'
+        env:
+          RELEASE_GPG_PRIVATE_KEY: ${{ secrets.RELEASE_GPG_PRIVATE_KEY }}
+          RELEASE_GPG_KEY_ID: ${{ secrets.RELEASE_GPG_KEY_ID }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PASSWORD }}
+        shell: bash
+        run: |
+          missing=()
+          for name in RELEASE_GPG_PRIVATE_KEY RELEASE_GPG_KEY_ID APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_TEAM_ID APPLE_ID APPLE_APP_PASSWORD WINDOWS_CERTIFICATE WINDOWS_CERTIFICATE_PASSWORD; do
+            if [[ -z "${!name}" ]]; then missing+=("$name"); fi
+          done
+          if (( ${#missing[@]} )); then
+            printf 'Missing required release signing secrets: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
 
   build-and-package:
     name: Build & Package (${{ matrix.platform }})
@@ -94,12 +117,59 @@ jobs:
         run: |
           python scripts/release/sync_versions.py
           python scripts/release/version_config.py verify
-      - name: Build toolchain and platform installer
+      - name: Build toolchain
+        shell: bash
+        run: |
+          cargo build --release
+
+      - name: Sign macOS binaries
+        if: matrix.platform == 'macos'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_P12 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/mantra-signing.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+          CERTIFICATE_PATH="$RUNNER_TEMP/developer-id.p12"
+          printf '%s' "$APPLE_CERTIFICATE" | base64 --decode > "$CERTIFICATE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -k "$KEYCHAIN_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+          for binary in target/release/mantra target/release/mantrac; do
+            codesign --force --options runtime --timestamp --sign "$APPLE_SIGNING_IDENTITY" "$binary"
+            codesign --verify --strict --verbose=2 "$binary"
+          done
+
+      - name: Sign Windows binaries
+        if: matrix.platform == 'windows'
+        shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PASSWORD }}
+        run: |
+          $certificatePath = Join-Path $env:RUNNER_TEMP 'mantra-signing.pfx'
+          [IO.File]::WriteAllBytes($certificatePath, [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE))
+          $signtool = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\*\x64\signtool.exe" |
+            Sort-Object { [version]$_.Directory.Parent.Name } -Descending |
+            Select-Object -First 1 -ExpandProperty FullName
+          if (-not $signtool) { throw 'Windows SDK signtool.exe was not found.' }
+          foreach ($binary in @('target\release\mantra.exe', 'target\release\mantrac.exe')) {
+            & $signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /f $certificatePath /p $env:WINDOWS_CERTIFICATE_PASSWORD $binary
+            if ($LASTEXITCODE -ne 0) { throw "Signing failed for $binary" }
+            & $signtool verify /pa /v $binary
+            if ($LASTEXITCODE -ne 0) { throw "Signature verification failed for $binary" }
+          }
+
+      - name: Package signed toolchain and installer
         shell: bash
         env:
           VERSION: ${{ needs.release-gate.outputs.version }}
         run: |
-          cargo build --release
           chmod +x create_installers.sh
           ./create_installers.sh "$VERSION"
           if [[ "${{ matrix.platform }}" == "windows" ]]; then
@@ -116,6 +186,20 @@ jobs:
           if [[ -f "${MANTRAC_BIN}.exe" ]]; then MANTRAC_BIN="${MANTRAC_BIN}.exe"; fi
           "./$MANTRA_BIN" --version | grep -F "v$VERSION"
           "./$MANTRAC_BIN" --version | grep -F "$VERSION"
+
+      - name: Notarize and staple macOS installer
+        if: matrix.platform == 'macos'
+        shell: bash
+        env:
+          VERSION: ${{ needs.release-gate.outputs.version }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          DMG="dist/releases/v${VERSION}/Mantra-${VERSION}-macOS.dmg"
+          xcrun notarytool submit "$DMG" --apple-id "$APPLE_ID" --password "$APPLE_APP_SPECIFIC_PASSWORD" --team-id "$APPLE_TEAM_ID" --wait
+          xcrun stapler staple "$DMG"
+          xcrun stapler validate "$DMG"
       - name: Upload macOS installer
         if: matrix.platform == 'macos'
         uses: actions/upload-artifact@v4
@@ -166,19 +250,14 @@ jobs:
           RELEASE_GPG_PRIVATE_KEY: ${{ secrets.RELEASE_GPG_PRIVATE_KEY }}
           GPG_KEY_ID: ${{ secrets.RELEASE_GPG_KEY_ID }}
           GPG_PASSPHRASE: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
+          REQUIRE_GPG_SIGNATURE: 'true'
         run: |
           mkdir -p "dist/releases/v$VERSION"
           cp dist/staging/* "dist/releases/v$VERSION/"
-          if [ -n "$RELEASE_GPG_PRIVATE_KEY" ]; then
-            if [ -z "$GPG_KEY_ID" ]; then
-              echo "GPG_KEY_ID must be configured when RELEASE_GPG_PRIVATE_KEY is set." >&2
-              exit 1
-            fi
-            printf '%s' "$RELEASE_GPG_PRIVATE_KEY" | gpg --batch --import
-          else
-            echo "::warning::GPG signing secrets are not configured; checksums and release metadata will be generated without detached signatures."
-          fi
+          printf '%s' "$RELEASE_GPG_PRIVATE_KEY" | gpg --batch --import
           bash ./scripts/release/sign_release.sh "$VERSION"
+          test -s "dist/releases/v$VERSION/SHA256SUMS.asc"
+          test -s "dist/releases/v$VERSION/release.json.asc"
       - name: Create or update GitHub release
         uses: softprops/action-gh-release@v2
         with:

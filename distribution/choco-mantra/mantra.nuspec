@@ -43,7 +43,6 @@ mantra run
     <releaseNotes>https://github.com/solotrondigital/mantra_programming_language/releases/tag/v0.8.0</releaseNotes>
   </metadata>
   <files>
-    <file src="tools\**" target="tools" />
+    <file src="tools/**" target="tools" />
   </files>
 </package>
-

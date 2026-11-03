@@ -19,11 +19,11 @@ class Dog extends Animal:
 
 def main() -> Int:
     print("Testing Inheritance...")
-    dog = Dog("Rex")
+    let dog = Dog("Rex")
     assert(dog.get_name() == "Rex")
     assert(dog.speak() == "Woof")
 
-    animal = Animal("Generic")
+    let animal = Animal("Generic")
     assert(animal.speak() == "Unknown sound")
 
     print("Test 03 passed!")

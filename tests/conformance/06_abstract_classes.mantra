@@ -17,7 +17,7 @@ class InMemoryRepository extends Repository:
 
 def main() -> Int:
     print("Testing Abstract Classes and Methods...")
-    repo = InMemoryRepository()
+    let repo = InMemoryRepository()
     assert(repo.get_by_id(1) == "Mantra Developer")
     assert(repo.exists(1) == True)
     assert(repo.exists(99) == False)

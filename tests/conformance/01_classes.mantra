@@ -12,7 +12,7 @@ class User:
         return self.age >= 18
 
 def main() -> Int:
-    user = User("Alex", 25)
+    let user = User("Alex", 25)
     print("Testing Class Declaration & Methods...")
     assert(user.name == "Alex")
     assert(user.age == 25)

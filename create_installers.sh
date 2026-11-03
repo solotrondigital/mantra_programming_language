@@ -95,7 +95,11 @@ echo "Target Version : v${VERSION}"
 echo "=================================================================="
 
 # Check / Build binaries
-if [ ! -f "$TARGET_RELEASE/mantra" ] || [ ! -f "$TARGET_RELEASE/mantrac" ] || [ "$REBUILD" = true ]; then
+MANTRA_SOURCE="$TARGET_RELEASE/mantra"
+MANTRAC_SOURCE="$TARGET_RELEASE/mantrac"
+if [ ! -f "$MANTRA_SOURCE" ] && [ -f "$TARGET_RELEASE/mantra.exe" ]; then MANTRA_SOURCE="$TARGET_RELEASE/mantra.exe"; fi
+if [ ! -f "$MANTRAC_SOURCE" ] && [ -f "$TARGET_RELEASE/mantrac.exe" ]; then MANTRAC_SOURCE="$TARGET_RELEASE/mantrac.exe"; fi
+if [ ! -f "$MANTRA_SOURCE" ] || [ ! -f "$MANTRAC_SOURCE" ] || [ "$REBUILD" = true ]; then
     echo ">> Compiling release binaries with Cargo..."
     if command -v cargo >/dev/null 2>&1; then
         (cd "$PKG_DIR" && cargo build --release)
@@ -105,13 +109,17 @@ if [ ! -f "$TARGET_RELEASE/mantra" ] || [ ! -f "$TARGET_RELEASE/mantrac" ] || [ 
     fi
 fi
 
-if [ ! -f "$TARGET_RELEASE/mantra" ] || [ ! -f "$TARGET_RELEASE/mantrac" ]; then
+MANTRA_SOURCE="$TARGET_RELEASE/mantra"
+MANTRAC_SOURCE="$TARGET_RELEASE/mantrac"
+if [ ! -f "$MANTRA_SOURCE" ] && [ -f "$TARGET_RELEASE/mantra.exe" ]; then MANTRA_SOURCE="$TARGET_RELEASE/mantra.exe"; fi
+if [ ! -f "$MANTRAC_SOURCE" ] && [ -f "$TARGET_RELEASE/mantrac.exe" ]; then MANTRAC_SOURCE="$TARGET_RELEASE/mantrac.exe"; fi
+if [ ! -f "$MANTRA_SOURCE" ] || [ ! -f "$MANTRAC_SOURCE" ]; then
     echo "Error: Binaries not found in $TARGET_RELEASE."
     exit 1
 fi
 
 echo ">> Verified binaries in $TARGET_RELEASE:"
-ls -lh "$TARGET_RELEASE/mantra" "$TARGET_RELEASE/mantrac"
+ls -lh "$MANTRA_SOURCE" "$MANTRAC_SOURCE"
 
 # Create a temporary staging area
 TMP_STAGE="$(mktemp -d /tmp/mantra_build_installer_XXXXXX)"
@@ -124,9 +132,9 @@ STAGE_ASSETS="$TMP_STAGE/assets/images"
 mkdir -p "$STAGE_BIN" "$STAGE_EXAMPLES" "$STAGE_ASSETS"
 
 # Copy binaries
-cp "$TARGET_RELEASE/mantra" "$STAGE_BIN/mantra"
-cp "$TARGET_RELEASE/mantrac" "$STAGE_BIN/mantrac"
-chmod 755 "$STAGE_BIN/mantra" "$STAGE_BIN/mantrac"
+cp "$MANTRA_SOURCE" "$STAGE_BIN/$(basename "$MANTRA_SOURCE")"
+cp "$MANTRAC_SOURCE" "$STAGE_BIN/$(basename "$MANTRAC_SOURCE")"
+chmod 755 "$STAGE_BIN/$(basename "$MANTRA_SOURCE")" "$STAGE_BIN/$(basename "$MANTRAC_SOURCE")"
 if [ -f "$TARGET_RELEASE/mantra-lsp" ]; then
     cp "$TARGET_RELEASE/mantra-lsp" "$STAGE_BIN/mantra-lsp"
     chmod 755 "$STAGE_BIN/mantra-lsp"

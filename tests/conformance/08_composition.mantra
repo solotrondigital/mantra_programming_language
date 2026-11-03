@@ -17,8 +17,8 @@ class Car:
 
 def main() -> Int:
     print("Testing Composition...")
-    eng = Engine(450)
-    car = Car("Mantra GT", eng)
+    let eng = Engine(450)
+    let car = Car("Mantra GT", eng)
     let msg = car.drive()
     print(msg)
     assert(msg == "Mantra GT is driving! V8 Engine started with 450 HP")

@@ -26,9 +26,9 @@ def main() -> Int:
     assert(s1 != s3)
 
     # Object Identity vs Value Equality
-    p1 = Point(5, 10)
-    p2 = Point(5, 10)
-    p3 = p1
+    let p1 = Point(5, 10)
+    let p2 = Point(5, 10)
+    let p3 = p1
 
     # Reference Identity
     assert(p1 == p3)
@@ -36,7 +36,7 @@ def main() -> Int:
 
     # Value Equality via method
     assert(p1.equals(p2) == True)
-    p4 = Point(7, 10)
+    let p4 = Point(7, 10)
     assert(p1.equals(p4) == False)
 
     print("Test 11 passed!")
