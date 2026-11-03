@@ -33,6 +33,10 @@ jobs:
       version: ${{ steps.gate.outputs.version }}
       forced_update: ${{ steps.gate.outputs.forced_update }}
       should_release: ${{ steps.gate.outputs.should_release }}
+      gpg_signing: ${{ steps.signing.outputs.gpg_signing }}
+      apple_signing: ${{ steps.signing.outputs.apple_signing }}
+      apple_notarization: ${{ steps.signing.outputs.apple_notarization }}
+      windows_signing: ${{ steps.signing.outputs.windows_signing }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -65,11 +69,12 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "forced_update=$FORCED_UPDATE" >> "$GITHUB_OUTPUT"
           python scripts/release/check_release_status.py
-      - name: Require release signing credentials
-        if: steps.gate.outputs.should_release == 'true'
+      - name: Detect available signing credentials
+        id: signing
         env:
           RELEASE_GPG_PRIVATE_KEY: ${{ secrets.RELEASE_GPG_PRIVATE_KEY }}
           RELEASE_GPG_KEY_ID: ${{ secrets.RELEASE_GPG_KEY_ID }}
+          RELEASE_GPG_PASSPHRASE: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_P12 }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_DEVELOPER_ID }}
@@ -80,14 +85,39 @@ jobs:
           WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_PASSWORD }}
         shell: bash
         run: |
-          missing=()
-          for name in RELEASE_GPG_PRIVATE_KEY RELEASE_GPG_KEY_ID APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_TEAM_ID APPLE_ID APPLE_APP_PASSWORD WINDOWS_CERTIFICATE WINDOWS_CERTIFICATE_PASSWORD; do
-            if [[ -z "${!name}" ]]; then missing+=("$name"); fi
-          done
-          if (( ${#missing[@]} )); then
-            printf 'Missing required release signing secrets: %s\n' "${missing[*]}" >&2
-            exit 1
+          gpg_signing=false
+          apple_signing=false
+          apple_notarization=false
+          windows_signing=false
+
+          if [[ -n "$RELEASE_GPG_PRIVATE_KEY" && -n "$RELEASE_GPG_KEY_ID" ]]; then
+            gpg_signing=true
+          else
+            echo "::notice::GPG signing will be skipped; configure RELEASE_GPG_PRIVATE_KEY and RELEASE_GPG_KEY_ID to enable it."
           fi
+
+          if [[ -n "$APPLE_CERTIFICATE" && -n "$APPLE_CERTIFICATE_PASSWORD" && -n "$APPLE_SIGNING_IDENTITY" ]]; then
+            apple_signing=true
+          else
+            echo "::notice::macOS code signing will be skipped; the macOS installer will still be packaged."
+          fi
+
+          if [[ "$apple_signing" == true && -n "$APPLE_TEAM_ID" && -n "$APPLE_ID" && -n "$APPLE_APP_PASSWORD" ]]; then
+            apple_notarization=true
+          else
+            echo "::notice::macOS notarization will be skipped; the macOS installer will still be published."
+          fi
+
+          if [[ -n "$WINDOWS_CERTIFICATE" && -n "$WINDOWS_CERTIFICATE_PASSWORD" ]]; then
+            windows_signing=true
+          else
+            echo "::notice::Windows code signing will be skipped; the Windows installer will still be packaged."
+          fi
+
+          echo "gpg_signing=$gpg_signing" >> "$GITHUB_OUTPUT"
+          echo "apple_signing=$apple_signing" >> "$GITHUB_OUTPUT"
+          echo "apple_notarization=$apple_notarization" >> "$GITHUB_OUTPUT"
+          echo "windows_signing=$windows_signing" >> "$GITHUB_OUTPUT"
 
   build-and-package:
     name: Build & Package (${{ matrix.platform }})
@@ -123,7 +153,7 @@ jobs:
           cargo build --release
 
       - name: Sign macOS binaries
-        if: matrix.platform == 'macos'
+        if: matrix.platform == 'macos' && needs.release-gate.outputs.apple_signing == 'true'
         shell: bash
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_DEVELOPER_ID_CERTIFICATE_P12 }}
@@ -146,7 +176,7 @@ jobs:
           done
 
       - name: Sign Windows binaries
-        if: matrix.platform == 'windows'
+        if: matrix.platform == 'windows' && needs.release-gate.outputs.windows_signing == 'true'
         shell: pwsh
         env:
           WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_SIGNING_CERTIFICATE_BASE64 }}
@@ -165,7 +195,7 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw "Signature verification failed for $binary" }
           }
 
-      - name: Package signed toolchain and installer
+      - name: Package toolchain and installer
         shell: bash
         env:
           VERSION: ${{ needs.release-gate.outputs.version }}
@@ -188,7 +218,7 @@ jobs:
           "./$MANTRAC_BIN" --version | grep -F "$VERSION"
 
       - name: Notarize and staple macOS installer
-        if: matrix.platform == 'macos'
+        if: matrix.platform == 'macos' && needs.release-gate.outputs.apple_notarization == 'true'
         shell: bash
         env:
           VERSION: ${{ needs.release-gate.outputs.version }}
@@ -250,14 +280,22 @@ jobs:
           RELEASE_GPG_PRIVATE_KEY: ${{ secrets.RELEASE_GPG_PRIVATE_KEY }}
           GPG_KEY_ID: ${{ secrets.RELEASE_GPG_KEY_ID }}
           GPG_PASSPHRASE: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
-          REQUIRE_GPG_SIGNATURE: 'true'
+          GPG_SIGNING_ENABLED: ${{ needs.release-gate.outputs.gpg_signing }}
         run: |
           mkdir -p "dist/releases/v$VERSION"
           cp dist/staging/* "dist/releases/v$VERSION/"
-          printf '%s' "$RELEASE_GPG_PRIVATE_KEY" | gpg --batch --import
+          if [[ "$GPG_SIGNING_ENABLED" == true ]]; then
+            printf '%s' "$RELEASE_GPG_PRIVATE_KEY" | gpg --batch --import
+          else
+            unset GPG_KEY_ID RELEASE_GPG_PRIVATE_KEY GPG_PASSPHRASE
+          fi
           bash ./scripts/release/sign_release.sh "$VERSION"
-          test -s "dist/releases/v$VERSION/SHA256SUMS.asc"
-          test -s "dist/releases/v$VERSION/release.json.asc"
+          if [[ "$GPG_SIGNING_ENABLED" == true ]]; then
+            test -s "dist/releases/v$VERSION/SHA256SUMS.asc"
+            test -s "dist/releases/v$VERSION/release.json.asc"
+          else
+            echo "GPG signatures skipped; unsigned checksums and release metadata are included."
+          fi
       - name: Create or update GitHub release
         uses: softprops/action-gh-release@v2
         with:
